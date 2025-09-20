@@ -1,0 +1,8 @@
+---
+title: "Classifying Retirement Plan Financial Adequacy Using Form 5500 Data"
+subtitle: "Exploratory Data Analysis"
+author: "Donnie Minnick, Statistical Learning - Fall A 2025"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+---
+
+
