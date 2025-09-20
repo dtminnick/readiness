@@ -57,6 +57,34 @@ schedule_h <- schedule_h %>%
 
 plans <- left_join(plans, schedule_h, by = "ACK_ID") %>% tidyr::drop_na()
 
+business_codes <- read.csv("./inst/extdata/industry_titles.csv",
+                           header = TRUE,
+                           sep = ",",
+                           na.strings = c(""),
+                           stringsAsFactors = FALSE)
+
+new_rows <- data.frame(industry_code = c(221500, 524140, 524150),
+                       industry_title = c("Combination gas and electric", 
+                                          "Direct life health medical insurance carriers",
+                                          "Direct insurance carriers agencies and brokerages"))
+
+business_codes <- bind_rows(business_codes, new_rows)
+
+business_codes <- business_codes %>%
+  rename(BUSINESS_CODE = industry_code,
+         INDUSTRY_TITLE = industry_title) %>%
+  mutate(BUSINESS_CODE = as.integer(stringr::str_pad(BUSINESS_CODE,
+                                          width = 6,
+                                          side = "right",
+                                          pad = 0)),
+         INDUSTRY_TITLE = stringr::str_remove(INDUSTRY_TITLE, 
+                                              "^(NAICS(07|12|17)?\\s*\\d{2,6}|\\d{2,4})\\s*"),
+         INDUSTRY_TITLE = stringr::str_remove(INDUSTRY_TITLE,
+                                              "^(-?\\d{1,6})\\s*")) %>%
+  distinct_all()
+
+plans <- left_join(plans, business_codes, by = "BUSINESS_CODE")
+
 saveRDS(plans, "./data/plans.rds")
 
 write.csv(plans, "./data/plans.csv")
