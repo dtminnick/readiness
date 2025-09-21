@@ -211,7 +211,7 @@ The representation at the detailed industry title level is sparse. Most individu
 I will collapse to broader categories using existing business code structure to group industries into super-sectors. This reduces cardinality and improves interpretability.
 
 ```{r}
-readRDS("../data/business_codes.rds")
+business_codes <- readRDS("../data/business_codes.rds")
 
 business_codes <- business_codes %>%
   rename(SECTOR_CODE = BUSINESS_CODE,
@@ -249,8 +249,6 @@ ggplot(summary_sector_title, aes(x = forcats::fct_reorder(stringr::str_trunc(SEC
   theme(axis.text.x = element_text(angle = 90, hjust = 0.5),
         plot.title = element_text(size = 14, face = "bold")) +
   expand_limits(y = max(summary_sector_title$entries) * 1.2)
-
-
 ```
 
 This plot reveals an imbalance in plan availability across sectors. The top few, e.g Manufacturing, Professional Services, and Healthcare, dominate the landscape, accounting for over half of all plans. 
@@ -270,29 +268,45 @@ Together, these features allow models to account for both who has access and how
 Implement plan penetration rate.
 
 ```{r}
-# Count plans per sector
+total_participants_all <- sum(plans$TOT_ACTIVE_PARTCP_CNT)
 
-plan_count <- plans %>%
-  group_by(SECTOR_CODE) %>%
-  summarise(plan_count = n())
+sector_participant_share <- plans %>%
+  group_by(SECTOR_TITLE) %>%
+  summarise(total_participants = sum(TOT_ACTIVE_PARTCP_CNT, na.rm = TRUE)) %>%
+  mutate(percent_participants = round(total_participants / total_participants_all, 4)) %>%
+  arrange(desc(percent_participants))
 
-employer_counts <- plans %>%
-  select(SECTOR_CODE, SPONS_DFE_EIN) %>%
-  distinct_all() %>%
-  group_by(SECTOR_CODE) %>%
-  summarise(employer_count = n())
-
-penetration <- left_join(plan_counts, employer_counts, by = "SECTOR_CODE") %>%
-  mutate(plans_per_1000_employers = (plan_counts / employer_counts) * 1000,
-         plans_per_10000_workers = (plan_counts / employer_counts) * 10000)
-
-check <- plans %>%
-  group_by(SPONS_DFE_EIN) %>%
-  summarise(count = n())
+kable(sector_participant_share,
+      col.names = c("Sector", "Participants", "Percent"),
+      caption = "Summary Sector",
+      format.args = list(big.mark = ","),
+      align = c("l", "r", "r"))
 ```
 
 
 
+```{r}
+ggplot(sector_participant_share, aes(x = forcats::fct_reorder(stringr::str_trunc(SECTOR_TITLE, width = 20), total_participants, .desc = TRUE), y = total_participants)) +
+  geom_col(fill = "steelblue", color = "white") +
+  geom_text(aes(label = paste0(scales::comma(total_participants), "\n", round(percent_participants * 100, 0), "%")),
+            vjust = -0.3, size = 3.0) +
+  labs(title = "Distribution of Participants by Sector",
+       x = "Sector",
+       y = "Count") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 0.5),
+        plot.title = element_text(size = 14, face = "bold")) +
+  expand_limits(y = max(sector_participant_share$total_participants) * 1.2)
+```
 
+This distribution reveals a disparity in coverage. High-coverage sectors like Manufacturing (18.4%), Healthcare (16.5%), and Retail (13.3%) dominate participant coverage. They most likely host large employers with institutional plans, unionized workforces, or strong compliance cultures. Their plans may be more standardized, with higher assets-per-participant and broader eligibility.
 
+Low-coverage sectors like Agriculture (0.5%), Mining (0.6%), Education (0.7%), and Public Administration (0.06%) are severely underrepresented. They may face structural barriers: seasonal labor, fragmented employment, or reliance on alternative retirement systems, e.g. public pensions are not captured in Form 5500.
 
+```{r}
+sector_participant_share <- sector_participant_share %>%
+  select(-total_participants) %>%
+  rename(SECTOR_PARTICIPANT_SHARE = percent_participants)
+
+plans <- left_join(plans, sector_participant_share, by = "SECTOR_TITLE")
+```
