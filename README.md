@@ -3,7 +3,7 @@
 ## Classifying Retirement Plan Financial Adequacy Using Form 5500 Data
 
 ## Overview
-This project classifies U.S. employer-sponsored retirement plans as structurally **adequate** or **inadequate** in supporting participant financial readiness. Using 2023 Form 5500 filings, I engineer interpretable features to assess plan-level savings dynamics, leakage, and engagement—offering a diagnostic lens into retirement plan design.
+This project classifies U.S. employer-sponsored retirement plans as structurally **adequate** or **inadequate** in supporting participant financial readiness. Using 2023 Form 5500 filings, I engineer interpretable features to assess plan-level savings dynamics, leakage, and engagement, offering a diagnostic lens into retirement plan design.
 
 ## Learning Question
 > Can we classify retirement plans as “adequate” or “inadequate” in supporting participant financial readiness, based on structural indicators such as participation rate, average account balance, contribution stability, and leakage volume?
