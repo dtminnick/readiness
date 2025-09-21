@@ -1,27 +1,28 @@
 ---
 title: "Classifying Retirement Plan Financial Adequacy Using Form 5500 Data"
-subtitle: "Exploratory Data Analysis"
+subtitle: "Exploratory Data Analysis and Feature Engineering"
 author: "Donnie Minnick, Statistical Learning - Fall A 2025"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 ---
 
-The analysis leverages the following R packages: `caret` for model training and evaluation, `dplyr` for data manipulation, `knitr` for report formatting, and `pROC` for ROC/AUC analysis.
+This analysis leverages the following R packages: `dplyr`, `lubridate` and `tidyr` for data manipulation, `knitr` for report formatting, and `ggplot2` for visualization.
 
 ```{r, load_libraries echo = FALSE, message = FALSE}
-library("caret")
 library("dplyr")
 library("ggplot2")
 library("knitr")
 library("lubridate")
-library("pROC")
 library("tidyr")
 ```
+Load Form 5500 data.
 
 ```{r load_data}
 plans <- readRDS("../data/plans.rds")
 ```
 
 # Missing Data
+
+Generate a report to check for missing values in the data at both the column and row level.
 
 ```{r missing_data}
 # Create column level summary.
@@ -52,17 +53,17 @@ kable(missing_report,
 
 # Plan Effective Date (PLAN_EFF_DATE)
 
-The variable PLAN_EFF_DATE marks the official inception of a retirement plan, i.e. the date it became active and enforceable under its governing provisions. This date anchors the plan’s life-cycle, serving as a reference point for regulatory applicability, sponsor tenure, and cohort benchmarking.
+Plan effective date marks the official inception of a retirement plan, i.e. the date it became active and enforceable under its governing provisions. This date anchors the plan’s life cycle, serving as a reference point for regulatory applicability, sponsor tenure, and cohort benchmarking.
 
-From an analytic perspective, PLAN_EFF_DATE enables several valuable transformations.  Calculating plan age from this field allows for stratification by maturity, which  is especially useful when assessing financial readiness across vintage cohorts.  Plans initiated in different eras may reflect distinct design philosophies, contribution behaviors, or participant engagement patterns. 
+From an analytic perspective, plan effective date enables several valuable transformations.  Calculating plan age from this field allows for stratification by maturity, which is useful when assessing financial readiness across vintage cohorts.  Plans initiated in different eras may reflect distinct design philosophies, contribution behaviors, or participant engagement patterns. 
 
-Grouping by effective date also supports fairness overlays, helping identify whether newer plans offer comparable adequacy and access relative to legacy plans.
+Grouping by plan effective date also supports fairness overlays, helping identify whether newer plans offer comparable adequacy and access relative to legacy plans.
 
-In benchmarking workflows, PLAN_EFF_DATE can be paired with BUSINESS_CODE to explore sector-specific adoption trends. As a foundational variable, it’s ideal for anchoring longitudinal diagnostics and enriching sponsor life-cycle narratives.
+In benchmarking workflows, plan effective date can be paired with business code (BUSINESS_CODE) to explore sector-specific adoption trends.
 
-```{r}
+```{r summary_plan_effective_date}
 summary_plan_effective_date <- plans %>%
-  mutate(PLAN_EFF_YEAR = year(PLAN_EFF_DATE)) %>%
+  mutate(PLAN_EFF_YEAR = as.character(year(PLAN_EFF_DATE))) %>%
   group_by(PLAN_EFF_YEAR) %>%
   arrange(PLAN_EFF_YEAR) %>%
   summarise(entries = n(), .groups = "drop") %>%
@@ -77,8 +78,8 @@ kable(summary_plan_effective_date,
 
 Plot plans by plan effective year.
 
-```{r}
-ggplot(summary_plan_effective_date, aes(x = PLAN_EFF_YEAR, y = entries)) +
+```{r plot_summary_plan_effective_date}
+ggplot(summary_plan_effective_date, aes(x = as.integer(PLAN_EFF_YEAR), y = entries)) +
   geom_col(fill = "steelblue", color = "white") +
   # geom_text(aes(label = paste0(scales::comma(entries), "\n", round(percent * 100, 0), "%")),
   #           vjust = -0.3, size = 3.0) +
@@ -93,13 +94,15 @@ ggplot(summary_plan_effective_date, aes(x = PLAN_EFF_YEAR, y = entries)) +
 
 This distribution tells a compelling story about the evolution of retirement plan adoption in the U.S. The gradual rise from the 1940s through the 1970s reflects the early institutionalization of employer-sponsored plans, likely driven by post-war economic expansion and the formalization of pension structures.
 
-The sharp uptick in the late 1970s through the 1990s coincides with major policy shifts, most notably the passage of ERISA in 1974 and the rise of defined contribution plans like 401(k)s in the early 1980s. This era marks a surge in plan formation,  especially among small and mid-sized employers responding to new regulatory clarity and tax incentives.
+The sharp uptick in the late 1970s through the 1990s coincides with major policy shifts, most notably the passage of ERISA in 1974 and the rise of defined contribution plans like 401(k)s in the early 1980s. This era marks a surge in plan formation, especially among small and mid-sized employers responding to new regulatory clarity and tax incentives.
 
-The peak in the late 1990s to early 2000s suggests a saturation point, after which the decline may reflect consolidation of plans or sponsor exits, a shift toward pooled or multi-employer arrangements, and market volatility post-2008 influencing plan  formation.
+The peak in the late 1990s to early 2000s suggests a saturation point, after which the decline reflects consolidation of plans or sponsor exits, a shift toward pooled or multi-employer arrangements, and market volatility post-2008 influencing plan formation.
 
-From a benchmarking or fairness audit perspective, this distribution is useful for stratifying plans by vintage. Plans initiated in different eras may have distinct design philosophies, contribution behaviors, or participant engagement patterns. A plan vintage feature (e.g., pre-1980, 1980–1999, post-2000) can help assess adequacy or access across cohorts. Pairing this variable with BUSINESS_CODE would allow sector-specific diagnostics, e.g., whether certain industries adopted plans earlier or more consistently.
+From a benchmarking or fairness audit perspective, this distribution is useful for stratifying plans by vintage. Plans initiated in different eras may have distinct design philosophies, contribution behaviors, or participant engagement patterns. A plan vintage feature (e.g. pre-1980, 1980–1999, post-2000) can help assess adequacy or access across cohorts. Pairing this variable with business code (BUSINESS_CODE) would allow sector-specific diagnostics, e.g. whether certain industries adopted plans earlier or more consistently.
 
-```{r plan_vintage_group}
+Create a plan vintage group variable.
+
+```{r create_plan_vintage_group}
 plans <- plans %>%
   mutate(
     PLAN_EFF_YEAR = year(PLAN_EFF_DATE),
@@ -119,7 +122,7 @@ plans <- plans %>%
 
 Plot plans by plan vintage group.
 
-```{r}
+```{r plot_summary_plan_vintage_group}
 summary_plan_vintage_group <- plans %>%
   group_by(PLAN_VINTAGE_GROUP) %>%
   summarise(entries = n(), .groups = "drop") %>%
@@ -131,7 +134,7 @@ ggplot(summary_plan_vintage_group, aes(x = PLAN_VINTAGE_GROUP, y = entries)) +
             vjust = -0.3, size = 3.0) +
   labs(title = "Distribution of Plans By Plan Vintage Group",
        x = "Year",
-       y = "Count") +
+       y = "Group") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1),
         plot.title = element_text(size = 14, face = "bold")) +
@@ -140,19 +143,21 @@ ggplot(summary_plan_vintage_group, aes(x = PLAN_VINTAGE_GROUP, y = entries)) +
 
 Given this distribution, where plan counts rise sharply in the Expansion era and taper off in more recent vintages, we are dealing with a nonlinear, asymmetric pattern that’s not well captured by a simple linear term.
 
-A spline would allow flexible modeling of nonlinear relationships without forcing global curvature.  I can place knots at meaningful breakpoints, e.g., 1980, 2000, 2010, using PLAN_EFF_YEAR to reflect policy or behavioral shifts. This would be easy to explain in stakeholder terms: plan creation changes around key regulatory eras.
+A spline would allow flexible modeling of nonlinear relationships without forcing global curvature.  I can place knots at meaningful breakpoints, e.g. 1980, 2000, 2010, using plan effective year to reflect policy or behavioral shifts. This would be easy to explain in stakeholder terms: plan creation changes around key regulatory eras.
 
-When performing logistic regression, splines allow the model to capture non-linearity by breaking the predictor into segments and fitting piecewise polynomials.
+When performing logistic regression, splines allow the model to capture non-linearity by breaking the predictor into segments and fitting piece-wise polynomials.
 
 Random forests don’t need splines to model non-linearity. They’re built to handle it through recursive splits. However, engineering spline-based features can make comparisons cleaner and diagnostics more stakeholder-friendly.
 
-# State (SPONS_DFE_MAIL_US_STATE)
+# Sponsor state (SPONS_DFE_MAIL_US_STATE)
 
-The variable SPONS_DFE_MAIL_US_STATE refers to the U.S. state listed in the mailing address of the plan sponsor or Direct Filing Entity (DFE) on Form 5500. It captures the geographic location of the sponsor’s administrative contact, not necessarily the location of plan participants or operations.
+The variable sponsor state (SPONS_DFE_MAIL_US_STATE) refers to the U.S. state listed in the mailing address of the plan sponsor or Direct Filing Entity (DFE) on Form 5500. It captures the geographic location of the sponsor’s administrative contact, not necessarily the location of plan participants or operations.
 
 This field is useful for regional benchmarking and comparing plan characteristics or adequacy across states, regulatory overlays, such as aligning with state-specific compliance or fiduciary rules, and geographic stratification.
 
-```{r}
+Summarize plans by sponsor state.
+
+```{r summary_sponsor_state}
 summary_sponsor_state <- plans %>%
   group_by(SPONS_DFE_MAIL_US_STATE) %>%
   summarise(entries = n(), .groups = "drop") %>%
@@ -168,8 +173,10 @@ kable(summary_sponsor_state,
 
 Plot plans by state.
 
-```{r}
-ggplot(summary_sponsor_state, aes(x = forcats::fct_reorder(SPONS_DFE_MAIL_US_STATE, entries, .desc = TRUE), y = entries)) +
+```{r plot_summary_sponsor_state}
+ggplot(summary_sponsor_state, aes(x = forcats::fct_reorder(SPONS_DFE_MAIL_US_STATE, 
+                                                           entries, 
+                                                           .desc = TRUE), y = entries)) +
   geom_col(fill = "steelblue", color = "white") +
   # geom_text(aes(label = paste0(scales::comma(entries), "\n", round(percent * 100, 0), "%")),
   #           vjust = -0.3, size = 3.0) +
@@ -182,17 +189,17 @@ ggplot(summary_sponsor_state, aes(x = forcats::fct_reorder(SPONS_DFE_MAIL_US_STA
   expand_limits(y = max(summary_sponsor_state$entries) * 1.2)
 ```
 
-This distribution aligns closely with population density and economic concentration. States like California, Texas, New York, and Florida tend to dominate in plan counts because they host a large number of employers, especially in sectors with high plan adoption rates (e.g., finance, tech, healthcare).
+This distribution aligns closely with population density and economic concentration. States like California, Texas, New York, and Florida tend to dominate in plan counts because they host a large number of employers, especially in sectors with high plan adoption rates (e.g. finance, tech, healthcare).
 
-It's also about business density and industry mix. High counts may reflect regional hubs of plan sponsors, especially in metro areas with strong retirement plan infrastructure.  Also, states with proactive retirement initiatives, e.g., CalSavers in California, may show elevated plan formation or reporting.
+High counts also reflect regional hubs of plan sponsors, especially in metro areas with strong retirement plan infrastructure.  States with proactive retirement initiatives, e.g. CalSavers in California, may show elevated plan formation or reporting.
 
-I can potentially combine BUSINESS_CODE with state to see which industries drive plan formation in each region.
+I can potentially combine sponsor state with business code (BUSINESS_CODE) to see which industries drive plan formation in each region.
 
 # Business Code and Industry Title (BUSINESS_CODE, INDUSTRY_TITLE)
 
-The BUSINESS_CODE field on Form 5500 refers to the six-digit code used to classify the primary business activity of the plan sponsor, based on the North American Industry Classification System (NAICS). It identifies the economic sector in which the sponsoring organization operates—such as manufacturing, healthcare, finance, or education.  The INDUSTRY_TITLE is the human-readable label associated with that code.
+Business code (BUSINESS_CODE) refers to the six-digit code used to classify the primary business activity of the plan sponsor, based on the North American Industry Classification System (NAICS). It identifies the economic sector in which the sponsoring organization operates—such as manufacturing, healthcare, finance, or education.  Industry title (INDUSTRY_TITLE) is the human-readable label associated with that code.
 
-```{r}
+```{r summary_industry_title}
 summary_industry_title <- plans %>%
   group_by(INDUSTRY_TITLE) %>%
   summarise(entries = n(), .groups = "drop") %>%
@@ -206,11 +213,11 @@ kable(head(summary_industry_title, 20),
       align = c("l", "r", "r"))
 ```
 
-The representation at the detailed industry title level is sparse. Most individual NAICS-derived titles contribute less than 0.03% of total plan filings, which suggests that modeling or benchmarking at this granularity may be noisy or unstable.  A few industries dominate plan filings, while most contribute marginally. The detailed industry title field has many levels, but low support per level. Using these titles directly in models could lead to poor generalization unless grouped.
+Representation at the detailed industry title level is sparse. Most individual NAICS-derived titles contribute less than 0.03% of total plan filings, which suggests that modeling or benchmarking at this granularity may be noisy or unstable.  A few industries dominate plan filings, while most contribute marginally. The detailed industry title field has many levels, but low support per level. Using these titles directly in models could lead to poor generalization unless grouped.
 
-I will collapse to broader categories using existing business code structure to group industries into super-sectors. This reduces cardinality and improves interpretability.
+Collapse to broader categories using existing business code structure and group industries into sectors. This reduces cardinality and improves interpretability.
 
-```{r}
+```{r create_sectors}
 business_codes <- readRDS("../data/business_codes.rds")
 
 business_codes <- business_codes %>%
@@ -237,7 +244,7 @@ kable(summary_sector_title,
 
 Plot by sector title.
 
-```{r}
+```{r plot_sectors}
 ggplot(summary_sector_title, aes(x = forcats::fct_reorder(stringr::str_trunc(SECTOR_TITLE, width = 20), entries, .desc = TRUE), y = entries)) +
   geom_col(fill = "steelblue", color = "white") +
   geom_text(aes(label = paste0(scales::comma(entries), "\n", round(percent * 100, 0), "%")),
@@ -303,6 +310,8 @@ This distribution reveals a disparity in coverage. High-coverage sectors like Ma
 
 Low-coverage sectors like Agriculture (0.5%), Mining (0.6%), Education (0.7%), and Public Administration (0.06%) are severely underrepresented. They may face structural barriers: seasonal labor, fragmented employment, or reliance on alternative retirement systems, e.g. public pensions are not captured in Form 5500.
 
+Calculate participant share by sector.
+
 ```{r}
 sector_participant_share <- sector_participant_share %>%
   select(-total_participants) %>%
@@ -310,3 +319,5 @@ sector_participant_share <- sector_participant_share %>%
 
 plans <- left_join(plans, sector_participant_share, by = "SECTOR_TITLE")
 ```
+
+
