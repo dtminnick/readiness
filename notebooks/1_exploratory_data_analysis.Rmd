@@ -211,24 +211,88 @@ The representation at the detailed industry title level is sparse. Most individu
 I will collapse to broader categories using existing business code structure to group industries into super-sectors. This reduces cardinality and improves interpretability.
 
 ```{r}
+readRDS("../data/business_codes.rds")
+
+business_codes <- business_codes %>%
+  rename(SECTOR_CODE = BUSINESS_CODE,
+         SECTOR_TITLE = INDUSTRY_TITLE)
+
 plans <- plans %>%
   mutate(SECTOR_CODE = as.integer(substr(BUSINESS_CODE, 1, 2)) * 10000)
+
+plans <- left_join(plans, business_codes, by = "SECTOR_CODE")
+
+summary_sector_title <- plans %>%
+  group_by(SECTOR_TITLE) %>%
+  summarise(entries = n(), .groups = "drop") %>%
+  arrange(desc(entries)) %>%
+  mutate(percent = round(entries / sum(entries), 2))
+
+kable(summary_sector_title,
+      col.names = c("Sector", "Entries", "Percent"),
+      caption = "Summary Sector",
+      format.args = list(big.mark = ","),
+      align = c("l", "r", "r"))
 ```
 
-Plot by industry title.
+Plot by sector title.
 
 ```{r}
-ggplot(summary_industry_title, aes(x = forcats::fct_reorder(INDUSTRY_TITLE, entries, .desc = TRUE), y = entries)) +
+ggplot(summary_sector_title, aes(x = forcats::fct_reorder(stringr::str_trunc(SECTOR_TITLE, width = 20), entries, .desc = TRUE), y = entries)) +
   geom_col(fill = "steelblue", color = "white") +
-  # geom_text(aes(label = paste0(scales::comma(entries), "\n", round(percent * 100, 0), "%")),
-  #           vjust = -0.3, size = 3.0) +
-  labs(title = "Distribution of Plans By Industry",
-       x = "Year",
+  geom_text(aes(label = paste0(scales::comma(entries), "\n", round(percent * 100, 0), "%")),
+            vjust = -0.3, size = 3.0) +
+  labs(title = "Distribution of Plans By Sector",
+       x = "Sector",
        y = "Count") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, hjust = 0.5),
         plot.title = element_text(size = 14, face = "bold")) +
-  expand_limits(y = max(summary_industry_title$entries) * 1.2)
+  expand_limits(y = max(summary_sector_title$entries) * 1.2)
+
+
 ```
+
+This plot reveals an imbalance in plan availability across sectors. The top few, e.g Manufacturing, Professional Services, and Healthcare, dominate the landscape, accounting for over half of all plans. 
+
+Saturated sectors like Manufacturing and Professional Services are likely have legacy plan structures and strong compliance cultures.
+
+Healthcare shows high plan counts, possibly due to large institutional employers and unionized workforces.
+
+Under-served sectors, such as Accommodation and Food Services, Arts and Entertainment, and Agriculture show very low plan counts despite employing millions. These sectors often have high turnover, part-time labor, or small businesses, all factors that historically correlate with low plan sponsorship.
+
+In terms of predictors, I can leverage this insight by engineering two features: a plan penetration rate of plans per 1,000 employers or per 10,000 workers in each sector, and a sector adequacy flag that compares assets-per-participant or contribution ratios across sectors.  The first captures structural access to retirement plans across sectors.  I expect it will be a strong signal for access disparity and potential classification into “adequate” versus "inadequate” groups.
+
+Binary or ordinal indicator based on sector-level averages of assets-per-participant or contribution ratios captures financial sufficiency of plans within each sector.  It may highlight whether certain industries consistently offer more robust retirement benefits.
+
+Together, these features allow models to account for both who has access and how well those plans perform, making your adequacy classification more equitable and diagnostically transparent.
+
+Implement plan penetration rate.
+
+```{r}
+# Count plans per sector
+
+plan_count <- plans %>%
+  group_by(SECTOR_CODE) %>%
+  summarise(plan_count = n())
+
+employer_counts <- plans %>%
+  select(SECTOR_CODE, SPONS_DFE_EIN) %>%
+  distinct_all() %>%
+  group_by(SECTOR_CODE) %>%
+  summarise(employer_count = n())
+
+penetration <- left_join(plan_counts, employer_counts, by = "SECTOR_CODE") %>%
+  mutate(plans_per_1000_employers = (plan_counts / employer_counts) * 1000,
+         plans_per_10000_workers = (plan_counts / employer_counts) * 10000)
+
+check <- plans %>%
+  group_by(SPONS_DFE_EIN) %>%
+  summarise(count = n())
+```
+
+
+
+
 
 

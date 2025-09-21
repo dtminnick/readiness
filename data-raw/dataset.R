@@ -83,6 +83,8 @@ business_codes <- business_codes %>%
                                               "^(-?\\d{1,6})\\s*")) %>%
   distinct_all()
 
+saveRDS(business_codes, "./data/business_codes.rds")
+
 plans <- left_join(plans, business_codes, by = "BUSINESS_CODE")
 
 saveRDS(plans, "./data/plans.rds")
