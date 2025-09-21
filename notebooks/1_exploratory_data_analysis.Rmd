@@ -188,8 +188,47 @@ It's also about business density and industry mix. High counts may reflect regio
 
 I can potentially combine BUSINESS_CODE with state to see which industries drive plan formation in each region.
 
+# Business Code and Industry Title (BUSINESS_CODE, INDUSTRY_TITLE)
 
+The BUSINESS_CODE field on Form 5500 refers to the six-digit code used to classify the primary business activity of the plan sponsor, based on the North American Industry Classification System (NAICS). It identifies the economic sector in which the sponsoring organization operates—such as manufacturing, healthcare, finance, or education.  The INDUSTRY_TITLE is the human-readable label associated with that code.
 
+```{r}
+summary_industry_title <- plans %>%
+  group_by(INDUSTRY_TITLE) %>%
+  summarise(entries = n(), .groups = "drop") %>%
+  arrange(desc(entries)) %>%
+  mutate(percent = round(entries / sum(entries), 2))
 
+kable(head(summary_industry_title, 20),
+      col.names = c("Industry", "Entries", "Percent"),
+      caption = "Summary Industry - Top 20 Entries",
+      format.args = list(big.mark = ","),
+      align = c("l", "r", "r"))
+```
+
+The representation at the detailed industry title level is sparse. Most individual NAICS-derived titles contribute less than 0.03% of total plan filings, which suggests that modeling or benchmarking at this granularity may be noisy or unstable.  A few industries dominate plan filings, while most contribute marginally. The detailed industry title field has many levels, but low support per level. Using these titles directly in models could lead to poor generalization unless grouped.
+
+I will collapse to broader categories using existing business code structure to group industries into super-sectors. This reduces cardinality and improves interpretability.
+
+```{r}
+plans <- plans %>%
+  mutate(SECTOR_CODE = as.integer(substr(BUSINESS_CODE, 1, 2)) * 10000)
+```
+
+Plot by industry title.
+
+```{r}
+ggplot(summary_industry_title, aes(x = forcats::fct_reorder(INDUSTRY_TITLE, entries, .desc = TRUE), y = entries)) +
+  geom_col(fill = "steelblue", color = "white") +
+  # geom_text(aes(label = paste0(scales::comma(entries), "\n", round(percent * 100, 0), "%")),
+  #           vjust = -0.3, size = 3.0) +
+  labs(title = "Distribution of Plans By Industry",
+       x = "Year",
+       y = "Count") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 0.5),
+        plot.title = element_text(size = 14, face = "bold")) +
+  expand_limits(y = max(summary_industry_title$entries) * 1.2)
+```
 
 
