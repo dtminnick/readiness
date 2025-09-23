@@ -5,11 +5,12 @@ author: "Donnie Minnick, Statistical Learning - Fall A 2025"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 ---
 
-This analysis leverages the following R packages: `dplyr`, `lubridate` and `tidyr` for data manipulation, `knitr` for report formatting, and `ggplot2` for visualization.
+This analysis leverages the following R packages: `dplyr`, `lubridate` and `tidyr` for data manipulation, `knitr` for report formatting, and `ggplot2` and `ggridges` for visualization.
 
 ```{r, load_libraries echo = FALSE, message = FALSE}
 library("dplyr")
 library("ggplot2")
+library("ggridges")
 library("knitr")
 library("lubridate")
 library("tidyr")
@@ -293,10 +294,12 @@ kable(sector_participant_share,
 
 
 ```{r}
-ggplot(sector_participant_share, aes(x = forcats::fct_reorder(stringr::str_trunc(SECTOR_TITLE, width = 20), total_participants, .desc = TRUE), y = total_participants)) +
+ggplot(sector_participant_share, aes(x = forcats::fct_reorder(stringr::str_trunc(SECTOR_TITLE, width = 20), 
+                                                              total_participants, .desc = TRUE), 
+                                     y = total_participants)) +
   geom_col(fill = "steelblue", color = "white") +
-  geom_text(aes(label = paste0(scales::comma(total_participants), "\n", round(percent_participants * 100, 0), "%")),
-            vjust = -0.3, size = 3.0) +
+  # geom_text(aes(label = paste0(scales::comma(total_participants), "\n", round(percent_participants * 100, 0), "%")),
+  #           vjust = -0.3, size = 3.0) +
   labs(title = "Distribution of Participants by Sector",
        x = "Sector",
        y = "Count") +
@@ -320,4 +323,176 @@ sector_participant_share <- sector_participant_share %>%
 plans <- left_join(plans, sector_participant_share, by = "SECTOR_TITLE")
 ```
 
+# Total Plan Assets (TOT_ASSETS_BOY_AMT, TOT_ASSETS_EOY_AMT)
+
+These variables represent the total value of all plan assets held by the plan at the start and end of the plan year.
+
+```{r}
+summary_plan_assets <- plans %>%
+  group_by(SECTOR_TITLE) %>%
+  summarise(total_assets_boy = sum(TOT_ASSETS_BOY_AMT),
+            total_assets_eoy = sum(TOT_ASSETS_EOY_AMT),
+            .groups = "drop")
+
+kable(summary_plan_assets,
+      col.names = c("Sector", "BOY Assets", "EOY Assets"),
+      caption = "BOY and EOY Total Plan Assets By Sector",
+      format.args = list(big.mark = ","),
+      align = c("l", "r", "r"))
+```
+
+Plot assets by sector.
+
+```{r}
+assets_long <- summary_plan_assets %>%
+  pivot_longer(cols = c(total_assets_boy, total_assets_eoy),
+               names_to = "Asset_Type",
+               values_to = "Asset_Value")
+
+ggplot(assets_long, aes(x = reorder(stringr::str_trunc(SECTOR_TITLE, width = 20), -Asset_Value), y = Asset_Value / 1e9, fill = Asset_Type)) +
+  geom_bar(stat = "identity", position = "dodge") +
+    scale_fill_manual(values = c("total_assets_boy" = "steelblue", "total_assets_eoy" = "lightsteelblue"),
+                      labels = c("total_assets_boy" = "Beginning of Year", "total_assets_eoy" = "End of Year")) +
+  labs(title = "BOY and EOY Total Plan Assets by Sector",
+       x = "Sector",
+       y = "Assets (Billions USD)",
+       fill = "Asset Type") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 0.5),
+        plot.title = element_text(size = 14, face = "bold"))
+```
+
+Asset growth over the course of the year is consistent across all sectors.
+
+Create a growth rate and assets per participant for each plan.
+
+```{r}
+plans <- plans %>%
+  mutate(
+    TOT_ASSETS_GROWTH_RATE = case_when(
+      TOT_ASSETS_BOY_AMT == 0 & TOT_ASSETS_EOY_AMT > 0 ~ 1.0000,
+      TOT_ASSETS_BOY_AMT == 0 & TOT_ASSETS_EOY_AMT == 0 ~ 0,
+      TOT_ASSETS_BOY_AMT != 0 ~ round((TOT_ASSETS_EOY_AMT - TOT_ASSETS_BOY_AMT) / TOT_ASSETS_BOY_AMT, 4),
+      TRUE ~ NA_real_))
+```
+
+Produce a density plot to show the distribution of asset growth rates.
+
+One plan with an asset growth rate of 84% is a serious outlier and distorting the overall distribution.  I exclude the outlier in the following plot.
+
+```{r}
+ggplot(plans %>% filter(TOT_ASSETS_GROWTH_RATE <= 10), aes(x = TOT_ASSETS_GROWTH_RATE)) +
+  geom_density(fill = "steelblue", alpha = 0.6) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray40") +
+  labs(title = "Density of Asset Growth Rates (Excluding Outlier)",
+       x = "Growth Rate",
+       y = "Density") +
+  theme_minimal()
+```
+
+Most plans have modest or stagnant asset growth, likely reflecting market conditions, contribution behavior, or plan maturity.
+
+The right skew suggests a subset of plans with strong growth, possibly due to rollovers, mergers, or aggressive investment strategies.
+
+The sharp peak near zero could indicate structural inertia, plans that are underfunded, inactive, or not receiving contributions.
+
+Create a ridgeline plot by sector.
+
+```{r}
+plans %>%
+  filter(TOT_ASSETS_GROWTH_RATE <= 10) %>%
+  ggplot(aes(x = TOT_ASSETS_GROWTH_RATE, y = stringr::str_trunc(SECTOR_TITLE, width = 20))) +
+  geom_density_ridges(bandwidth = 0.05, fill = "steelblue", alpha = 0.6) +
+  labs(title = "Asset Growth Rate by Sector (≤ 10)",
+       x = "Growth Rate",
+       y = "Sector") +
+  theme_minimal()
+```
+
+Most sectors cluster near zero; the sharp density around zero suggests widespread stagnation or minimal growth, possibly reflecting low contributions, market flatness, or plan maturity.
+
+Right-skewed tails in sectors like Finance and Insurance, Real Estate, and Professional Services hint at pockets of aggressive growth, likely driven by rollovers, mergers, or high-income participant behavior.
+
+Public sector plans (e.g. Educational Services, Health Care, Public Administration) show tighter distributions, possibly due to more regulated funding structures or consistent employer contributions.
+
+Volatile sectors like Construction, Arts, and Accommodation show broader spread, likely reflecting economic sensitivity and participant turnover.
+
+
+
+
+```{r}
+plans <- plans %>%
+  mutate(
+    DENOMINATOR = case_when(
+      PARTCP_ACCOUNT_BAL_CNT > 0 ~ PARTCP_ACCOUNT_BAL_CNT,
+      TOT_ACTIVE_PARTCP_CNT > 0 ~ TOT_ACTIVE_PARTCP_CNT,
+      TOT_ACT_PARTCP_BOY_CNT > 0 ~ TOT_ACT_PARTCP_BOY_CNT,
+      TRUE ~ NA_real_
+    ),
+    ASSETS_PER_PARTCP = round(TOT_ASSETS_EOY_AMT / DENOMINATOR, 0)
+  ) %>% select(-DENOMINATOR)
+```
+
+Plot assets per participant
+
+```{r}
+ggplot(plans, aes(x = ASSETS_PER_PARTCP)) +
+  geom_density(fill = "steelblue", alpha = 0.6) +
+  geom_vline(xintercept = median(plans$ASSETS_PER_PARTCP, na.rm = TRUE), 
+             linetype = "dashed", color = "darkred") +
+  labs(title = "Density of Assets per Participant",
+       x = "Assets per Participant (USD)",
+       y = "Density") +
+  theme_minimal()
+```
+
+That sharp peak near the lower end, followed by a long right tail, suggests most plans cluster below $100K per participant, but a few are pulling the average upward with much higher balances.
+
+Plot the log-transformed distribution to reveal structure in the lower range.
+
+```{r}
+ggplot(plans, aes(x = log1p(ASSETS_PER_PARTCP))) +
+  geom_density(fill = "steelblue", alpha = 0.6) +
+  labs(title = "Log-Scaled Density of Assets per Participant",
+       x = "log(Assets + 1)",
+       y = "Density") +
+  theme_minimal()
+```
+
+That peak around 10 corresponds to roughly $22,000–$25,000 per participant, which is a much more grounded estimate of typical adequacy than the inflated mean near $100K.
+
+Most plans are far below the mean: The log transformation exposes that the bulk of plans cluster in the $10K–$30K range, not near six figures.
+
+Long tail still exists: But now it’s visually compressed, allowing us to focus on the core distribution.
+
+Create adequacy tier labels.
+
+```{r}
+plans <- plans %>%
+  mutate(
+    ADEQUACY_TIER = case_when(
+      ASSETS_PER_PARTCP < 5000 ~ "< $5K",
+      ASSETS_PER_PARTCP >= 5000 & ASSETS_PER_PARTCP < 25000 ~ "$5K–$25K",
+      ASSETS_PER_PARTCP >= 25000 & ASSETS_PER_PARTCP < 50000 ~ "$25K–$50K",
+      ASSETS_PER_PARTCP >= 50000 & ASSETS_PER_PARTCP < 100000 ~ "$50K–$100K",
+      ASSETS_PER_PARTCP >= 100000 ~ "> $100K",
+      TRUE ~ NA_character_),
+    ADEQUACY_TIER = factor(ADEQUACY_TIER,
+                           levels = c("< $5K", "$5K–$25K", "$25K–$50K", "$50K–$100K", "> $100K"),
+                           ordered = TRUE))
+```
+
+Boxplot by tier.
+
+```{r}
+ggplot(plans, aes(x = ASSETS_PER_PARTCP, fill = ADEQUACY_TIER)) +
+  geom_density(alpha = 0.6) +
+  facet_wrap(~ ADEQUACY_TIER, scales = "free") +
+  scale_fill_manual(values = c("firebrick", "gold", "skyblue", "steelblue", "forestgreen")) +
+  labs(title = "Density of Assets per Participant by Adequacy Tier",
+       x = "Assets per Participant (USD)",
+       y = "Density") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
 
