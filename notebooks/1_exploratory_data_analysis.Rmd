@@ -1,8 +1,12 @@
 ---
 title: "Classifying Retirement Plan Financial Adequacy Using Form 5500 Data"
-subtitle: "Exploratory Data Analysis and Feature Engineering"
 author: "Donnie Minnick, Statistical Learning - Fall A 2025"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+subtitle: Exploratory Data Analysis and Feature Engineering
 ---
 
 This analysis leverages the following R packages: `dplyr`, `lubridate`, '`stringr` and `tidyr` for data manipulation, `knitr` for report formatting, and `ggplot2` and `ggridges` for visualization.
@@ -397,6 +401,8 @@ This distribution reveals a disparity in coverage. High-coverage sectors like Ma
 
 Low-coverage sectors like Agriculture, Mining, Education, and Public Administration (0.06%) are severely underrepresented. They may face structural barriers: seasonal labor, fragmented employment, or reliance on alternative retirement systems, e.g. public pensions are not captured in Form 5500.
 
+# Sector Participant Share (SECTOR_PARTCP_SHARE)
+
 Engineer participant share.
 
 ```{r}
@@ -549,21 +555,21 @@ Most plans are far below the mean: The log transformation exposes that the bulk 
 
 Long tail still exists: But now it’s visually compressed, allowing us to focus on the core distribution.
 
-# Account Balance Tier (ACCBAL_TIER)
+# Assets Per Participant Tier (ASSETS_PER_PARTCP_TIER)
 
-Create account balance tier labels.
+Create assets per parrticipant tier labels.
 
 ```{r}
 plans <- plans %>%
   mutate(
-    ACCBAL_TIER = case_when(
+    ASSETS_PER_PARTCP_TIER = case_when(
       ASSETS_PER_PARTCP < 5000 ~ "< $5K",
       ASSETS_PER_PARTCP >= 5000 & ASSETS_PER_PARTCP < 25000 ~ "$5K–$25K",
       ASSETS_PER_PARTCP >= 25000 & ASSETS_PER_PARTCP < 50000 ~ "$25K–$50K",
       ASSETS_PER_PARTCP >= 50000 & ASSETS_PER_PARTCP < 100000 ~ "$50K–$100K",
       ASSETS_PER_PARTCP >= 100000 ~ "> $100K",
       TRUE ~ NA_character_),
-    ACCBAL_TIER = factor(ACCBAL_TIER,
+    ASSETS_PER_PARTCP_TIER = factor(ASSETS_PER_PARTCP_TIER,
                            levels = c("< $5K", "$5K–$25K", "$25K–$50K", "$50K–$100K", "> $100K"),
                            ordered = TRUE))
 ```
@@ -571,11 +577,11 @@ plans <- plans %>%
 Plot density by tier.
 
 ```{r}
-ggplot(plans, aes(x = ASSETS_PER_PARTCP, fill = ACCBAL_TIER)) +
+ggplot(plans, aes(x = ASSETS_PER_PARTCP, fill = ASSETS_PER_PARTCP_TIER)) +
   geom_density(alpha = 0.6) +
-  facet_wrap(~ ACCBAL_TIER, scales = "free") +
-  # scale_fill_manual(values = c("firebrick", "gold", "skyblue", "steelblue", "forestgreen")) +
-  labs(title = "Density of Assets per Participant by Account Balance Tier",
+  facet_wrap(~ ASSETS_PER_PARTCP_TIER, scales = "free") +
+  scale_fill_manual(values = c("#B0C4DE", "#87AFC7", "#4682B4", "#36648B", "#27408B")) +
+  labs(title = "Density of Assets Per Participant by Tier",
        x = "Assets per Participant (USD)",
        y = "Density") +
   theme_minimal() +
@@ -669,27 +675,30 @@ plans %>%
 
 Most sectors seem tightly clustered near zero, and the horizontal scale compresses variation, making it hard to distinguish meaningful outliers or trends.
 
-# Participant Growth Rate Flag (PARTCP_GROWTH_FLAG)
+# Participant Growth Rate Tier (PARTCP_GROWTH_TIER)
 
-Create a participant growth rate flag to delineate between negative, typical, and high growth plans.
+Create a participant growth tier flag to delineate between negative, typical, and high growth plans.
 
 ```{r}
 plans <- plans%>%
-  mutate(PARTCP_GROWTH_FLAG = case_when(PARTCP_GROWTH_RATE > 0.05 ~ "High Growth",
+  mutate(PARTCP_GROWTH_TIER = case_when(PARTCP_GROWTH_RATE > 0.05 ~ "High Growth",
                                         PARTCP_GROWTH_RATE < -0.05 ~ "Negative Growth",
-                                        TRUE ~ "Typical"))
+                                        TRUE ~ "Typical"),
+             PARTCP_GROWTH_TIER = factor(PARTCP_GROWTH_TIER,
+                                levels = c("Negative Growth", "Typical", "High Growth"),
+                                ordered = TRUE))
 ```
 
-Plot participant growth rates by sector with the growth flags.
+Plot participant growth rates by sector with the growth tiers.
 
 ```{r}
-ggplot(plans, aes(x = PARTCP_GROWTH_RATE, y = reorder(stringr::str_trunc(SECTOR_TITLE, width = 20), PARTCP_GROWTH_RATE), fill = PARTCP_GROWTH_FLAG)) +
+ggplot(plans, aes(x = PARTCP_GROWTH_RATE, y = reorder(stringr::str_trunc(SECTOR_TITLE, width = 20), PARTCP_GROWTH_RATE), fill = PARTCP_GROWTH_TIER)) +
   geom_col() +
   scale_fill_manual(values = c("High Growth" = "steelblue", "Negative Growth" = "lightsteelblue", "Typical" = "gray70")) +
-  labs(title = "Participant Growth Rate by Sector",
+  labs(title = "Participant Growth Rate by Sector and Tier",
        x = "Growth Rate",
        y = "Sector",
-       fill = "Growth Category") +
+       fill = "Growth Tier") +
   theme_minimal()
 ```
 
@@ -785,27 +794,30 @@ plans %>%
 
 Most sectors seem tightly clustered near zero, and the horizontal scale compresses variation, making it hard to distinguish meaningful outliers or trends.
 
-# Participant Contribution Growth Flag (CONTRIB_PARTCP_GROWTH_FLAG)
+# Participant Contribution Growth Tier (CONTRIB_PARTCP_GROWTH_TIER)
 
-Create a contribution growth rate flag to delineate between negative, typical, and high growth plans.
+Create a contribution growth rate tier to delineate between negative, typical, and high growth plans.
 
 ```{r}
 plans <- plans%>%
-  mutate(CONTRIB_PARTCP_GROWTH_FLAG = case_when(CONTRIB_PARTCP_GROWTH_RATE > 0.05 ~ "High Growth",
+  mutate(CONTRIB_PARTCP_GROWTH_TIER= case_when(CONTRIB_PARTCP_GROWTH_RATE > 0.05 ~ "High Growth",
                                         CONTRIB_PARTCP_GROWTH_RATE < -0.05 ~ "Negative Growth",
-                                        TRUE ~ "Typical"))
+                                        TRUE ~ "Typical"),
+         CONTRIB_PARTCP_GROWTH_TIER = factor(CONTRIB_PARTCP_GROWTH_TIER,
+                                levels = c("Negative Growth", "Typical", "High Growth"),
+                                ordered = TRUE))
 ```
 
-Plot contribution growth rates by sector with the growth flags.
+Plot contribution growth tiers by sector with the growth flags.
 
 ```{r}
-ggplot(plans, aes(x = CONTRIB_PARTCP_GROWTH_RATE, y = reorder(stringr::str_trunc(SECTOR_TITLE, width = 20), CONTRIB_PARTCP_GROWTH_RATE), fill = CONTRIB_PARTCP_GROWTH_FLAG)) +
+ggplot(plans, aes(x = CONTRIB_PARTCP_GROWTH_RATE, y = reorder(stringr::str_trunc(SECTOR_TITLE, width = 20), CONTRIB_PARTCP_GROWTH_RATE), fill = CONTRIB_PARTCP_GROWTH_TIER)) +
   geom_col() +
   scale_fill_manual(values = c("High Growth" = "steelblue", "Negative Growth" = "lightsteelblue", "Typical" = "gray70")) +
   labs(title = "Contribution Growth Rate by Sector",
        x = "Growth Rate",
        y = "Sector",
-       fill = "Growth Category") +
+       fill = "Growth Tier") +
   theme_minimal()
 ```
 
@@ -847,6 +859,20 @@ ggplot(summary_by_average_contribution, aes(x = AVERAGE_CONTRIB_PER_PARTCP,
   theme_minimal() + 
   coord_cartesian(xlim = c(0, max(plans$AVERAGE_CONTRIB_PER_PARTCP) * 1.1))
 
+```
+
+# Contribution Per Participant Tier (CONTRIB_PER_PARTCP_TIER)
+
+Create a tiered variable for average participant contribution.
+
+```{r}
+plans <- plans%>%
+  mutate(CONTRIB_PER_PARTCP_TIER = cut(AVERAGE_CONTRIB_PER_PARTCP,
+                       breaks = c(0, 1000, 2000, 3000, Inf),
+                       labels = c("Low", "Moderate", "High", "Very High")),
+         CONTRIB_PARTCP_GROWTH_TIER = factor(CONTRIB_PARTCP_GROWTH_TIER,
+                                levels = c("Low", "Moderate", "High", "Very High"),
+                                ordered = TRUE))
 ```
 
 # Employer Contributions (TOTAL_CONTRIB_EMPLR_BOY, TOTAL_CONTRIB_EMPLR_EOY)
@@ -933,21 +959,24 @@ plans %>%
 
 Most sectors seem tightly clustered near zero, and the horizontal scale compresses variation, making it hard to distinguish meaningful outliers or trends.
 
-# Employer Contribution Growth Flag (CONTRIB_EMPLR_GROWTH_FLAG)
+# Employer Contribution Growth Tier (CONTRIB_EMPLR_GROWTH_TIER)
 
 Create an employer contribution growth rate flag to delineate between negative, typical, and high growth plans.
 
 ```{r}
 plans <- plans%>%
-  mutate(CONTRIB_EMPLR_GROWTH_FLAG = case_when(CONTRIB_EMPLR_GROWTH_RATE > 0.05 ~ "High Growth",
+  mutate(CONTRIB_EMPLR_GROWTH_TIER = case_when(CONTRIB_EMPLR_GROWTH_RATE > 0.05 ~ "High Growth",
                                                CONTRIB_EMPLR_GROWTH_RATE < -0.05 ~ "Negative Growth",
-                                               TRUE ~ "Typical"))
+                                               TRUE ~ "Typical"),
+         CONTRIB_EMPLR_GROWTH_TIER = factor(CONTRIB_EMPLR_GROWTH_TIER,
+                                levels = c("Negative Growth", "Typical", "High Growth"),
+                                ordered = TRUE))
 ```
 
 Plot contribution growth rates by sector with the growth flags.
 
 ```{r}
-ggplot(plans, aes(x = CONTRIB_EMPLR_GROWTH_RATE, y = reorder(stringr::str_trunc(SECTOR_TITLE, width = 20), CONTRIB_EMPLR_GROWTH_RATE), fill = CONTRIB_EMPLR_GROWTH_FLAG)) +
+ggplot(plans, aes(x = CONTRIB_EMPLR_GROWTH_RATE, y = reorder(stringr::str_trunc(SECTOR_TITLE, width = 20), CONTRIB_EMPLR_GROWTH_RATE), fill = CONTRIB_EMPLR_GROWTH_TIER)) +
   geom_col() +
   scale_fill_manual(values = c("High Growth" = "steelblue", "Negative Growth" = "lightsteelblue", "Typical" = "gray70")) +
   labs(title = "Employer Contribution Growth Rate by Sector",
@@ -987,8 +1016,6 @@ kable(summary_loans,
 
 Plot loans by sector.
 
-Plot contributions by sector.
-
 ```{r}
 er_loans_long <- summary_loans %>%
   pivot_longer(cols = c(total_loans_boy, total_loans_eoy),
@@ -1009,6 +1036,7 @@ ggplot(er_loans_long, aes(x = reorder(stringr::str_trunc(SECTOR_TITLE, width = 2
 ```
 
 Loan balances are rising in most sectors.
+
 The light blue EOY bars often exceed the dark blue BOY bars, suggesting net borrowing across the year. That’s a potential red flag for participant liquidity strain or plan leniency.
 
 Manufacturing and Health Care lead in total loan volume.  These sectors show the highest absolute balances—likely due to large participant bases and higher plan penetration. But it also raises questions about adequacy erosion and fallback logic.
@@ -1041,9 +1069,118 @@ kable(summary_os_loans,
       align = c("l", "r", "r"))
 ```
 
-Save plans data frame with updates and features.
+# Loan Leakage Ratio (LOAN_LEAKAGE_RATIO)
 
 ```{r}
+plans <- plans %>%
+  mutate(LOAN_LEAKAGE_RATIO = if_else(TOTAL_LOANS_EOY == 0 & TOTAL_ASSETS_EOY == 0, 
+                                      0, 
+                                      round(TOTAL_LOANS_EOY / TOTAL_ASSETS_EOY, 4)))
+```
+
+# Loan Leakage Tier (LOAN_LEAKAGE_TIER)
+
+```{r}
+plans <- plans %>%
+  mutate(LOAN_LEAKAGE_TIER = case_when(LOAN_LEAKAGE_RATIO == 0 ~ "None",
+                                       TRUE ~ as.character(cut(LOAN_LEAKAGE_RATIO,
+                                                               breaks = c(0, 0.05, 0.1, 0.15, 0.2, Inf),
+                                                               labels = c("Minimal", "Low", "Moderate", "High", "Very High"),
+                                                               right = FALSE))),
+         LOAN_LEAKAGE_TIER = factor(LOAN_LEAKAGE_TIER,
+                                    levels = c("None", "Minimal", "Low", "Moderate", "High", "Very High"),
+                                    ordered = TRUE))
+```
+
+# Retirement Adequacy Score (ADEQUACY_SCORE, ADEQUACY_IND, ADEQUACY_LABEL) 
+
+This response variable is designed to classify retirement plans as adequate or inadequate based on a principled, multi-signal framework. Rather than relying on a single metric, it integrates four structural indicators of plan health:
+
+Assets per Participant > $50,000 signals long-term saving capacity and participant wealth accumulation.
+
+Asset Growth Rate > 5% reflects sustained engagement and financial momentum over time.
+
+Average Contributions per Participant > $2,000 indicates meaningful participant deferral behavior and plan utilization.
+
+Loan Leakage Ratio < 0.5 captures erosion risk due to participant borrowing; lower ratios suggest stronger adequacy.
+
+Each condition is evaluated as a binary flag, and the adequacy score is the sum of conditions met. Plans meeting three or more criteria are classified as adequate.
+
+```{r}
+plans <- plans %>%
+  mutate(ADEQUACY_SCORE = (ASSETS_PER_PARTCP > 50000) +
+                          (TOTAL_ASSETS_GROWTH_RATE > 0.05) +
+                          (AVERAGE_CONTRIB_PER_PARTCP > 2000) +
+                          (LOAN_LEAKAGE_RATIO < 0.5),
+         ADEQUACY_IND = if_else(ADEQUACY_SCORE >= 3, 1L, 0L),
+         ADEQUACY_LABEL = if_else(ADEQUACY_IND == 1L, "Adequate", "Inadequate"))
+```
+
+This approach offers several advantages:
+
+Interpretability; Stakeholders can trace adequacy classification to specific, transparent thresholds.
+
+Diagnostic clarity: Each component reflects a distinct dimension of plan health—accumulation, growth, engagement, and leakage.
+
+Fairness-aware: By requiring multiple criteria, the model avoids overfitting to any one sector or plan type.
+
+Model-ready: The binary label supports classification tasks, while the tiered label enables stakeholder previews and fairness overlays.
+
+This response variable scaffolds ethical modeling, stakeholder trust, and reproducible diagnostics, all central to my analytic philosophy for this project.
+
+# Finalize and Save Dataset
+
+Order variables and save plans data frame with updates and features.
+
+```{r}
+plans <- plans %>%
+  select(ADEQUACY_LABEL,
+         ADEQUACY_IND,
+         ADEQUACY_SCORE,
+         ACK_ID,
+         PLAN_YEAR_BEGIN_DATE,
+         PLAN_YEAR_END_DATE,
+         PLAN_NAME,
+         PLAN_EFFECTIVE_DATE,
+         PLAN_EFFECTIVE_YEAR,
+         PLAN_VINTAGE_GROUP,
+         PLAN_TYPE,
+         PLAN_TYPE_NAME,
+         SPONSOR_NAME,
+         SPONSOR_STATE,
+         SPONSOR_EIN,
+         BUSINESS_CODE,
+         INDUSTRY_TITLE,
+         SECTOR_CODE,
+         SECTOR_TITLE,
+         SECTOR_PARTCP_SHARE,
+         TOTAL_ACTIVE_PARTCP_BOY,
+         TOTAL_ACTIVE_PARTCP_EOY,
+         TOTAL_ACCBAL_PARTCP_BOY,
+         TOTAL_ACCBAL_PARTCP_EOY,
+         PARTCP_GROWTH_RATE,
+         PARTCP_GROWTH_TIER,
+         TOTAL_CONTRIB_PARTCP_BOY,
+         TOTAL_CONTRIB_PARTCP_EOY,
+         CONTRIB_PARTCP_GROWTH_RATE,
+         CONTRIB_PARTCP_GROWTH_TIER,
+         AVERAGE_CONTRIB_PER_PARTCP,
+         CONTRIB_PER_PARTCP_TIER,
+         TOTAL_CONTRIB_EMPLR_BOY,
+         TOTAL_CONTRIB_EMPLR_EOY,
+         CONTRIB_EMPLR_GROWTH_RATE,
+         CONTRIB_EMPLR_GROWTH_TIER,
+         TOTAL_LOANS_BOY,
+         TOTAL_LOANS_EOY, 
+         HAS_OUTSTANDING_LOANS,
+         LOAN_LEAKAGE_RATIO,
+         LOAN_LEAKAGE_TIER,
+         TOTAL_ASSETS_BOY,
+         TOTAL_ASSETS_EOY,
+         TOTAL_ASSETS_GROWTH_RATE,
+         ASSETS_PER_PARTCP,
+         ASSETS_PER_PARTCP_TIER)
+
 saveRDS(plans, "../data/plans_final.rds")
 ```
 
