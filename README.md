@@ -11,8 +11,8 @@ This project classifies U.S. employer-sponsored retirement plans as structurally
 ## Dataset
 - Source: [EFAST2 Portal](https://www.dol.gov/agencies/ebsa/about-ebsa/our-activities/public-disclosure/efast2)
 - Year: 2023
-- Scope: ~12,177 single-employer defined contribution plans
-- Variables: 32 plan-level features including:
+- Scope: ~25,355 single-employer defined contribution plans
+- Variables: 40 plan-level features including:
   - Participant counts (BOY/EOY)
   - Contributions, distributions, loans
   - Plan assets, sponsor metadata, business codes
