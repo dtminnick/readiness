@@ -6,8 +6,10 @@ output:
   word_document: default
   html_document:
     df_print: paged
-subtitle: Exploratory Data Analysis and Feature Engineering
+subtitle: "Exploratory Data Analysis and Feature Engineering"
 ---
+
+
 
 This analysis leverages the following R packages: `dplyr`, `lubridate`, '`stringr` and `tidyr` for data manipulation, `knitr` for report formatting, and `ggplot2` and `ggridges` for visualization.
 

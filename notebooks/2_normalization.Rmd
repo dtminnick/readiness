@@ -1,0 +1,114 @@
+---
+title: "Normalization of Growth Metrics and Plan-Level Predictors"
+author: "Donnie Minnick, Statistical Learning - Fall A 2025"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+subtitle: "A Modular Walkthrough of Scale Alignment, Transformation Logic, and Modeling Readiness"
+
+---
+
+
+
+This analysis leverages the following R packages: `dplyr`, `lubridate`, '`stringr` and `tidyr` for data manipulation, `knitr` for report formatting, and `ggplot2` and `ggridges` for visualization.
+
+```{r echo = FALSE, message = FALSE}
+library("dplyr")
+library("ggplot2")
+```
+
+Load transformed Form 5500 data.
+
+```{r}
+plans <- readRDS("./data/plans_final.rds")
+```
+
+# Participant Growth Rate (PARTCP_GROWTH_RATE)
+
+Flag outliers with the interquartile range method.
+
+```{r}
+check <- plans %>%
+  mutate(
+    q1 = quantile(PARTCP_GROWTH_RATE, 0.25, na.rm = TRUE),
+    q3 = quantile(PARTCP_GROWTH_RATE, 0.75, na.rm = TRUE),
+    iqr = q3 - q1,
+    lower_bound = q1 - 1.5 * iqr,
+    upper_bound = q3 + 1.5 * iqr,
+    is_outlier = PARTCP_GROWTH_RATE < lower_bound | PARTCP_GROWTH_RATE > upper_bound
+  )
+
+```
+
+Visualize outliers.
+
+```{r}
+ggplot(check, aes(x = PARTCP_GROWTH_RATE, fill = is_outlier)) +
+  geom_histogram(binwidth = 0.05, position = "identity", alpha = 0.7) +
+  scale_fill_manual(values = c("FALSE" = "steelblue", "TRUE" = "firebrick")) +
+  labs(title = "Participant Growth Rate with Outlier Overlay")
+
+```
+
+Diagnostic table.
+
+```{r}
+check_table <- check %>%
+  group_by(SECTOR_TITLE) %>%
+  summarise(
+    outlier_count = sum(is_outlier, na.rm = TRUE),
+    total = n(),
+    pct_outliers = round(100 * outlier_count / total, 2)
+  )
+
+check_table
+```
+
+Structural clarity: See which sectors have tight vs. wide internal variation.
+
+Outlier surfacing: Sectors with long tails or bimodal shapes may need fallback logic.
+
+Fairness overlays: Helps narrate whether normalization preserves interpretability across sectors.
+
+Sector-aware z score normalization
+
+This centers each sector’s growth rate around its own mean.
+
+Standard deviation is computed per sector, preserving internal variation.
+
+norm_growth_sector is now scale-aligned but sector-relative.
+
+```{r}
+plans <- plans %>%
+  group_by(SECTOR_TITLE) %>%
+  mutate(
+    PARTCP_GROWTH_RATE_sector_mean = mean(PARTCP_GROWTH_RATE, na.rm = TRUE),
+    PARTCP_GROWTH_RATE_sector_sd   = sd(PARTCP_GROWTH_RATE, na.rm = TRUE),
+    PARTCP_GROWTH_RATE_norm_growth_sector = (PARTCP_GROWTH_RATE - PARTCP_GROWTH_RATE_sector_mean) / PARTCP_GROWTH_RATE_sector_sd) %>%
+  ungroup()
+```
+
+Sector aware distributions
+
+```{r}
+ggplot(plans, aes(x = PARTCP_GROWTH_RATE_norm_growth_sector)) +
+  geom_density(fill = "steelblue", alpha = 0.6) +
+  facet_wrap(~ SECTOR_TITLE, scales = "free_y") +
+  labs(
+    title = "Sector-Aware Normalized Growth Rate Distributions",
+    x = "Normalized Growth Rate (Sector-Relative)",
+    y = "Density"
+  )
+
+
+```
+
+Centered within sector: Each sector’s mean is zero, so you're modeling relative growth rather than absolute.
+
+Scaled within sector: Standard deviation is 1, which prevents dominant sectors from skewing regularization or distance-based models.
+
+Preserves structural disparities: Sector-level volatility is retained, which is crucial for fairness-aware modeling.
+
+Interpretable coefficientsA unit increase in this variable means “1 SD above sector mean,” which stakeholders can understand.
