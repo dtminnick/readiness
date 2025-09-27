@@ -30,27 +30,35 @@ plans <- readRDS("./data/plans_final.rds")
 Flag outliers with the interquartile range method.
 
 ```{r}
-check <- plans %>%
-  mutate(
-    q1 = quantile(PARTCP_GROWTH_RATE, 0.25, na.rm = TRUE),
-    q3 = quantile(PARTCP_GROWTH_RATE, 0.75, na.rm = TRUE),
-    iqr = q3 - q1,
-    lower_bound = q1 - 1.5 * iqr,
-    upper_bound = q3 + 1.5 * iqr,
-    is_outlier = PARTCP_GROWTH_RATE < lower_bound | PARTCP_GROWTH_RATE > upper_bound
-  )
-
+PARTCP_GROWTH_RATE_check <- plans %>%
+  mutate(q1 = quantile(PARTCP_GROWTH_RATE, 0.25, na.rm = TRUE),
+         q3 = quantile(PARTCP_GROWTH_RATE, 0.75, na.rm = TRUE),
+         iqr = q3 - q1,
+         lower_bound = q1 - 1.5 * iqr,
+         upper_bound = q3 + 1.5 * iqr,
+         is_outlier = PARTCP_GROWTH_RATE < lower_bound | PARTCP_GROWTH_RATE > upper_bound)
 ```
 
 Visualize outliers.
 
 ```{r}
-ggplot(check, aes(x = PARTCP_GROWTH_RATE, fill = is_outlier)) +
+ggplot(PARTCP_GROWTH_RATE_check, aes(x = PARTCP_GROWTH_RATE, fill = is_outlier)) +
   geom_histogram(binwidth = 0.05, position = "identity", alpha = 0.7) +
-  scale_fill_manual(values = c("FALSE" = "steelblue", "TRUE" = "firebrick")) +
-  labs(title = "Participant Growth Rate with Outlier Overlay")
-
+  scale_fill_manual(values = c("FALSE" = "steelblue", "TRUE" = "firebrick"),
+                    labels = c("is_outlier" = "Is Outlier")) +
+  labs(title = "Participant Growth Rate with Outlier Overlay",
+       x = "Participant Growth Rate",
+       y = "Plans") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1),
+        plot.title = element_text(size = 14, face = "bold")) 
 ```
+
+The red bars on both tails immediately highlight plans with unusual participant growth rates. This visual makes it easy to narrate volatility across sectors or plan types.
+
+The distribution is roughly bell-shaped and centered near zero, confirming that most plans are stable.
+
+
 
 Diagnostic table.
 
