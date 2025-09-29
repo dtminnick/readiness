@@ -17,12 +17,13 @@ This analysis leverages the following R packages: `dplyr`, `lubridate`, '`string
 ```{r echo = FALSE, message = FALSE}
 library("dplyr")
 library("ggplot2")
+library("knitr")
 ```
 
 Load transformed Form 5500 data.
 
 ```{r}
-plans <- readRDS("./data/plans_final.rds")
+plans <- readRDS("../data/plans_final.rds")
 ```
 
 # Participant Growth Rate (PARTCP_GROWTH_RATE)
@@ -30,22 +31,24 @@ plans <- readRDS("./data/plans_final.rds")
 Flag outliers with the interquartile range method.
 
 ```{r}
-PARTCP_GROWTH_RATE_check <- plans %>%
-  mutate(q1 = quantile(PARTCP_GROWTH_RATE, 0.25, na.rm = TRUE),
-         q3 = quantile(PARTCP_GROWTH_RATE, 0.75, na.rm = TRUE),
-         iqr = q3 - q1,
-         lower_bound = q1 - 1.5 * iqr,
-         upper_bound = q3 + 1.5 * iqr,
-         is_outlier = PARTCP_GROWTH_RATE < lower_bound | PARTCP_GROWTH_RATE > upper_bound)
+plans <- plans %>%
+  mutate(PARTCP_GROWTH_RATE_q1 = quantile(PARTCP_GROWTH_RATE, 0.25, na.rm = TRUE),
+         PARTCP_GROWTH_RATE_q3 = quantile(PARTCP_GROWTH_RATE, 0.75, na.rm = TRUE),
+         PARTCP_GROWTH_RATE_iqr = PARTCP_GROWTH_RATE_q3 - PARTCP_GROWTH_RATE_q1,
+         PARTCP_GROWTH_RATE_lower_bound = PARTCP_GROWTH_RATE_q1 - 1.5 * PARTCP_GROWTH_RATE_iqr,
+         PARTCP_GROWTH_RATE_upper_bound = PARTCP_GROWTH_RATE_q3 + 1.5 * PARTCP_GROWTH_RATE_iqr,
+         PARTCP_GROWTH_RATE_is_outlier = PARTCP_GROWTH_RATE < PARTCP_GROWTH_RATE_lower_bound |
+                                    PARTCP_GROWTH_RATE > PARTCP_GROWTH_RATE_upper_bound)
 ```
 
-Visualize outliers.
+Visualize outliers; zoom into dense region between -1 and 1.
 
 ```{r}
-ggplot(PARTCP_GROWTH_RATE_check, aes(x = PARTCP_GROWTH_RATE, fill = is_outlier)) +
+ggplot(plans, aes(x = PARTCP_GROWTH_RATE, fill = PARTCP_GROWTH_RATE_is_outlier)) +
   geom_histogram(binwidth = 0.05, position = "identity", alpha = 0.7) +
   scale_fill_manual(values = c("FALSE" = "steelblue", "TRUE" = "firebrick"),
                     labels = c("is_outlier" = "Is Outlier")) +
+  coord_cartesian(xlim = c(-1, 1)) +
   labs(title = "Participant Growth Rate with Outlier Overlay",
        x = "Participant Growth Rate",
        y = "Plans") +
@@ -54,69 +57,162 @@ ggplot(PARTCP_GROWTH_RATE_check, aes(x = PARTCP_GROWTH_RATE, fill = is_outlier))
         plot.title = element_text(size = 14, face = "bold")) 
 ```
 
-The red bars on both tails immediately highlight plans with unusual participant growth rates. This visual makes it easy to narrate volatility across sectors or plan types.
-
-The distribution is roughly bell-shaped and centered near zero, confirming that most plans are stable.
-
-
+Most retirement plans exhibit modest participant growth, forming a stable, bell-shaped distribution centered near zero. Outliers, highlighted in red, represent plans with unusually high or low growth rates, flagged for further review due to potential volatility, structural churn, or data anomalies.
 
 Diagnostic table.
 
 ```{r}
-check_table <- check %>%
+check_table <- plans %>%
   group_by(SECTOR_TITLE) %>%
-  summarise(
-    outlier_count = sum(is_outlier, na.rm = TRUE),
-    total = n(),
-    pct_outliers = round(100 * outlier_count / total, 2)
-  )
+  summarise(outlier_count = sum(PARTCP_GROWTH_RATE_is_outlier, na.rm = TRUE),
+            total = n(),
+            pct_outliers = round(100 * outlier_count / total, 2))
 
-check_table
+kable(check_table,
+      col.names = c("Sector", "Outlier Count", "Total", "% Outliers"),
+      caption = "Outliers in Participant Growth Rate",
+      format.args = list(big.mark = ","),
+      align = c("l", "r", "r", "r"))
 ```
 
-Structural clarity: See which sectors have tight vs. wide internal variation.
+Outlier prevalence varies meaningfully across sectors, revealing structural patterns in participant growth volatility. Sectors such as Accommodation and Food Services, Administrative and Waste Management, and Agriculture exhibit the highest rates of outlier plans, likely reflecting episodic employment, seasonal churn, or fragmented plan structures. These elevated rates suggest the need for fallback-aware modeling and adjusted adequacy tier logic to avoid misclassification.
 
-Outlier surfacing: Sectors with long tails or bimodal shapes may need fallback logic.
+Mid-range volatility is observed in sectors like Information, Arts and Entertainment, and Professional Services, where outlier rates hover around 11–12%. These patterns may stem from startup dynamics, project-based employment, or creative churn, and warrant sector-aware normalization to preserve interpretability.
 
-Fairness overlays: Helps narrate whether normalization preserves interpretability across sectors.
+In contrast, sectors such as Education, Finance, Manufacturing, and Wholesale Trade show lower outlier rates (6–9%), indicating more stable participation patterns. These sectors may serve as anchors for benchmarking and fairness overlays.
 
-Sector-aware z score normalization
-
-This centers each sector’s growth rate around its own mean.
-
-Standard deviation is computed per sector, preserving internal variation.
-
-norm_growth_sector is now scale-aligned but sector-relative.
+Overall, the distribution of outliers across sectors underscores the importance of structural diagnostics in retirement plan analytics. Outlier-aware modeling and transparency in sector-level volatility are essential for ethical classification and stakeholder trust.
 
 ```{r}
 plans <- plans %>%
   group_by(SECTOR_TITLE) %>%
-  mutate(
-    PARTCP_GROWTH_RATE_sector_mean = mean(PARTCP_GROWTH_RATE, na.rm = TRUE),
-    PARTCP_GROWTH_RATE_sector_sd   = sd(PARTCP_GROWTH_RATE, na.rm = TRUE),
-    PARTCP_GROWTH_RATE_norm_growth_sector = (PARTCP_GROWTH_RATE - PARTCP_GROWTH_RATE_sector_mean) / PARTCP_GROWTH_RATE_sector_sd) %>%
-  ungroup()
+  mutate(PARTCP_GROWTH_RATE_sector_mean = mean(PARTCP_GROWTH_RATE[!PARTCP_GROWTH_RATE_is_outlier], na.rm = TRUE),
+         PARTCP_GROWTH_RATE_sector_sd   = sd(PARTCP_GROWTH_RATE[!PARTCP_GROWTH_RATE_is_outlier], na.rm = TRUE),
+         PARTCP_GROWTH_RATE_norm_growth_sector = if_else(!PARTCP_GROWTH_RATE_is_outlier,
+          (PARTCP_GROWTH_RATE - PARTCP_GROWTH_RATE_sector_mean) / 
+            PARTCP_GROWTH_RATE_sector_sd, NA_real_)) %>% ungroup()
 ```
 
-Sector aware distributions
+Sector aware distributions.
 
 ```{r}
 ggplot(plans, aes(x = PARTCP_GROWTH_RATE_norm_growth_sector)) +
   geom_density(fill = "steelblue", alpha = 0.6) +
   facet_wrap(~ SECTOR_TITLE, scales = "free_y") +
-  labs(
-    title = "Sector-Aware Normalized Growth Rate Distributions",
-    x = "Normalized Growth Rate (Sector-Relative)",
-    y = "Density"
-  )
+  labs(title = "Sector-Aware Normalized Growth Rate Distributions",
+       x = "Normalized Growth Rate (Sector-Relative)",
+       y = "Density")
+```
 
+This grid of sector-specific density plots reveals how participant growth rates behave once normalized within each sector. By centering and scaling growth rates relative to sector norms, we uncover a consistent bell-shaped distribution across most industries — a sign that normalization has successfully neutralized scale disparities and volatility.
+
+Sectors like Accommodation and Food Services and Transportation and Warehousing show wider spreads, hinting at structural churn or episodic employment patterns. In contrast, sectors such as Finance and Insurance or Educational Services display tighter distributions, suggesting more stable participation dynamics.
+
+This visualization affirms that sector-aware normalization enables fair, interpretable comparisons across industries. It lays the groundwork for modeling, tiering, and fairness audits by ensuring that growth metrics reflect relative performance rather than raw magnitude.
+
+# Average Contribution Per Participant (AVERAGE_CONTRIB_PER_PARTCP)
+
+Flag outliers with the interquartile range method.
+
+```{r}
+plans <- plans %>%
+  mutate(AVERAGE_CONTRIB_PER_PARTCP_q1 = quantile(AVERAGE_CONTRIB_PER_PARTCP, 0.25, na.rm = TRUE),
+         AVERAGE_CONTRIB_PER_PARTCP_q3 = quantile(AVERAGE_CONTRIB_PER_PARTCP, 0.75, na.rm = TRUE),
+         AVERAGE_CONTRIB_PER_PARTCP_iqr = AVERAGE_CONTRIB_PER_PARTCP_q3 - AVERAGE_CONTRIB_PER_PARTCP_q1,
+         AVERAGE_CONTRIB_PER_PARTCP_lower_bound = AVERAGE_CONTRIB_PER_PARTCP_q1 - 1.5 * AVERAGE_CONTRIB_PER_PARTCP_iqr,
+         AVERAGE_CONTRIB_PER_PARTCP_upper_bound = AVERAGE_CONTRIB_PER_PARTCP_q3 + 1.5 * AVERAGE_CONTRIB_PER_PARTCP_iqr,
+         AVERAGE_CONTRIB_PER_PARTCP_is_outlier = AVERAGE_CONTRIB_PER_PARTCP < AVERAGE_CONTRIB_PER_PARTCP_lower_bound |
+                                    AVERAGE_CONTRIB_PER_PARTCP > AVERAGE_CONTRIB_PER_PARTCP_upper_bound)
+```
+
+Visualize outliers; zoom into dense region between -1 and 1.
+
+```{r}
+ggplot(plans, aes(x = AVERAGE_CONTRIB_PER_PARTCP, fill = AVERAGE_CONTRIB_PER_PARTCP_is_outlier)) +
+  geom_histogram(bins = 50, position = "identity", alpha = 0.7, color = "white") +
+  scale_fill_manual(
+    values = c("FALSE" = "steelblue", "TRUE" = "firebrick"),
+    labels = c("FALSE" = "Non-Outlier", "TRUE" = "Outlier"),
+    name = "Outlier Status"
+  ) +
+scale_x_log10(
+  breaks = c(1, 10, 100, 1000, 10000),
+  labels = scales::comma_format()
+) +
+  labs(
+    title = "Average Contribution Per Participant with Outlier Overlay",
+    x = "Average Contribution (Log Scale)",
+    y = "Plan Count"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 1),
+    plot.title = element_text(size = 14, face = "bold")
+  )
 
 ```
 
-Centered within sector: Each sector’s mean is zero, so you're modeling relative growth rather than absolute.
+Most plans contribute between $100 and $1,000 per participant. Outliers (red) represent plans with unusually high contributions, which may reflect elite benefit structures or data anomalies.
 
-Scaled within sector: Standard deviation is 1, which prevents dominant sectors from skewing regularization or distance-based models.
+Diagnostic table.
 
-Preserves structural disparities: Sector-level volatility is retained, which is crucial for fairness-aware modeling.
+```{r}
+diagnostic_table <- plans %>%
+  group_by(SECTOR_TITLE) %>%
+  summarize(
+    outlier_count = sum(AVERAGE_CONTRIB_PER_PARTCP_is_outlier, na.rm = TRUE),
+    total = n(),
+    pct_outliers = round(100 * outlier_count / total, 1)
+  ) %>%
+  arrange(desc(pct_outliers))
 
-Interpretable coefficientsA unit increase in this variable means “1 SD above sector mean,” which stakeholders can understand.
+kable(diagnostic_table,
+      col.names = c("Sector","Outlier Count", "Total", "% Outliers"),
+      caption = "Outliers in Average Contribution Per Participant",
+      format.args = list(big.mark = ","),
+      align = c("l", "r", "r", "r"))
+
+```
+
+This table reveals sector-level disparities in participant contributions, meaning the amounts employees themselves choose to defer into their retirement plans. These aren’t employer matches or discretionary deposits — they reflect individual financial behavior, plan design, and structural capacity to save.
+
+Sectors like Utilities (26.3% outliers), Professional Services (23.4%), and Educational Services (21.2%) show elevated rates of unusually high participant contributions. This suggests that employees in these industries may have greater financial literacy, higher disposable income, or access to plans that encourage aggressive deferral — such as 403(b)s or executive-tier 401(k)s.
+
+High outlier prevalence in Information, Finance, and Management of Companies further supports the narrative of structurally privileged sectors, where employees may defer large portions of income due to compensation structure, plan flexibility, or cultural norms around retirement saving.
+
+In contrast, sectors like Retail, Accommodation and Food Services, and Public Administration show lower outlier rates, indicating more uniform — and often modest — contribution behavior. These patterns may reflect wage constraints, limited plan features, or lower participation incentives.
+
+```{r}
+plans <- plans %>%
+  group_by(SECTOR_TITLE) %>%
+  mutate(AVERAGE_CONTRIB_PER_PARTCP_sector_mean = 
+           mean(AVERAGE_CONTRIB_PER_PARTCP[!AVERAGE_CONTRIB_PER_PARTCP_is_outlier], na.rm = TRUE),
+         AVERAGE_CONTRIB_PER_PARTCP_sector_sd = 
+           sd(AVERAGE_CONTRIB_PER_PARTCP[!AVERAGE_CONTRIB_PER_PARTCP_is_outlier], na.rm = TRUE),
+         AVERAGE_CONTRIB_PER_PARTCP_norm_sector = 
+           if_else(!AVERAGE_CONTRIB_PER_PARTCP_is_outlier,
+             (AVERAGE_CONTRIB_PER_PARTCP - AVERAGE_CONTRIB_PER_PARTCP_sector_mean) / 
+              AVERAGE_CONTRIB_PER_PARTCP_sector_sd, NA_real_)) %>% ungroup()
+```
+
+Sector aware distributions.
+
+```{r}
+plans %>%
+  filter(!is.na(AVERAGE_CONTRIB_PER_PARTCP_norm_sector)) %>%
+ggplot(aes(x = AVERAGE_CONTRIB_PER_PARTCP_norm_sector)) +
+  geom_density(fill = "steelblue", alpha = 0.6) +
+  coord_cartesian(xlim = c(-3, 3)) +
+  facet_wrap(~ SECTOR_TITLE, scales = "free_y") +
+  labs(title = "Sector-Aware Normalized Participant Contribution Distributions",
+       x = "Normalized Average Contribution (Sector-Relative)",
+       y = "Density")
+```
+
+These plots reveal the distribution of normalized participant contributions across sectors, with each curve centered around the sector mean. Because these are employee deferrals, not employer matches, the shapes reflect individual saving behavior relative to sector norms.
+
+Most sectors show left-skewed distributions, indicating that the majority of participants contribute below their sector’s average. This suggests that while high deferrals exist, they’re concentrated among a small subset — likely higher earners or financially literate participants. Sectors like Finance, Information, and Utilities show wider spreads, hinting at structural privilege or plan flexibility that enables aggressive saving.
+
+In contrast, sectors like Retail, Accommodation, and Arts display tighter, more compressed distributions, suggesting limited deferral capacity or more uniform contribution behavior. These patterns may reflect wage constraints, plan design limitations, or cultural norms around retirement saving.
+
+
