@@ -32,12 +32,13 @@ Flag outliers with the interquartile range method.
 
 ```{r}
 plans <- plans %>%
-  mutate(PARTCP_GROWTH_RATE_q1 = quantile(PARTCP_GROWTH_RATE, 0.25, na.rm = TRUE),
-         PARTCP_GROWTH_RATE_q3 = quantile(PARTCP_GROWTH_RATE, 0.75, na.rm = TRUE),
-         PARTCP_GROWTH_RATE_iqr = PARTCP_GROWTH_RATE_q3 - PARTCP_GROWTH_RATE_q1,
-         PARTCP_GROWTH_RATE_lower_bound = PARTCP_GROWTH_RATE_q1 - 1.5 * PARTCP_GROWTH_RATE_iqr,
-         PARTCP_GROWTH_RATE_upper_bound = PARTCP_GROWTH_RATE_q3 + 1.5 * PARTCP_GROWTH_RATE_iqr,
-         PARTCP_GROWTH_RATE_is_outlier = PARTCP_GROWTH_RATE < PARTCP_GROWTH_RATE_lower_bound |
+  mutate(
+    PARTCP_GROWTH_RATE_q1 = quantile(PARTCP_GROWTH_RATE, 0.25, na.rm = TRUE),
+    PARTCP_GROWTH_RATE_q3 = quantile(PARTCP_GROWTH_RATE, 0.75, na.rm = TRUE),
+    PARTCP_GROWTH_RATE_iqr = PARTCP_GROWTH_RATE_q3 - PARTCP_GROWTH_RATE_q1,
+    PARTCP_GROWTH_RATE_lower_bound = PARTCP_GROWTH_RATE_q1 - 1.5 * PARTCP_GROWTH_RATE_iqr,
+    PARTCP_GROWTH_RATE_upper_bound = PARTCP_GROWTH_RATE_q3 + 1.5 * PARTCP_GROWTH_RATE_iqr,
+    PARTCP_GROWTH_RATE_is_outlier = PARTCP_GROWTH_RATE < PARTCP_GROWTH_RATE_lower_bound |
                                     PARTCP_GROWTH_RATE > PARTCP_GROWTH_RATE_upper_bound)
 ```
 
@@ -86,17 +87,18 @@ Overall, the distribution of outliers across sectors underscores the importance 
 ```{r}
 plans <- plans %>%
   group_by(SECTOR_TITLE) %>%
-  mutate(PARTCP_GROWTH_RATE_sector_mean = mean(PARTCP_GROWTH_RATE[!PARTCP_GROWTH_RATE_is_outlier], na.rm = TRUE),
-         PARTCP_GROWTH_RATE_sector_sd   = sd(PARTCP_GROWTH_RATE[!PARTCP_GROWTH_RATE_is_outlier], na.rm = TRUE),
-         PARTCP_GROWTH_RATE_norm_growth_sector = if_else(!PARTCP_GROWTH_RATE_is_outlier,
-          (PARTCP_GROWTH_RATE - PARTCP_GROWTH_RATE_sector_mean) / 
-            PARTCP_GROWTH_RATE_sector_sd, NA_real_)) %>% ungroup()
+  mutate(
+    PARTCP_GROWTH_RATE_sector_mean = mean(PARTCP_GROWTH_RATE[!PARTCP_GROWTH_RATE_is_outlier], na.rm = TRUE),
+    PARTCP_GROWTH_RATE_sector_sd   = sd(PARTCP_GROWTH_RATE[!PARTCP_GROWTH_RATE_is_outlier], na.rm = TRUE),
+    PARTCP_GROWTH_RATE_norm_sector = if_else(!PARTCP_GROWTH_RATE_is_outlier,
+      (PARTCP_GROWTH_RATE - PARTCP_GROWTH_RATE_sector_mean) / 
+       PARTCP_GROWTH_RATE_sector_sd, NA_real_)) %>% ungroup()
 ```
 
 Sector aware distributions.
 
 ```{r}
-ggplot(plans, aes(x = PARTCP_GROWTH_RATE_norm_growth_sector)) +
+ggplot(plans, aes(x = PARTCP_GROWTH_RATE_norm_sector)) +
   geom_density(fill = "steelblue", alpha = 0.6) +
   facet_wrap(~ SECTOR_TITLE, scales = "free_y") +
   labs(title = "Sector-Aware Normalized Growth Rate Distributions",
@@ -116,13 +118,14 @@ Flag outliers with the interquartile range method.
 
 ```{r}
 plans <- plans %>%
-  mutate(AVERAGE_CONTRIB_PER_PARTCP_q1 = quantile(AVERAGE_CONTRIB_PER_PARTCP, 0.25, na.rm = TRUE),
-         AVERAGE_CONTRIB_PER_PARTCP_q3 = quantile(AVERAGE_CONTRIB_PER_PARTCP, 0.75, na.rm = TRUE),
-         AVERAGE_CONTRIB_PER_PARTCP_iqr = AVERAGE_CONTRIB_PER_PARTCP_q3 - AVERAGE_CONTRIB_PER_PARTCP_q1,
-         AVERAGE_CONTRIB_PER_PARTCP_lower_bound = AVERAGE_CONTRIB_PER_PARTCP_q1 - 1.5 * AVERAGE_CONTRIB_PER_PARTCP_iqr,
-         AVERAGE_CONTRIB_PER_PARTCP_upper_bound = AVERAGE_CONTRIB_PER_PARTCP_q3 + 1.5 * AVERAGE_CONTRIB_PER_PARTCP_iqr,
-         AVERAGE_CONTRIB_PER_PARTCP_is_outlier = AVERAGE_CONTRIB_PER_PARTCP < AVERAGE_CONTRIB_PER_PARTCP_lower_bound |
-                                    AVERAGE_CONTRIB_PER_PARTCP > AVERAGE_CONTRIB_PER_PARTCP_upper_bound)
+  mutate(
+    AVERAGE_CONTRIB_PER_PARTCP_q1 = quantile(AVERAGE_CONTRIB_PER_PARTCP, 0.25, na.rm = TRUE),
+    AVERAGE_CONTRIB_PER_PARTCP_q3 = quantile(AVERAGE_CONTRIB_PER_PARTCP, 0.75, na.rm = TRUE),
+    AVERAGE_CONTRIB_PER_PARTCP_iqr = AVERAGE_CONTRIB_PER_PARTCP_q3 - AVERAGE_CONTRIB_PER_PARTCP_q1,
+    AVERAGE_CONTRIB_PER_PARTCP_lower_bound = AVERAGE_CONTRIB_PER_PARTCP_q1 - 1.5 * AVERAGE_CONTRIB_PER_PARTCP_iqr,
+    AVERAGE_CONTRIB_PER_PARTCP_upper_bound = AVERAGE_CONTRIB_PER_PARTCP_q3 + 1.5 * AVERAGE_CONTRIB_PER_PARTCP_iqr,
+    AVERAGE_CONTRIB_PER_PARTCP_is_outlier = AVERAGE_CONTRIB_PER_PARTCP < AVERAGE_CONTRIB_PER_PARTCP_lower_bound |
+      AVERAGE_CONTRIB_PER_PARTCP > AVERAGE_CONTRIB_PER_PARTCP_upper_bound)
 ```
 
 Visualize outliers; zoom into dense region between -1 and 1.
@@ -130,26 +133,17 @@ Visualize outliers; zoom into dense region between -1 and 1.
 ```{r}
 ggplot(plans, aes(x = AVERAGE_CONTRIB_PER_PARTCP, fill = AVERAGE_CONTRIB_PER_PARTCP_is_outlier)) +
   geom_histogram(bins = 50, position = "identity", alpha = 0.7, color = "white") +
-  scale_fill_manual(
-    values = c("FALSE" = "steelblue", "TRUE" = "firebrick"),
-    labels = c("FALSE" = "Non-Outlier", "TRUE" = "Outlier"),
-    name = "Outlier Status"
-  ) +
-scale_x_log10(
-  breaks = c(1, 10, 100, 1000, 10000),
-  labels = scales::comma_format()
-) +
-  labs(
-    title = "Average Contribution Per Participant with Outlier Overlay",
-    x = "Average Contribution (Log Scale)",
-    y = "Plan Count"
-  ) +
+  scale_fill_manual(values = c("FALSE" = "steelblue", "TRUE" = "firebrick"),
+                    labels = c("FALSE" = "Non-Outlier", "TRUE" = "Outlier"),
+                    name = "Outlier Status") +
+  scale_x_log10(breaks = c(1, 10, 100, 1000, 10000),
+                labels = scales::comma_format()) +
+  labs(title = "Average Contribution Per Participant with Outlier Overlay",
+       x = "Average Contribution (Log Scale)",
+       y = "Plan Count") +
   theme_minimal() +
-  theme(
-    axis.text.x = element_text(angle = 0, hjust = 1),
-    plot.title = element_text(size = 14, face = "bold")
-  )
-
+  theme(axis.text.x = element_text(angle = 0, hjust = 1),
+        plot.title = element_text(size = 14, face = "bold"))
 ```
 
 Most plans contribute between $100 and $1,000 per participant. Outliers (red) represent plans with unusually high contributions, which may reflect elite benefit structures or data anomalies.
@@ -159,11 +153,9 @@ Diagnostic table.
 ```{r}
 diagnostic_table <- plans %>%
   group_by(SECTOR_TITLE) %>%
-  summarize(
-    outlier_count = sum(AVERAGE_CONTRIB_PER_PARTCP_is_outlier, na.rm = TRUE),
-    total = n(),
-    pct_outliers = round(100 * outlier_count / total, 1)
-  ) %>%
+  summarize(outlier_count = sum(AVERAGE_CONTRIB_PER_PARTCP_is_outlier, na.rm = TRUE),
+            total = n(),
+            pct_outliers = round(100 * outlier_count / total, 1)) %>%
   arrange(desc(pct_outliers))
 
 kable(diagnostic_table,
@@ -171,7 +163,6 @@ kable(diagnostic_table,
       caption = "Outliers in Average Contribution Per Participant",
       format.args = list(big.mark = ","),
       align = c("l", "r", "r", "r"))
-
 ```
 
 This table reveals sector-level disparities in participant contributions, meaning the amounts employees themselves choose to defer into their retirement plans. These aren’t employer matches or discretionary deposits — they reflect individual financial behavior, plan design, and structural capacity to save.
@@ -215,4 +206,249 @@ Most sectors show left-skewed distributions, indicating that the majority of par
 
 In contrast, sectors like Retail, Accommodation, and Arts display tighter, more compressed distributions, suggesting limited deferral capacity or more uniform contribution behavior. These patterns may reflect wage constraints, plan design limitations, or cultural norms around retirement saving.
 
+# Assets Per Participant (ASSETS_PER_PARTCP)
 
+Flag outliers with the interquartile range method.
+
+```{r}
+plans <- plans %>%
+  mutate(ASSETS_PER_PARTCP_q1 = quantile(ASSETS_PER_PARTCP, 0.25, na.rm = TRUE),
+         ASSETS_PER_PARTCP_q3 = quantile(ASSETS_PER_PARTCP, 0.75, na.rm = TRUE),
+         ASSETS_PER_PARTCP_iqr = ASSETS_PER_PARTCP_q3 - ASSETS_PER_PARTCP_q1,
+         ASSETS_PER_PARTCP_lower_bound = ASSETS_PER_PARTCP_q1 - 1.5 * ASSETS_PER_PARTCP_iqr,
+         ASSETS_PER_PARTCP_upper_bound = ASSETS_PER_PARTCP_q3 + 1.5 * ASSETS_PER_PARTCP_iqr,
+         ASSETS_PER_PARTCP_is_outlier = ASSETS_PER_PARTCP < ASSETS_PER_PARTCP_lower_bound |
+                                    ASSETS_PER_PARTCP > ASSETS_PER_PARTCP_upper_bound)
+```
+
+Visualize outliers; zoom into dense region between -1 and 1.
+
+```{r}
+ggplot(plans, aes(x = ASSETS_PER_PARTCP, fill = ASSETS_PER_PARTCP_is_outlier)) +
+  geom_histogram(bins = 50, position = "identity", alpha = 0.7, color = "white") +
+  scale_fill_manual(
+    values = c("FALSE" = "steelblue", "TRUE" = "firebrick"),
+    labels = c("FALSE" = "Non-Outlier", "TRUE" = "Outlier"),
+    name = "Outlier Status"
+  ) +
+scale_x_log10(
+  breaks = c(1, 10, 100, 1000, 10000, 100000, 1000000),
+  labels = scales::comma_format()
+) +
+  labs(
+    title = "Assets Per Participant with Outlier Overlay",
+    x = "Assets (Log Scale)",
+    y = "Plan Count"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 1),
+    plot.title = element_text(size = 14, face = "bold")
+  )
+
+```
+
+The distribution of assets per participant is heavily right-skewed, even on a log scale. That means most retirement plans cluster around modest asset levels per participant. A small subset of plans hold exceptionally high assets, flagged as outliers in red.
+
+The log scale compresses extreme values, but the separation between typical and outlier plans remains visually stark. This pattern suggests structural stratification in retirement plan wealth.  Non-outlier plans likely reflect typical employer-sponsored 401(k)s with moderate balances, constrained by wage levels, tenure, and contribution behavior. 
+
+Outlier plans may represent executive-tier plans, legacy pensions, or plans with concentrated ownership where a few participants hold disproportionately large balances.
+
+```{r}
+plans <- plans %>%
+  group_by(SECTOR_TITLE) %>%
+  mutate(ASSETS_PER_PARTCP_sector_mean = 
+           mean(ASSETS_PER_PARTCP[!ASSETS_PER_PARTCP_is_outlier], na.rm = TRUE),
+         ASSETS_PER_PARTCP_sector_sd = 
+           sd(ASSETS_PER_PARTCP[!ASSETS_PER_PARTCP_is_outlier], na.rm = TRUE),
+         ASSETS_PER_PARTCP_norm_sector = 
+           if_else(!ASSETS_PER_PARTCP_is_outlier,
+             (ASSETS_PER_PARTCP - ASSETS_PER_PARTCP_sector_mean) / 
+              ASSETS_PER_PARTCP_sector_sd, NA_real_)) %>% ungroup()
+```
+
+Sector aware distributions.
+
+```{r}
+plans %>%
+  filter(!is.na(ASSETS_PER_PARTCP_norm_sector)) %>%
+ggplot(aes(x = ASSETS_PER_PARTCP_norm_sector)) +
+  geom_density(fill = "steelblue", alpha = 0.6) +
+  coord_cartesian(xlim = c(-3, 3)) +
+  facet_wrap(~ SECTOR_TITLE, scales = "free_y") +
+  labs(title = "Sector-Aware Normalized Assets Per Paticipant Distributions",
+       x = "Normalized Average Contribution (Sector-Relative)",
+       y = "Density")
+```
+
+Each density plot shows the distribution of assets per participant, normalized relative to the sector mean and standard deviation. This normalization allows for fair comparison across sectors with vastly different wage structures, tenure norms, and plan generosity.
+
+Most sectors exhibit left-skewed distributions, even after normalization — meaning the majority of participants fall below their sector’s average asset level. This suggests that retirement wealth is concentrated among a minority, even within structurally privileged sectors.
+
+Sectors like Finance, Utilities, and Management of Companies show wider spreads and heavier tails, indicating greater internal inequality in participant asset levels. These may reflect executive-heavy plans, concentrated ownership, or legacy balances.
+
+In contrast, sectors like Retail, Accommodation, and Arts display tighter, compressed distributions, suggesting more uniform — and often modest — asset accumulation. These sectors may face structural constraints: lower wages, higher turnover, and limited plan engagement.
+
+# Total Assets Growth Rate (TOTAL_ASSETS_GROWTH_RATE)
+
+Flag outliers with the interquartile range method.
+
+```{r}
+plans <- plans %>%
+  mutate(TOTAL_ASSETS_GROWTH_RATE_q1 = quantile(TOTAL_ASSETS_GROWTH_RATE, 0.25, na.rm = TRUE),
+         TOTAL_ASSETS_GROWTH_RATE_q3 = quantile(TOTAL_ASSETS_GROWTH_RATE, 0.75, na.rm = TRUE),
+         TOTAL_ASSETS_GROWTH_RATE_iqr = TOTAL_ASSETS_GROWTH_RATE_q3 - TOTAL_ASSETS_GROWTH_RATE_q1,
+         TOTAL_ASSETS_GROWTH_RATE_lower_bound = TOTAL_ASSETS_GROWTH_RATE_q1 - 1.5 * TOTAL_ASSETS_GROWTH_RATE_iqr,
+         TOTAL_ASSETS_GROWTH_RATE_upper_bound = TOTAL_ASSETS_GROWTH_RATE_q3 + 1.5 * TOTAL_ASSETS_GROWTH_RATE_iqr,
+         TOTAL_ASSETS_GROWTH_RATE_is_outlier = TOTAL_ASSETS_GROWTH_RATE < TOTAL_ASSETS_GROWTH_RATE_lower_bound |
+                                    TOTAL_ASSETS_GROWTH_RATE > TOTAL_ASSETS_GROWTH_RATE_upper_bound)
+```
+
+Visualize outliers; zoom into dense region between -1 and 1.
+
+```{r}
+ggplot(plans, aes(x = TOTAL_ASSETS_GROWTH_RATE, fill = TOTAL_ASSETS_GROWTH_RATE_is_outlier)) +
+  geom_histogram(binwidth = 0.05, position = "identity", alpha = 0.7, color = "white") +
+  scale_fill_manual(
+    values = c("FALSE" = "steelblue", "TRUE" = "firebrick"),
+    labels = c("FALSE" = "Non-Outlier", "TRUE" = "Outlier"),
+    name = "Outlier Status"
+  ) +
+    coord_cartesian(xlim = c(-1, 2)) +
+  labs(
+    title = "Total Assets Growth Rate with Outlier Overlay",
+    x = "Assets",
+    y = "Plan Count"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 1),
+    plot.title = element_text(size = 14, face = "bold")
+  )
+
+```
+
+The distribution is roughly bell-shaped, centered around a growth rate of zero, suggesting that most plans experience modest asset changes year-over-year. This symmetry implies a mix of plans with slight gains and slight losses, consistent with normal market fluctuations and participant behavior.
+
+The outliers, flagged in red, appear on both tails — representing plans with either exceptionally high growth or sharp declines. These could stem from:
+
+High-growth outliers: New contributions, mergers, or asset transfers.
+
+Negative-growth outliers: Heavy distributions, market losses, or plan terminations.
+
+Outlier exclusion is essential for normalization and modeling — these plans behave fundamentally differently.
+
+```{r}
+plans <- plans %>%
+  group_by(SECTOR_TITLE) %>%
+  mutate(TOTAL_ASSETS_GROWTH_RATE_sector_mean = 
+           mean(TOTAL_ASSETS_GROWTH_RATE[!TOTAL_ASSETS_GROWTH_RATE_is_outlier], na.rm = TRUE),
+         TOTAL_ASSETS_GROWTH_RATE_sector_sd = 
+           sd(TOTAL_ASSETS_GROWTH_RATE[!TOTAL_ASSETS_GROWTH_RATE_is_outlier], na.rm = TRUE),
+         TOTAL_ASSETS_GROWTH_RATE_norm_sector = 
+           if_else(!TOTAL_ASSETS_GROWTH_RATE_is_outlier,
+             (TOTAL_ASSETS_GROWTH_RATE - TOTAL_ASSETS_GROWTH_RATE_sector_mean) / 
+              TOTAL_ASSETS_GROWTH_RATE_sector_sd, NA_real_)) %>% ungroup()
+```
+
+Sector aware distributions.
+
+```{r}
+plans %>%
+  filter(!is.na(TOTAL_ASSETS_GROWTH_RATE_norm_sector)) %>%
+ggplot(aes(x = TOTAL_ASSETS_GROWTH_RATE_norm_sector)) +
+  geom_density(fill = "steelblue", alpha = 0.6) +
+  coord_cartesian(xlim = c(-3, 3)) +
+  facet_wrap(~ SECTOR_TITLE, scales = "free_y") +
+  labs(title = "Sector-Aware Normalized Total Assets Growth Rate Distributions",
+       x = "Normalized Total Assets Growth Rate (Sector-Relative)",
+       y = "Density")
+```
+
+Each density plot shows the distribution of normalized asset growth rates, centered around the sector mean. This normalization allows you to compare volatility and skew across sectors with vastly different baseline growth expectations.
+
+Most sectors exhibit tight, symmetric distributions, suggesting that asset growth is relatively stable and centered around modest year-over-year change. This is especially true in sectors like Manufacturing, Retail, and Health Care, where plan behavior may be more regulated or predictable.
+
+However, sectors like Finance, Information, and Management of Companies show wider spreads and heavier tails, indicating greater internal volatility. These may reflect plans with concentrated ownership, discretionary contributions, or episodic asset transfers.
+
+Sectors like Arts, Accommodation, and Agriculture show compressed distributions, possibly due to smaller plan sizes, lower engagement, or structural constraints on growth.
+
+# Loan Leakage Ratio (LOAN_LEAKAGE_RATIO)
+
+Flag outliers with the interquartile range method.
+
+```{r}
+plans <- plans %>%
+  mutate(LOAN_LEAKAGE_RATIO_q1 = quantile(LOAN_LEAKAGE_RATIO, 0.25, na.rm = TRUE),
+         LOAN_LEAKAGE_RATIO_q3 = quantile(LOAN_LEAKAGE_RATIO, 0.75, na.rm = TRUE),
+         LOAN_LEAKAGE_RATIO_iqr = LOAN_LEAKAGE_RATIO_q3 - LOAN_LEAKAGE_RATIO_q1,
+         LOAN_LEAKAGE_RATIO_lower_bound = LOAN_LEAKAGE_RATIO_q1 - 1.5 * LOAN_LEAKAGE_RATIO_iqr,
+         LOAN_LEAKAGE_RATIO_upper_bound = LOAN_LEAKAGE_RATIO_q3 + 1.5 * LOAN_LEAKAGE_RATIO_iqr,
+         LOAN_LEAKAGE_RATIO_is_outlier = LOAN_LEAKAGE_RATIO < LOAN_LEAKAGE_RATIO_lower_bound |
+                                    LOAN_LEAKAGE_RATIO > LOAN_LEAKAGE_RATIO_upper_bound)
+```
+
+Visualize outliers; zoom into dense region between -1 and 1.
+
+```{r}
+ggplot(plans, aes(x = LOAN_LEAKAGE_RATIO, fill = LOAN_LEAKAGE_RATIO_is_outlier)) +
+  geom_histogram(binwidth = 0.01, position = "identity", alpha = 0.7, color = "white") +
+  scale_fill_manual(
+    values = c("FALSE" = "steelblue", "TRUE" = "firebrick"),
+    labels = c("FALSE" = "Non-Outlier", "TRUE" = "Outlier"),
+    name = "Outlier Status"
+  ) +
+    coord_cartesian(xlim = c(0, 0.3)) +
+  labs(
+    title = "Loan Leakage Ratio with Outlier Overlay",
+    x = "Ratio",
+    y = "Plan Count"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 0, hjust = 1),
+    plot.title = element_text(size = 14, face = "bold")
+  )
+
+```
+
+Sharp concentration near zero; most plans have minimal leakage, which is reassuring from an adequacy and retention standpoint.
+
+The red bars stretch into higher ratios, suggesting episodic or structural leakage, possibly due to aggressive loan policies, hardship withdrawals, or poor participant education.
+
+Plans with high leakage ratios may be undermining participant adequacy even if contributions are strong.
+
+Sector-level overlays could reveal whether certain industries (e.g., retail, hospitality) are structurally prone to leakage.
+
+```{r}
+plans <- plans %>%
+  group_by(SECTOR_TITLE) %>%
+  mutate(LOAN_LEAKAGE_RATIO_sector_mean = 
+           mean(LOAN_LEAKAGE_RATIO[!LOAN_LEAKAGE_RATIO_is_outlier], na.rm = TRUE),
+         LOAN_LEAKAGE_RATIO_sector_sd = 
+           sd(LOAN_LEAKAGE_RATIO[!LOAN_LEAKAGE_RATIO_is_outlier], na.rm = TRUE),
+         LOAN_LEAKAGE_RATIO_norm_sector = 
+           if_else(!LOAN_LEAKAGE_RATIO_is_outlier,
+             (LOAN_LEAKAGE_RATIO - LOAN_LEAKAGE_RATIO_sector_mean) / 
+              LOAN_LEAKAGE_RATIO_sector_sd, NA_real_)) %>% ungroup()
+```
+
+Sector aware distributions.
+
+```{r}
+plans %>%
+  filter(!is.na(LOAN_LEAKAGE_RATIO_norm_sector)) %>%
+ggplot(aes(x = LOAN_LEAKAGE_RATIO_norm_sector)) +
+  geom_density(fill = "steelblue", alpha = 0.6) +
+  coord_cartesian(xlim = c(-3, 3)) +
+  facet_wrap(~ SECTOR_TITLE, scales = "free_y") +
+  labs(title = "Sector-Aware Normalized Loan Leakage Ratio Distributions",
+       x = "Normalized Loan Leakage Ratio (Sector-Relative)",
+       y = "Density")
+```
+
+Retail trade, accommodation, and food services show long right tails — suggesting episodic or structural leakage. These sectors may have more transient workforces or looser loan policies.
+
+Finance, insurance, and public administration are tightly clustered — possibly due to stricter controls or higher participant literacy.
+
+Utilities and mining show bimodal or skewed distributions — worth investigating whether plan design or participant behavior is driving that.
