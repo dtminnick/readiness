@@ -12,7 +12,7 @@ plans <- form_5500 %>%
          FORM_TAX_PRD == "2023-12-31" & 
          FINAL_FILING_IND != 1 &
          TYPE_PLAN_ENTITY_CD == 2 &
-         stringr::str_detect(TYPE_PENSION_BNFT_CODE, "2K|2S|2R|2T")) %>%
+         stringr::str_detect(TYPE_PENSION_BNFT_CODE, "2K")) %>%
   select(ACK_ID,
          FORM_PLAN_YEAR_BEGIN_DATE,
          FORM_TAX_PRD,
@@ -92,6 +92,20 @@ business_codes <- business_codes %>%
 saveRDS(business_codes, "./data/business_codes.rds")
 
 plans <- left_join(plans, business_codes, by = "BUSINESS_CODE")
+
+cols_to_check <- c("TOTAL_ACCBAL_PARTCP_BOY",
+                   "TOTAL_ACCBAL_PARTCP_EOY",
+                   "TOTAL_CONTRIB_PARTCP_BOY",
+                   "TOTAL_CONTRIB_PARTCP_EOY",
+                   "TOTAL_CONTRIB_EMPLR_BOY",
+                   "TOTAL_CONTRIB_EMPLR_EOY",
+                   "TOTAL_LOANS_BOY",
+                   "TOTAL_LOANS_EOY",
+                   "TOTAL_ASSETS_BOY",
+                   "TOTAL_ASSETS_EOY")
+
+plans <- plans %>%
+  filter(if_all(all_of(cols_to_check), ~ . != 0))
 
 saveRDS(plans, "./data/plans.rds")
 

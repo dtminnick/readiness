@@ -6,7 +6,7 @@ output:
   word_document: default
   html_document:
     df_print: paged
-subtitle: "Exploratory Data Analysis and Data Transformations"
+subtitle: "Exploratory Data Analysis"
 ---
 
 # Load Libraries
@@ -25,11 +25,15 @@ library("tidyr")
 
 # Load Data
 
-Load the Form 5500 data.
+Load the Form 5500 data for 401(k) plans.
 
 ```{r}
 plans <- readRDS("../data/plans.rds")
 ```
+
+This analysis focuses on 401(k) plans because they are the dominant defined contribution vehicle in the U.S. private sector, offering broad sector coverage and stable representation in Form 5500 data. While I initially considered 403(b) plans, their sparse and sector-specific presence, primarily in nonprofits and education, limits their utility for benchmarking and fairness diagnostics.
+
+The baseline dataset includes `r format(nrow(plans), big.mark = ",", scientific = FALSE)` plans and `r format(ncol(plans), big.mark = ",", scientific = FALSE)` variables.
 
 # Missing Data
 
@@ -62,7 +66,7 @@ kable(missing_report,
       align = c("l", "r", "r"))
 ```
 
-No missing values.
+There are no missing values in the dataset; however, I need to also verify if count and amount variables take on zero values, as these may indicate inactive plans, reporting artifacts, or edge cases requiring further review.
 
 # Zero Values
 
@@ -89,27 +93,7 @@ kable(zero_report,
       align = c("l", "r", "r"))
 ```
 
-To ensure the integrity of diagnostics, I will exclude plans with zero values in key count and contribution fields, specifically participant counts, participant contributions, employer contributions, loans, and total contributions. These exclusions are not arbitrary; they reflect a principled modeling decision grounded in interpretability.
-
-Plans reporting zero contributions are structurally distinct. They may represent inactive accounts, legacy plans, or data artifacts that do not reflect participant engagement or plan behavior. Including them would dilute the analytic signal, obscure meaningful variation, and risk misrepresenting adequacy drivers.
-
-By filtering out these zero-value plans, I preserve the validity of my comparisons, sharpen the diagnostic lens, and ensure that adequacy tiers reflect real behavioral differences, not suppressed or stagnant inputs. This approach supports ethical modeling, stakeholder clarity, and fairness-aware benchmarking across sectors.
-
-```{r}
-cols_to_check <- c("TOTAL_ACCBAL_PARTCP_BOY",
-                   "TOTAL_ACCBAL_PARTCP_EOY",
-                   "TOTAL_CONTRIB_PARTCP_BOY",
-                   "TOTAL_CONTRIB_PARTCP_EOY",
-                   "TOTAL_CONTRIB_EMPLR_BOY",
-                   "TOTAL_CONTRIB_EMPLR_EOY",
-                   "TOTAL_LOANS_BOY",
-                   "TOTAL_LOANS_EOY",
-                   "TOTAL_ASSETS_BOY",
-                   "TOTAL_ASSETS_EOY")
-
-plans <- plans %>%
-  filter(if_all(all_of(cols_to_check), ~ . != 0))
-```
+The dataset does not include any zero values.
 
 # Acknowledgement Id (ACK_ID)
 
@@ -142,6 +126,8 @@ kable(summary_by_plan_effective_year,
       align = c("l", "r", "r"))
 ```
 
+Plan formation was historically sparse, with most years before 1975 contributing fewer than 10 plans, and often just one or two. Even decades into the data, annual proportions still relatively low, underscoring how rare formal retirement plans were. A modest uptick begins in the mid-1970s, likely reflecting regulatory shifts.
+
 Plot plans by plan effective year.
 
 ```{r}
@@ -155,13 +141,13 @@ ggplot(summary_by_plan_effective_year, aes(x = as.integer(PLAN_EFFECTIVE_YEAR), 
         plot.title = element_text(size = 14, face = "bold"))
 ```
 
-This distribution tells a compelling story about the evolution of retirement plan adoption in the U.S.  The gradual rise from the 1940s through the 1970s reflects the early institutionalization of employer-sponsored plans, driven by post-war economic expansion and the formalization of pension structures.
+The gradual rise from the 1940s through the 1970s reflects the early institutionalization of employer-sponsored plans, driven by post-war economic expansion and the formalization of pension structures.
 
-The sharp uptick in the late 1970s through the 1990s coincides with major policy shifts, most notably the passage of ERISA in 1974 and the rise of defined contribution plans like 401(k) plans in the early 1980s. This era marks a surge in plan formation, especially among small and mid-sized employers responding to new regulatory clarity and tax incentives.
+The uptick in the late 1970s through the 1990s coincides with major policy shifts, most notably the passage of ERISA in 1974 and the rise of defined contribution plans like 401(k) plans in the early 1980s. This era marks a surge in plan formation, especially among small and mid-sized employers responding to new regulatory clarity and tax incentives.
 
 The peak in the late 1990s to early 2000s suggests a saturation point, after which the decline reflects consolidation of plans or sponsor exits, a shift toward pooled and multi-employer arrangements, and market volatility post-2008 influencing plan formation.
 
-This distribution is useful for stratifying plans by vintage. Plans initiated in different eras may have distinct design philosophies, contribution behaviors, or participant engagement patterns. A plan vintage feature (e.g. pre-1980, 1980–1999, post-2000) can help assess adequacy or access across cohorts. Pairing this variable with business code would allow sector-specific diagnostics, e.g. whether certain industries adopted plans earlier or more consistently.
+Grouping plans into vintages, i.e. multi-year cohorts based on effective year, helps mitigate the diagnostic noise of annual sparcity in the early years of the data. Plans initiated in different eras may have distinct design philosophies, contribution behaviors, or participant engagement patterns. A plan vintage feature (e.g. pre-1980, 1980–1999, post-2000) can help assess adequacy or access across cohorts.
 
 # Plan Vintage Group (PLAN_VINTAGE_GROUP)
 
@@ -171,16 +157,14 @@ Engineer a plan vintage group variable.
 plans <- plans %>%
   mutate(PLAN_EFFECTIVE_YEAR = year(PLAN_EFFECTIVE_DATE),
     PLAN_VINTAGE_GROUP = case_when(
-      PLAN_EFFECTIVE_YEAR < 1980 ~ "Legacy (Pre-1980)",
-      PLAN_EFFECTIVE_YEAR >= 1980 & PLAN_EFFECTIVE_YEAR <= 1999 ~ "Expansion (1980–1999)",
-      PLAN_EFFECTIVE_YEAR >= 2000 & PLAN_EFFECTIVE_YEAR <= 2009 ~ "Modern (2000–2009)",
-      PLAN_EFFECTIVE_YEAR >= 2010 & PLAN_EFFECTIVE_YEAR <= 2019 ~ "Post-Crisis (2010–2019)",
-      PLAN_EFFECTIVE_YEAR >= 2020 ~ "Recent (2020+)"),
-    PLAN_VINTAGE_GROUP = factor(PLAN_VINTAGE_GROUP,levels = c("Legacy (Pre-1980)",
-                                                              "Expansion (1980–1999)",
-                                                              "Modern (2000–2009)",
-                                                              "Post-Crisis (2010–2019)",
-                                                              "Recent (2020+)"), ordered = TRUE))
+      is.na(PLAN_EFFECTIVE_YEAR) ~ NA_character_,
+      PLAN_EFFECTIVE_YEAR < 1990 ~ "Legacy",
+      PLAN_EFFECTIVE_YEAR >= 1990 & PLAN_EFFECTIVE_YEAR <= 1999 ~ "Expansion", 
+      PLAN_EFFECTIVE_YEAR >= 2000 & PLAN_EFFECTIVE_YEAR <= 2010 ~ "Modern",
+      PLAN_EFFECTIVE_YEAR > 2010 ~ "Recent"),
+    PLAN_VINTAGE_GROUP = factor(PLAN_VINTAGE_GROUP,
+      levels = c("Legacy", "Expansion", "Modern", "Recent"),
+      ordered = TRUE))
 ```
 
 Plot plans by plan vintage group.
@@ -199,125 +183,12 @@ ggplot(summary_by_plan_vintage_group, aes(x = PLAN_VINTAGE_GROUP, y = entries)) 
        x = "Period",
        y = "Group") +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 90, hjust = 0.5),
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5),
         plot.title = element_text(size = 14, face = "bold")) +
   expand_limits(y = max(summary_by_plan_vintage_group$entries) * 1.2)
 ```
 
-Given this distribution, where plan counts rise sharply in the Expansion era and taper off in more recent vintages, we are dealing with a nonlinear, asymmetric pattern that’s not well captured by a simple linear term.
-
-A spline would allow flexible modeling of nonlinear relationships without forcing global curvature.  I can place knots at meaningful breakpoints, e.g. 1980, 2000, 2010, using plan effective year to reflect policy or behavioral shifts. This would be easy to explain in stakeholder terms: plan creation changes around key regulatory eras.
-
-When performing logistic regression, splines allow the model to capture non-linearity by breaking the predictor into segments and fitting piece-wise polynomials.
-
-Random forests don’t need splines to model non-linearity. They’re built to handle it through recursive splits. However, engineering spline-based features can make comparisons cleaner and diagnostics more stakeholder-friendly.
-
-# Plan Type (PLAN_TYPE)
-
-This field is used to indicate the types of pension benefit features present in a plan. It’s a multi-valued field, meaning a single plan can report multiple codes concatenated into a single string.
-
-In the landscape of employer-sponsored retirement plans, four distinct plan types often surface in nonprofit, education, and corporate sectors: 401(k), 403(b)(1), 403(b)(7), and 403(b)(9). Each reflects a unique structural and regulatory framework, shaping how participants accumulate retirement savings.
-
-The 401(k) plan (code 2k) is the most prevalent defined contribution vehicle in the corporate world. It allows employees to defer a portion of their salary into tax-advantaged accounts, often with employer matching contributions. Its flexibility and widespread adoption make it a cornerstone of private-sector retirement readiness.
-
-In contrast, the 403(b) family of plans caters to nonprofit and educational institutions. 
-
-The 403(b)(1) annuity contract (code 2R) is structured around insurance-based annuities, offering a predictable, contract-driven approach to retirement accumulation.
-
-The 403(b)(7) custodial account (code 2S) channels contributions into mutual funds held in custodial arrangements, providing participants with market-based growth potential and investment choice.
-
-Distinct from these is the 403(b)(9) retirement income account (code 2T), designed specifically for churches and church-affiliated organizations. It blends the regulatory protections of 403(b) plans with the unique governance and income structures of religious institutions, often emphasizing long-term stability over investment variety.
-
-Together, these plan types form the backbone of sector-aware retirement analytics. Understanding their structural nuances is essential for benchmarking adequacy, surfacing disparities, and designing fairness overlays that reflect the lived realities of participants across industries.
-
-# Plan Type Name (PLAN_TYPE_NAME)
-
-Extract the relevant codes from the plan type string and use them to create a new plan type name field.
-
-```{r}
-plans <- plans %>%
-  mutate(PLAN_TYPE_NAME = case_when(str_detect(PLAN_TYPE, "2K") ~ "401(k)",
-                                    str_detect(PLAN_TYPE, "2R") ~ "403(b)(1) Annuity",
-                                    str_detect(PLAN_TYPE, "2S") ~ "403(b)(7) Custodial",
-                                    str_detect(PLAN_TYPE, "2T") ~ "403(b)(9) Church"))
-```
-
-Generate summary by plan type name.
-
-```{r}
-summary_by_plan_type_name <- plans %>%
-  group_by(PLAN_TYPE_NAME) %>%
-  summarise(entries = n()) %>%
-  arrange(desc(entries)) %>%
-  mutate(percent = round(entries / sum(entries), 2))
-
-kable(summary_by_plan_type_name,
-      col.names = c("Plan Type", "Plans", "Percent"),
-      caption = "Summary By Plan Type Name",
-      format.args = list(big.mark = ","),
-      align = c("l", "r", "r"))
-```
-
-Plot summary by plan type name.
-
-```{r}
-ggplot(summary_by_plan_type_name, aes(x = forcats::fct_reorder(PLAN_TYPE_NAME, 
-                                                               entries, 
-                                                              .desc = TRUE), y = entries)) +
-  geom_col(fill = "steelblue", color = "white") +
-  geom_text(aes(label = paste0(scales::comma(entries), "\n", round(percent * 100, 0), "%")),
-            vjust = -0.3, size = 3.0) +
-  labs(title = "Distribution of Plans By Plan Type Name",
-       x = "Plan Type",
-       y = "Plans") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 90, hjust = 0.5),
-        plot.title = element_text(size = 14, face = "bold")) +
-  expand_limits(y = max(summary_by_plan_type_name$entries) * 1.2)
-```
-
-This confirms the corporate sector’s pull in retirement plan design; 88% of the plans are of the 401(k) type. The remaining 12% is split across three structurally distinct 403(b) types.
-
-# Sponsor State (SPONSOR_STATE)
-
-This variable refers to the U.S. state listed in the mailing address of the plan sponsor on Form 5500. It captures the geographic location of the sponsor’s administrative contact, not necessarily the location of plan participants or operations.
-
-This field is useful for regional benchmarking and comparing plan characteristics or adequacy across states, regulatory overlays, such as aligning with state-specific compliance or fiduciary rules, and geographic stratification.
-
-Summarize plans by sponsor state.
-
-```{r}
-summary_by_sponsor_state <- plans %>%
-  group_by(SPONSOR_STATE) %>%
-  summarise(entries = n()) %>%
-  arrange(desc(entries)) %>%
-  mutate(percent = round(entries / sum(entries), 2))
-
-kable(summary_by_sponsor_state,
-      col.names = c("Sponsor State", "Plans", "Percent"),
-      caption = "Summary By Sponsor State",
-      format.args = list(big.mark = ","),
-      align = c("l", "r", "r"))
-```
-
-Plot plans by state.
-
-```{r}
-ggplot(summary_by_sponsor_state, aes(x = forcats::fct_reorder(SPONSOR_STATE, 
-                                                              entries, 
-                                                              .desc = TRUE), y = entries)) +
-  geom_col(fill = "steelblue", color = "white") +
-  labs(title = "Distribution of Plans By Sponsor State",
-       x = "State",
-       y = "Plans") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 90, hjust = 0.5),
-        plot.title = element_text(size = 14, face = "bold"))
-```
-
-This distribution aligns closely with population density and economic concentration. States like California, Texas, New York, and Florida tend to dominate in plan counts because they host a large number of employers, especially in sectors with high plan adoption rates (e.g. finance, tech, healthcare).
-
-High counts also reflect regional hubs of plan sponsors, especially in metro areas with strong retirement plan infrastructure.  States with proactive retirement initiatives, e.g. CalSavers in California, may show elevated plan formation or reporting.
+Given this distribution, where plan counts rise in the Expansion era and taper off in more recent vintages, we are dealing with a nonlinear, asymmetric pattern.
 
 # Business Code and Industry Title (BUSINESS_CODE, INDUSTRY_TITLE)
 
@@ -337,7 +208,7 @@ kable(head(summary_by_industry_title, 20),
       align = c("l", "r", "r"))
 ```
 
-Representation at the detailed industry title level is sparse. Most individual NAICS-derived titles contribute less than 0.03% of total plan filings, which suggests that modeling or benchmarking at this granularity may be noisy or unstable.  A few industries dominate plan filings, while most contribute marginally. The detailed industry title field has many levels, but low support per level. Using these titles directly in models could lead to poor generalization unless grouped.
+Representation at the detailed industry title level is sparse. Most individual NAICS-derived titles contribute less than 0.03% of total plan filings, which suggests that modeling or benchmarking at this granularity may be noisy or unstable.  A few industries dominate plan filings, while most contribute marginally. The detailed industry title field has many levels, but low support per level. Using these titles directly in models could lead to poor generalization unless grouped.  Grouping into sectors addresses this sparcity.
 
 # Sector Code and Sector Title (SECTOR_CODE, SECTOR_TITLE, SECTOR_TITLE_SHORT)
 
@@ -357,6 +228,19 @@ plans <- plans %>%
 plans <- left_join(plans, business_codes, by = "SECTOR_CODE")
 ```
 
+Check counts for reference level, find the median category by count, relevel and set the reference level.
+
+```{r}
+sector_counts <- plans %>%
+  count(SECTOR_TITLE_SHORT, name = "n") %>%
+  arrange(n)
+
+# Find the central category
+central_sector <- sector_counts$SECTOR_TITLE_SHORT[ceiling(nrow(sector_counts) / 2)]
+
+plans$SECTOR_TITLE_SHORT <- relevel(factor(plans$SECTOR_TITLE_SHORT), ref = "Information")
+```
+
 Summarize plans by sector.
 
 ```{r}
@@ -372,6 +256,8 @@ kable(summary_by_sector_title,
       format.args = list(big.mark = ","),
       align = c("l", "r", "r"))
 ```
+
+Sector grouping reveals strong concentration and long-tail sparcity. Just three sectors, Manufacturing, Professional Services, and Health Care, account for nearly half of all plans, while the bottom dozen sectors each contribute less than 3%. This uneven distribution suggests structural disparities in retirement plan availability, with some sectors historically underserved or slower to adopt.
 
 Plot by sector title.
 
@@ -390,52 +276,93 @@ ggplot(summary_by_sector_title, aes(x = forcats::fct_reorder(SECTOR_TITLE_SHORT,
   expand_limits(y = max(summary_by_sector_title$entries) * 1.2)
 ```
 
-This plot reveals an imbalance in plan availability across sectors. The top few, e.g Manufacturing, Professional Services, and Healthcare, dominate the landscape, accounting for over half of all plans. 
+Given the high concentration in a few dominant sectors and the long tail of underrepresented sectors, the data over-represent high-density sectors and obscure structural disparities. A stratified sample can ensure equitable representation across sectors, especially those with low plan counts and improved diagnostic clarity when benchmarking adequacy.
 
-Saturated sectors like Manufacturing and Professional Services are likely have legacy plan structures and strong compliance cultures. Healthcare shows high plan counts, possibly due to large institutional employers and unionized workforces.
-
-Under-served sectors, such as Accommodation and Food Services, Arts and Entertainment, and Agriculture show very low plan counts despite employing millions. These sectors often have high turnover, part-time labor, or small businesses, all factors that historically correlate with low plan sponsorship.
-
-# Sector Participant Share (SECTOR_PARTICIPANT_SHARE)
-
-Engineer a sector participant share variable.
+# Create Stratified Sample
 
 ```{r}
-total_participants_all <- sum(plans$TOTAL_ACCBAL_PARTCP_EOY)
+# Step 1: Count plans by vintage-sector strata
+strata_counts <- plans %>%
+  count(PLAN_VINTAGE_GROUP, SECTOR_TITLE_SHORT)
 
-sector_participant_share <- plans %>%
+# Step 2: Define initial sample size per stratum (proportional with minimum floor)
+strata_counts <- strata_counts %>%
+  mutate(sample_n = pmax(round(n / sum(n) * 5000), 5))
+
+# Step 3: Compute total sample size per sector across vintages
+sector_totals <- strata_counts %>%
   group_by(SECTOR_TITLE_SHORT) %>%
-  summarise(total_participants = sum(TOTAL_ACCBAL_PARTCP_EOY, na.rm = TRUE)) %>%
-  mutate(percent_participants = round(total_participants / total_participants_all, 4)) %>%
-  arrange(desc(percent_participants))
+  summarise(sector_sample_total = sum(sample_n), .groups = "drop")
 
-kable(sector_participant_share,
-      col.names = c("Sector", "Participants", "Percent"),
-      caption = "Participant Share By Sector",
-      format.args = list(big.mark = ","),
-      align = c("l", "r", "r"))
+# Step 4: Set sector-level cap and compute scale factor
+sector_cap <- 100  # Adjust this value as needed
+
+sector_totals <- sector_totals %>%
+  mutate(scale_factor = pmin(1, sector_cap / sector_sample_total))
+
+# Step 5: Apply scale factor to each stratum's sample size
+strata_counts <- strata_counts %>%
+  left_join(sector_totals, by = "SECTOR_TITLE_SHORT") %>%
+  mutate(sample_n_capped = pmax(round(sample_n * scale_factor), 5))
+
+# Step 6: Join capped sample sizes to full plan data
+plans_joined <- plans %>%
+  inner_join(strata_counts %>%
+               select(PLAN_VINTAGE_GROUP, SECTOR_TITLE_SHORT, sample_n_capped),
+             by = c("PLAN_VINTAGE_GROUP", "SECTOR_TITLE_SHORT")) %>%
+  rename(sample_n = sample_n_capped)
+
+# Step 7: Split into strata and sample per stratum
+plans_split <- plans_joined %>%
+  group_split(PLAN_VINTAGE_GROUP, SECTOR_TITLE_SHORT)
+
+plans_stratified <- purrr::map_dfr(plans_split, ~ slice_sample(.x, n = .x$sample_n[1]))
 ```
 
-Plot participant share by sector.
+Check representation in the sample compared to the original distribution.
 
 ```{r}
-ggplot(sector_participant_share, aes(x = forcats::fct_reorder(SECTOR_TITLE_SHORT, 
-                                                              total_participants, .desc = TRUE), 
-                                     y = total_participants)) +
-  geom_col(fill = "steelblue", color = "white") +
-  scale_y_continuous(labels = scales::comma) +
-  labs(title = "Share of Participants by Sector",
-       x = "Sector",
-       y = "Count") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 90, hjust = 0.5),
-        plot.title = element_text(size = 14, face = "bold")) +
-  expand_limits(y = max(sector_participant_share$total_participants) * 1.2)
+full_dist <- plans %>%
+  count(PLAN_VINTAGE_GROUP, SECTOR_TITLE_SHORT, name = "full_n")
+
+sample_dist <- plans_stratified %>%
+  count(PLAN_VINTAGE_GROUP, SECTOR_TITLE_SHORT, name = "sample_n")
+
+representation_check <- full_dist %>%
+  full_join(sample_dist, by = c("PLAN_VINTAGE_GROUP", "SECTOR_TITLE_SHORT")) %>%
+  mutate(
+    full_n = replace_na(full_n, 0),
+    sample_n = replace_na(sample_n, 0),
+    sample_share = sample_n / sum(sample_n),
+    full_share = full_n / sum(full_n),
+    ratio = sample_share / full_share
+  ) %>%
+  arrange(desc(ratio))
 ```
 
-This distribution reveals a disparity in coverage. High-coverage sectors like Manufacturing, Healthcare, and Retail dominate participant coverage. They most likely host large employers with institutional plans, unionized workforces, or strong compliance cultures. Their plans may be more standardized, with higher assets-per-participant and broader eligibility.
+This representation check provides a ratio that shows how well each sector-vintage stratum is represented in the stratified sample relative to its full share. Values near 1 indicate balanced representation, while ratios above 1 signal over-representation and those below 1 point to under-representation.
 
-Low-coverage sectors like Agriculture, Mining, Education, and Public Administration are severely underrepresented. They may face structural barriers: seasonal labor, fragmented employment, or reliance on alternative retirement systems, e.g. public pensions are not captured in Form 5500.
+Plot the ratios.
+
+```{r}
+ggplot(representation_check, aes(x = reorder(SECTOR_TITLE_SHORT, ratio), y = ratio, fill = PLAN_VINTAGE_GROUP)) +
+  geom_col(position = "dodge") +
+  geom_hline(yintercept = 1, linetype = "dashed", color = "gray40") +
+  labs(title = "Stratified Sample Representation by Sector and Vintage",
+       x = "Sector",
+       y = "Sample Share / Full Share (Ratio)",
+       fill = "Vintage Group") +
+  coord_flip() +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5),
+        plot.title = element_text(size = 14, face = "bold"))
+```
+
+This plot confirms that the stratified sample was intentionally adjusted to reduce over-representation from dominant sectors. Lower sample-to-full ratios in sectors like Manufacturing and Professional Services reflect deliberate down-weighting, while ratios near 1 in sparse sectors preserve diagnostic signal. The result is a structurally balanced sample that supports fairness-aware modeling across both sector and vintage dimensions.
+
+```{r}
+plans <- plans_stratified
+```
 
 # Total Plan Assets (TOTAL_ASSETS_BOY, TOTAL_ASSETS_EOY)
 
@@ -498,7 +425,7 @@ Produce a density plot to show the distribution of asset growth rates.
 Two plans are outliers with 1708% and 1364% growth rates, which distort the overall distribution.  I exclude the outliers in the following plot.
 
 ```{r}
-ggplot(plans %>% filter(TOTAL_ASSETS_GROWTH_RATE <= 10), aes(x = TOTAL_ASSETS_GROWTH_RATE)) +
+ggplot(plans, aes(x = TOTAL_ASSETS_GROWTH_RATE)) +
   geom_density(fill = "steelblue", alpha = 0.6) +
   scale_y_continuous(labels = scales::percent_format(scale = 1, accuracy = 0.1)) +
   geom_vline(xintercept = 0, linetype = "dashed", color = "gray40") +
@@ -519,9 +446,7 @@ The sharp peak near zero could indicate structural inertia, plans that are under
 Create a ridgeline plot by sector.
 
 ```{r}
-plans %>%
-  filter(TOTAL_ASSETS_GROWTH_RATE <= 10) %>%
-  ggplot(aes(x = TOTAL_ASSETS_GROWTH_RATE, y = SECTOR_TITLE_SHORT)) +
+ggplot(plans, aes(x = TOTAL_ASSETS_GROWTH_RATE, y = SECTOR_TITLE_SHORT)) +
   geom_density_ridges(bandwidth = 0.05, fill = "steelblue", alpha = 0.6) +
   labs(title = "Density of Total Assets Growth Rates (Excluding Outliers) by Sector",
        x = "Growth Rate",
@@ -539,6 +464,48 @@ Public sector plans (e.g. Educational Services, Health Care, Public Administrati
 
 Volatile sectors like Construction, Arts, and Accommodation show broader spread, likely reflecting economic sensitivity and participant turnover.
 
+# Total Assets Growth Tier (TOTAL_ASSETS_GROWTH_TIER)
+
+Create assets per participant tier labels.
+
+```{r}
+plans <- plans %>%
+  mutate(
+    TOTAL_ASSETS_GROWTH_TIER = case_when(
+      TOTAL_ASSETS_GROWTH_RATE > 0.25 ~ "High",
+      TOTAL_ASSETS_GROWTH_RATE < 0.125 ~ "Negative", 
+      TRUE ~ "Typical"),
+    TOTAL_ASSETS_GROWTH_TIER = factor(TOTAL_ASSETS_GROWTH_TIER,
+                           levels = c("Negative", "Typical", "High"),
+                           ordered = TRUE))
+```
+
+Plot density by tier.
+
+```{r}
+summary_by_total_assets_growth_tier <- plans %>%
+  group_by(TOTAL_ASSETS_GROWTH_TIER) %>%
+  summarise(entries = n()) %>%
+  mutate(percent = round(entries / sum(entries), 2))
+
+ggplot(summary_by_total_assets_growth_tier, aes(x = TOTAL_ASSETS_GROWTH_TIER, y = entries)) +
+  geom_col(fill = "steelblue", color = "white") +
+  geom_text(aes(label = paste0(scales::comma(entries), "\n", round(percent * 100, 0), "%")),
+            vjust = -0.3, size = 3.0) +
+  labs(title = "Distribution of Plans By Total Assets Growth Tier",
+       x = "Tier",
+       y = "Plans") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5),
+        plot.title = element_text(size = 14, face = "bold")) +
+  expand_limits(y = max(summary_by_total_assets_growth_tier$entries) * 1.2)
+```
+
+
+
+
+
+
 # Assets Per Participant (ASSETS_PER_PARTCP)
 
 Engineer an assets per participant variable.
@@ -548,11 +515,10 @@ plans <- plans %>%
   mutate(ASSETS_PER_PARTCP = round(TOTAL_ASSETS_EOY / TOTAL_ACCBAL_PARTCP_EOY, 0))
 ```
 
-Plot assets per participant excluding outliers over $500,000.
+Plot assets per participant.
 
 ```{r}
-plans %>% filter(ASSETS_PER_PARTCP < 500000) %>%
-ggplot(aes(x = ASSETS_PER_PARTCP)) +
+ggplot(plans, aes(x = ASSETS_PER_PARTCP)) +
   geom_density(fill = "steelblue", alpha = 0.6) +
   geom_vline(xintercept = mean(plans$ASSETS_PER_PARTCP, na.rm = TRUE), 
              linetype = "dashed", color = "darkred") +
@@ -566,7 +532,7 @@ ggplot(aes(x = ASSETS_PER_PARTCP)) +
         plot.title = element_text(size = 14, face = "bold"))
 ```
 
-That sharp peak near the lower end, followed by a long right tail, suggests most plans cluster below $50,000 per participant with a mean of approximately $80,000.
+That sharp peak near the lower end, followed by a long right tail, suggests most plans cluster around $50,000 per participant with a mean of approximately $80,000.
 
 Plot the log-transformed distribution to reveal structure in the lower range.
 
@@ -583,7 +549,7 @@ ggplot(plans, aes(x = log1p(ASSETS_PER_PARTCP))) +
         plot.title = element_text(size = 14, face = "bold"))
 ```
 
-Most plans are far below the mean: The log transformation exposes that the bulk of plans cluster near $59,000, not near six figures.
+Most plans are far below the mean: The log transformation shows that the bulk of plans cluster near $59,000.
 
 # Assets Per Participant Tier (ASSETS_PER_PARTCP_TIER)
 
@@ -593,38 +559,37 @@ Create assets per participant tier labels.
 plans <- plans %>%
   mutate(
     ASSETS_PER_PARTCP_TIER = case_when(
-      ASSETS_PER_PARTCP < 5000 ~ "< $5K",
-      ASSETS_PER_PARTCP >= 5000 & ASSETS_PER_PARTCP < 25000 ~ "$5K–$25K",
-      ASSETS_PER_PARTCP >= 25000 & ASSETS_PER_PARTCP < 50000 ~ "$25K–$50K",
-      ASSETS_PER_PARTCP >= 50000 & ASSETS_PER_PARTCP < 100000 ~ "$50K–$100K",
-      ASSETS_PER_PARTCP >= 100000 ~ "> $100K",
+      ASSETS_PER_PARTCP < 50000 ~ "Low",
+      ASSETS_PER_PARTCP >= 50000 & ASSETS_PER_PARTCP < 100000 ~ "Moderate",
+      ASSETS_PER_PARTCP >= 100000 ~ "High",
       TRUE ~ NA_character_),
     ASSETS_PER_PARTCP_TIER = factor(ASSETS_PER_PARTCP_TIER,
-                           levels = c("< $5K", "$5K–$25K", "$25K–$50K", "$50K–$100K", "> $100K"),
+                           levels = c("Low", "Moderate", "High"),
                            ordered = TRUE))
 ```
 
 Plot density by tier.
 
 ```{r}
-ggplot(plans, aes(x = ASSETS_PER_PARTCP, fill = ASSETS_PER_PARTCP_TIER)) +
-  geom_density(alpha = 0.6) +
-  facet_wrap(~ ASSETS_PER_PARTCP_TIER, scales = "free") +
-  scale_y_continuous(labels = scales::percent_format(accuracy = 0.01)) +
-  scale_x_continuous(labels = scales::comma) +
-  scale_fill_manual(values = c("#B0C4DE", "#87AFC7", "#4682B4", "#36648B", "#27408B")) +
-  labs(title = "Density of Assets Per Participant by Tier",
-       x = "Assets per Participant (USD)",
-       y = "Density") +
+summary_by_assets_per_partcp_tier <- plans %>%
+  group_by(ASSETS_PER_PARTCP_TIER) %>%
+  summarise(entries = n()) %>%
+  mutate(percent = round(entries / sum(entries), 2))
+
+ggplot(summary_by_assets_per_partcp_tier, aes(x = ASSETS_PER_PARTCP_TIER, y = entries)) +
+  geom_col(fill = "steelblue", color = "white") +
+  geom_text(aes(label = paste0(scales::comma(entries), "\n", round(percent * 100, 0), "%")),
+            vjust = -0.3, size = 3.0) +
+  labs(title = "Distribution of Plans By Assets Per Participant Tier",
+       x = "Tier",
+       y = "Plans") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 0, hjust = 0.5),
         plot.title = element_text(size = 14, face = "bold")) +
-  theme(legend.position = "none")
+  expand_limits(y = max(summary_by_assets_per_partcp_tier$entries) * 1.2)
 ```
 
-The "< $5K" tier shows a tight peak near $4,000, suggesting many plans cluster at very low adequacy. In contrast, the "$50K–$100K" tier is broader, indicating more heterogeneity in plan quality.
-
-The "> $100K" tier is especially telling: a sharp peak just above $100,000 followed by a steep drop-off. That suggests a few high-performing plans dominate this tier, but most don’t go far beyond the threshold.
+The distribution of plans by assets per participant reveals a clear skew toward lower tiers. Over 40% of plans fall into the "Low" category, while just 23% qualify as "High." This suggests that most plans operate with relatively modest asset levels per participant, which may reflect sector constraints, legacy plan structures, or limited growth. The "Moderate" tier, at 36%, anchors the middle ground but still trails the low tier. Overall, the distribution highlights a long tail of undercapitalized plans and reinforces the need for adequacy diagnostics and tier-aware benchmarking.
 
 # Total Participants with Account Balances (TOTAL_ACCBAL_PARTCP_BOY, TOTAL_ACCBAL_PARTCP_EOY)
 
@@ -679,10 +644,8 @@ plans <- plans %>%
 
 Produce a density plot to show the distribution of participant growth rates.
 
-One plan with a participant growth rate of 299% is a serious outlier and distorting the overall distribution.  I exclude the outlier in the following plot.
-
 ```{r}
-ggplot(plans %>% filter(PARTCP_GROWTH_RATE <= 5), aes(x = PARTCP_GROWTH_RATE)) +
+ggplot(plans, aes(x = PARTCP_GROWTH_RATE)) +
   geom_density(fill = "steelblue", alpha = 0.6) +
   geom_vline(xintercept = 0, linetype = "dashed", color = "gray40") +
   labs(title = "Density of Participant Growth Rates (Excluding Outliers)",
@@ -696,9 +659,7 @@ ggplot(plans %>% filter(PARTCP_GROWTH_RATE <= 5), aes(x = PARTCP_GROWTH_RATE)) +
 Create a ridgeline plot by sector.
 
 ```{r}
-plans %>%
-  filter(PARTCP_GROWTH_RATE <= 10) %>%
-  ggplot(aes(x = PARTCP_GROWTH_RATE, y = SECTOR_TITLE_SHORT)) +
+  ggplot(plans, aes(x = PARTCP_GROWTH_RATE, y = SECTOR_TITLE_SHORT)) +
   geom_density_ridges(bandwidth = 0.05, fill = "steelblue", alpha = 0.6) +
   labs(title = "Participant Growth Rate by Sector (≤ 100)",
        x = "Growth Rate",
@@ -716,27 +677,33 @@ Create a participant growth tier flag to delineate between negative, typical, an
 
 ```{r}
 plans <- plans%>%
-  mutate(PARTCP_GROWTH_TIER = case_when(PARTCP_GROWTH_RATE > 0.05 ~ "High Growth",
-                                        PARTCP_GROWTH_RATE < -0.05 ~ "Negative Growth",
+  mutate(PARTCP_GROWTH_TIER = case_when(PARTCP_GROWTH_RATE > 0.05 ~ "High",
+                                        PARTCP_GROWTH_RATE < -0.05 ~ "Negative",
                                         TRUE ~ "Typical"),
              PARTCP_GROWTH_TIER = factor(PARTCP_GROWTH_TIER,
-                                levels = c("Negative Growth", "Typical", "High Growth"),
+                                levels = c("Negative", "Typical", "High"),
                                 ordered = TRUE))
 ```
 
 Plot participant growth rates by sector with the growth tiers.
 
 ```{r}
-ggplot(plans, aes(x = PARTCP_GROWTH_RATE, y = reorder(SECTOR_TITLE_SHORT, PARTCP_GROWTH_RATE), fill = PARTCP_GROWTH_TIER)) +
-  geom_col() +
-  scale_fill_manual(values = c("High Growth" = "steelblue", "Negative Growth" = "lightsteelblue", "Typical" = "gray70")) +
-  labs(title = "Participant Growth Rate by Sector and Tier",
-       x = "Growth Rate",
-       y = "Sector",
-       fill = "Growth Tier") +
+summary_by_partcp_growth_tier <- plans %>%
+  group_by(PARTCP_GROWTH_TIER) %>%
+  summarise(entries = n()) %>%
+  mutate(percent = round(entries / sum(entries), 2))
+
+ggplot(summary_by_partcp_growth_tier, aes(x = PARTCP_GROWTH_TIER, y = entries)) +
+  geom_col(fill = "steelblue", color = "white") +
+  geom_text(aes(label = paste0(scales::comma(entries), "\n", round(percent * 100, 0), "%")),
+            vjust = -0.3, size = 3.0) +
+  labs(title = "Distribution of Plans By Participant Growth Tier",
+       x = "Tier",
+       y = "Plans") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 0, hjust = 0.5),
-        plot.title = element_text(size = 14, face = "bold"))
+        plot.title = element_text(size = 14, face = "bold")) +
+  expand_limits(y = max(summary_by_partcp_growth_tier$entries) * 1.2)
 ```
 
 Participant growth rates vary meaningfully across sectors, and the flagged outliers, e.g. Manufacturing with high growth, Information with negative growth, suggest real economic or policy implications.
@@ -817,9 +784,7 @@ ggplot(plans, aes(x = CONTRIB_PARTCP_GROWTH_RATE)) +
 Create a ridgeline plot by sector.
 
 ```{r}
-plans %>%
-  filter(CONTRIB_PARTCP_GROWTH_RATE <= 100) %>%
-  ggplot(aes(x = CONTRIB_PARTCP_GROWTH_RATE, y = SECTOR_TITLE_SHORT)) +
+ggplot(plans, aes(x = CONTRIB_PARTCP_GROWTH_RATE, y = SECTOR_TITLE_SHORT)) +
   geom_density_ridges(bandwidth = 0.05, fill = "steelblue", alpha = 0.6) +
   labs(title = "Contribution Growth Rate by Sector",
        x = "Growth Rate",
@@ -837,80 +802,38 @@ Create a contribution growth rate tier to delineate between negative, typical, a
 
 ```{r}
 plans <- plans%>%
-  mutate(CONTRIB_PARTCP_GROWTH_TIER= case_when(CONTRIB_PARTCP_GROWTH_RATE > 0.30 ~ "High Growth",
-                                        CONTRIB_PARTCP_GROWTH_RATE < -0.05 ~ "Negative Growth",
+  mutate(CONTRIB_PARTCP_GROWTH_TIER = case_when(CONTRIB_PARTCP_GROWTH_RATE > 0.10 ~ "High",
+                                        CONTRIB_PARTCP_GROWTH_RATE < -0.10 ~ "Negative",
                                         TRUE ~ "Typical"),
          CONTRIB_PARTCP_GROWTH_TIER = factor(CONTRIB_PARTCP_GROWTH_TIER,
-                                levels = c("Negative Growth", "Typical", "High Growth"),
+                                levels = c("Negative", "Typical", "High"),
                                 ordered = TRUE))
 ```
 
 Plot contribution growth tiers by sector with the growth flags.
 
 ```{r}
-ggplot(plans, aes(x = CONTRIB_PARTCP_GROWTH_RATE, y = reorder(SECTOR_TITLE_SHORT, CONTRIB_PARTCP_GROWTH_RATE), fill = CONTRIB_PARTCP_GROWTH_TIER)) +
-  geom_col() +
-  scale_fill_manual(values = c("High Growth" = "steelblue", "Negative Growth" = "lightsteelblue", "Typical" = "gray70")) +
-  labs(title = "Contribution Growth Rate by Sector",
-       x = "Growth Rate",
-       y = "Sector",
-       fill = "Growth Tier") +
+summary_by_contrib_partcp_growth_tier <- plans %>%
+  group_by(CONTRIB_PARTCP_GROWTH_TIER) %>%
+  summarise(entries = n()) %>%
+  mutate(percent = round(entries / sum(entries), 2))
+
+ggplot(summary_by_contrib_partcp_growth_tier, aes(x = CONTRIB_PARTCP_GROWTH_TIER, y = entries)) +
+  geom_col(fill = "steelblue", color = "white") +
+  geom_text(aes(label = paste0(scales::comma(entries), "\n", round(percent * 100, 0), "%")),
+            vjust = -0.3, size = 3.0) +
+  labs(title = "Distribution of Plans By Participant Contribution Growth Tier",
+       x = "Tier",
+       y = "Plans") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 0, hjust = 0.5),
-        plot.title = element_text(size = 14, face = "bold"))
+        plot.title = element_text(size = 14, face = "bold")) +
+  expand_limits(y = max(summary_by_contrib_partcp_growth_tier$entries) * 1.2)
 ```
 
 Transportation and warehousing, Mining, and Healthcare show strong contribution growth—suggesting active funding and participant engagement.
 
 Information and Arts & Entertainment show negative growth, which could signal stagnation, plan attrition, or structural undercoverage.
-
-# Average Contribution Per Participant (AVERAGE_CONTRIB_PER_PARTCP)
-
-Implement average contribution per participant.
-
-```{r}
-plans <- plans %>%
-  mutate(AVERAGE_CONTRIB_PER_PARTCP = round(TOTAL_CONTRIB_PARTCP_EOY / TOTAL_ACCBAL_PARTCP_EOY, 4))
-```
-
-Plot average contribution per participant by sector.
-
-```{r}
-summary_by_average_contribution <- plans %>%
-  group_by(SECTOR_TITLE_SHORT) %>%
-  summarise(AVERAGE_CONTRIB_PER_PARTCP = mean(AVERAGE_CONTRIB_PER_PARTCP))
-
-ggplot(summary_by_average_contribution, aes(x = AVERAGE_CONTRIB_PER_PARTCP, 
-                                            y = reorder(SECTOR_TITLE_SHORT,
-                                                              AVERAGE_CONTRIB_PER_PARTCP))) +
-  geom_col(fill = "steelblue") +
-  geom_text(aes(label = scales::comma(round(AVERAGE_CONTRIB_PER_PARTCP))),
-            hjust = -0.1, size = 3.5) +
-  scale_x_continuous(labels = scales::label_comma()) +
-
-  labs(title = "Average Contribution per Participant by Sector",
-       x = "Avg Contribution (USD)",
-       y = "Sector") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 0, hjust = 0.5),
-        plot.title = element_text(size = 14, face = "bold")) +
-  coord_cartesian(xlim = c(0, max(plans$AVERAGE_CONTRIB_PER_PARTCP) * 1.1))
-```
-
-# Contribution Per Participant Tier (CONTRIB_PER_PARTCP_TIER)
-
-Create a tiered variable for average participant contribution.
-
-```{r}
-plans <- plans %>%
-  mutate(CONTRIB_PER_PARTCP_TIER = cut(AVERAGE_CONTRIB_PER_PARTCP,
-                       breaks = c(-Inf, 0, 1000, 2000, 3000, Inf),
-                       labels = c("Negative", "Low", "Moderate", "High", "Very High"),
-                       right = FALSE),
-         CONTRIB_PER_PARTCP_TIER = factor(CONTRIB_PER_PARTCP_TIER,
-                                levels = c("Negative", "Low", "Moderate", "High", "Very High"),
-                                ordered = TRUE))
-```
 
 # Employer Contributions (TOTAL_CONTRIB_EMPLR_BOY, TOTAL_CONTRIB_EMPLR_EOY)
 
@@ -1002,27 +925,33 @@ Create an employer contribution growth rate flag to delineate between negative, 
 
 ```{r}
 plans <- plans%>%
-  mutate(CONTRIB_EMPLR_GROWTH_TIER = case_when(CONTRIB_EMPLR_GROWTH_RATE > 0.30 ~ "High Growth",
-                                               CONTRIB_EMPLR_GROWTH_RATE < -0.05 ~ "Negative Growth",
+  mutate(CONTRIB_EMPLR_GROWTH_TIER = case_when(CONTRIB_EMPLR_GROWTH_RATE > 0.10 ~ "High",
+                                               CONTRIB_EMPLR_GROWTH_RATE < -0.10 ~ "Negative",
                                                TRUE ~ "Typical"),
          CONTRIB_EMPLR_GROWTH_TIER = factor(CONTRIB_EMPLR_GROWTH_TIER,
-                                levels = c("Negative Growth", "Typical", "High Growth"),
+                                levels = c("Negative", "Typical", "High"),
                                 ordered = TRUE))
 ```
 
 Plot contribution growth rates by sector with the growth flags.
 
 ```{r}
-ggplot(plans, aes(x = CONTRIB_EMPLR_GROWTH_RATE, y = reorder(SECTOR_TITLE_SHORT, CONTRIB_EMPLR_GROWTH_RATE), fill = CONTRIB_EMPLR_GROWTH_TIER)) +
-  geom_col() +
-  scale_fill_manual(values = c("High Growth" = "steelblue", "Negative Growth" = "lightsteelblue", "Typical" = "gray70")) +
-  labs(title = "Employer Contribution Growth Rate by Sector",
-       x = "Growth Rate",
-       y = "Sector",
-       fill = "Growth Category") +
+summary_by_contrib_emplr_growth_tier <- plans %>%
+  group_by(CONTRIB_EMPLR_GROWTH_TIER) %>%
+  summarise(entries = n()) %>%
+  mutate(percent = round(entries / sum(entries), 2))
+
+ggplot(summary_by_contrib_emplr_growth_tier, aes(x = CONTRIB_EMPLR_GROWTH_TIER, y = entries)) +
+  geom_col(fill = "steelblue", color = "white") +
+  geom_text(aes(label = paste0(scales::comma(entries), "\n", round(percent * 100, 0), "%")),
+            vjust = -0.3, size = 3.0) +
+  labs(title = "Distribution of Plans By Employer Contribution Growth Tier",
+       x = "Tier",
+       y = "Plans") +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 90, hjust = 0.5),
-        plot.title = element_text(size = 14, face = "bold"))
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5),
+        plot.title = element_text(size = 14, face = "bold")) +
+  expand_limits(y = max(summary_by_contrib_emplr_growth_tier$entries) * 1.2)
 ```
 
 Transportation and warehousing stands out with exceptional growth—this could reflect increased employer investment, plan expansion, or policy shifts.
@@ -1030,39 +959,6 @@ Transportation and warehousing stands out with exceptional growth—this could r
 Educational services and Wholesale trade also show strong growth, which may signal rising institutional support in traditionally underfunded sectors.
 
 Several sectors show negative growth (e.g., Information, Arts & Entertainment), which could indicate declining employer engagement, plan attrition, or funding retraction.
-
-# Average Employer Contribution Per Participant (AVERAGE_EMPLR_CONTRIB_PER_PARTCP)
-
-Implement average contribution per participant.
-
-```{r}
-plans <- plans %>%
-  mutate(AVERAGE_EMPLR_CONTRIB_PER_PARTCP = round(TOTAL_CONTRIB_EMPLR_EOY / TOTAL_ACCBAL_PARTCP_EOY, 4))
-```
-
-Plot average contribution per participant by sector.
-
-```{r}
-summary_by_average_emplr_contribution <- plans %>%
-  group_by(SECTOR_TITLE_SHORT) %>%
-  summarise(AVERAGE_EMPLR_CONTRIB_PER_PARTCP = mean(AVERAGE_EMPLR_CONTRIB_PER_PARTCP))
-
-ggplot(summary_by_average_emplr_contribution, aes(x = AVERAGE_EMPLR_CONTRIB_PER_PARTCP, 
-                                            y = reorder(SECTOR_TITLE_SHORT,
-                                                              AVERAGE_EMPLR_CONTRIB_PER_PARTCP))) +
-  geom_col(fill = "steelblue") +
-  geom_text(aes(label = scales::comma(round(AVERAGE_EMPLR_CONTRIB_PER_PARTCP))),
-            hjust = -0.1, size = 3.5) +
-  scale_x_continuous(labels = scales::label_comma()) +
-
-  labs(title = "Average Contribution per Participant by Sector",
-       x = "Avg Contribution (USD)",
-       y = "Sector") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 90, hjust = 0.5),
-        plot.title = element_text(size = 14, face = "bold")) +
-  coord_cartesian(xlim = c(0, max(plans$AVERAGE_EMPLR_CONTRIB_PER_PARTCP) * 1.1))
-```
 
 # Participant Loans (TOTAL_LOANS_BOY, TOTAL_LOANS_EOY)
 
@@ -1128,14 +1024,33 @@ plans <- plans %>%
 
 ```{r}
 plans <- plans %>%
-  mutate(LOAN_LEAKAGE_TIER = case_when(LOAN_LEAKAGE_RATIO == 0 ~ "None",
-                                       TRUE ~ as.character(cut(LOAN_LEAKAGE_RATIO,
-                                                               breaks = c(0, 0.05, 0.1, 0.15, 0.2, Inf),
-                                                               labels = c("Minimal", "Low", "Moderate", "High", "Very High"),
-                                                               right = FALSE))),
+  mutate(LOAN_LEAKAGE_TIER = case_when(LOAN_LEAKAGE_RATIO <= 0.015 ~ "Low",  # Combines 0 and values up to 0.015
+                                       LOAN_LEAKAGE_RATIO <= 0.03 ~ "Moderate",
+                                       TRUE ~ "High"),
          LOAN_LEAKAGE_TIER = factor(LOAN_LEAKAGE_TIER,
-                                    levels = c("None", "Minimal", "Low", "Moderate", "High", "Very High"),
+                                    levels = c("Low", "Moderate", "High"),
                                     ordered = TRUE))
+```
+
+Plot loan leakage tier.
+
+```{r}
+summary_by_loan_leakage_tier <- plans %>%
+  group_by(LOAN_LEAKAGE_TIER) %>%
+  summarise(entries = n()) %>%
+  mutate(percent = round(entries / sum(entries), 2))
+
+ggplot(summary_by_loan_leakage_tier, aes(x = LOAN_LEAKAGE_TIER, y = entries)) +
+  geom_col(fill = "steelblue", color = "white") +
+  geom_text(aes(label = paste0(scales::comma(entries), "\n", round(percent * 100, 0), "%")),
+            vjust = -0.3, size = 3.0) +
+  labs(title = "Distribution of Plans By Loan Leakage Tier",
+       x = "Tier",
+       y = "Plans") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5),
+        plot.title = element_text(size = 14, face = "bold")) +
+  expand_limits(y = max(summary_by_loan_leakage_tier$entries) * 1.2)
 ```
 
 # Retirement Adequacy Score (ADEQUACY_SCORE, ADEQUACY_IND, ADEQUACY_LABEL) 
@@ -1154,11 +1069,13 @@ Each condition is evaluated as a binary flag, and the adequacy score is the sum 
 
 ```{r}
 plans <- plans %>%
-  mutate(ADEQUACY_SCORE = (ASSETS_PER_PARTCP > 55000) +
-                          (TOTAL_ASSETS_GROWTH_RATE > 0.03) +
-                          (AVERAGE_CONTRIB_PER_PARTCP > 1000) +
-                          (LOAN_LEAKAGE_RATIO < 0.12),
-         ADEQUACY_IND = if_else(ADEQUACY_SCORE >= 3, 1L, 0L),
+  mutate(ADEQUACY_SCORE = (ASSETS_PER_PARTCP > 59000) +
+                          (TOTAL_ASSETS_GROWTH_RATE > 0.10) +
+                          (PARTCP_GROWTH_RATE > 0.03) +
+                          (CONTRIB_PARTCP_GROWTH_RATE > 0.10) + 
+                          (CONTRIB_EMPLR_GROWTH_RATE > 0.07) + 
+                          (LOAN_LEAKAGE_RATIO < 0.013),
+         ADEQUACY_IND = if_else(ADEQUACY_SCORE >= 4, 1L, 0L),
          ADEQUACY_LABEL = if_else(ADEQUACY_IND == 1L, "Adequate", "Inadequate"))
 ```
 
@@ -1180,7 +1097,6 @@ Summarize plans by adequacy score.
 summary_by_adequacy_score <- plans %>%
   group_by(ADEQUACY_SCORE) %>%
   summarise(entries = n()) %>%
-  arrange(desc(entries)) %>%
   mutate(percent = round(entries / sum(entries), 2))
 
 kable(summary_by_adequacy_score,
@@ -1206,6 +1122,28 @@ ggplot(summary_by_adequacy_score, aes(x = ADEQUACY_SCORE, y = entries)) +
   expand_limits(y = max(summary_by_adequacy_score$entries) * 1.2)
 ```
 
+Plot distribution by adequacy class.
+
+```{r}
+summary_by_adequacy_class <- plans %>%
+  group_by(ADEQUACY_LABEL) %>%
+  summarise(entries = n()) %>%
+  mutate(percent = round(entries / sum(entries), 2))
+
+ggplot(summary_by_adequacy_class, aes(x = ADEQUACY_LABEL, y = entries)) +
+  geom_col(fill = "steelblue", color = "white") +
+  geom_text(aes(label = paste0(scales::comma(entries), "\n", round(percent * 100, 0), "%")),
+            vjust = -0.3, size = 3.0) +
+  labs(title = "Distribution of Adequacy Class",
+       x = "Adequacy Class",
+       y = "Number of Plans") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5),
+        plot.title = element_text(size = 14, face = "bold")) +
+  expand_limits(y = max(summary_by_adequacy_class$entries) * 1.2)
+```
+
+
 # Finalize and Save Dataset
 
 Order variables and save plans data frame with updates and features.
@@ -1223,7 +1161,6 @@ plans <- plans %>%
          PLAN_EFFECTIVE_YEAR,
          PLAN_VINTAGE_GROUP,
          PLAN_TYPE,
-         PLAN_TYPE_NAME,
          SPONSOR_NAME,
          SPONSOR_STATE,
          SPONSOR_EIN,
@@ -1240,13 +1177,10 @@ plans <- plans %>%
          TOTAL_CONTRIB_PARTCP_EOY,
          CONTRIB_PARTCP_GROWTH_RATE,
          CONTRIB_PARTCP_GROWTH_TIER,
-         AVERAGE_CONTRIB_PER_PARTCP,
-         CONTRIB_PER_PARTCP_TIER,
          TOTAL_CONTRIB_EMPLR_BOY,
          TOTAL_CONTRIB_EMPLR_EOY,
          CONTRIB_EMPLR_GROWTH_RATE,
          CONTRIB_EMPLR_GROWTH_TIER,
-         AVERAGE_EMPLR_CONTRIB_PER_PARTCP,
          TOTAL_LOANS_BOY,
          TOTAL_LOANS_EOY, 
          LOAN_LEAKAGE_RATIO,
@@ -1254,6 +1188,7 @@ plans <- plans %>%
          TOTAL_ASSETS_BOY,
          TOTAL_ASSETS_EOY,
          TOTAL_ASSETS_GROWTH_RATE,
+         TOTAL_ASSETS_GROWTH_TIER,
          ASSETS_PER_PARTCP,
          ASSETS_PER_PARTCP_TIER)
 

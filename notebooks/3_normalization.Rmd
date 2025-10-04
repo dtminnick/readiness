@@ -6,13 +6,17 @@ output:
   word_document: default
   html_document:
     df_print: paged
-subtitle: "A Modular Walkthrough of Scale Alignment, Transformation Logic, and Modeling Readiness"
+subtitle: "Normalization and Sector-Aware Scaling"
 
 ---
+
+Sector-level mean/SD, outlier exclusion, z-score normalization, fallback logic, density plots.
 
 # Load Libraries
 
 This analysis leverages the following R packages: `dplyr`, `lubridate`, '`stringr` and `tidyr` for data manipulation, `knitr` for report formatting, and `ggplot2` and `ggridges` for visualization.
+
+Two customized R functions enabled evaluation of predictor associations and multicollinearity checks.
 
 ```{r echo = FALSE, message = FALSE}
 library("dplyr")
@@ -501,7 +505,6 @@ plans <- plans %>%
          "AVERAGE_CONTRIB_PER_PARTCP",
          "AVERAGE_CONTRIB_PER_PARTCP_is_outlier",
          "AVERAGE_CONTRIB_PER_PARTCP_norm_sector",
-         "CONTRIB_PER_PARTCP_TIER",
          "CONTRIB_EMPLR_GROWTH_RATE",
          "CONTRIB_EMPLR_GROWTH_TIER",
          "AVERAGE_EMPLR_CONTRIB_PER_PARTCP",

@@ -6,7 +6,321 @@ output:
   html_document:
     df_print: paged
   word_document: default
-subtitle: "A Structural Diagnostic Approach to Retirement Plan Adequacy"
+subtitle: "Candidate Model Training and Comparison"
 ---
 
+Logistic regression and random forest setup, cross-validation, fairness overlays, residual diagnostics, ROC/AUC curves, confusion matrices
+
+# Load Libraries
+
+This analysis leverages the following R packages: `dplyr`, `lubridate`, '`stringr` and `tidyr` for data manipulation, `knitr` for report formatting, and `ggplot2` and `ggridges` for visualization.
+
+```{r echo = FALSE, message = FALSE}
+library("dplyr")
+library("ggplot2")
+library("glmnet")
+library("knitr")
+
+source("../R/check_multicollinearity_factors.R")
+source("../R/test_predictor_associations.R")
+```
+
+# Load Data
+
+Load transformed Form 5500 data.
+
+```{r}
+plans <- readRDS("../data/plans_final.rds")
+```
+
+# Check Correlations
+
+Check for correlations among predictors.
+
+```{r check_correlations}
+# Set vectors.
+
+predictors <- c("PLAN_VINTAGE_GROUP",
+                "SECTOR_TITLE_SHORT",
+                "PARTCP_GROWTH_TIER",
+                "CONTRIB_PARTCP_GROWTH_TIER",
+                "CONTRIB_EMPLR_GROWTH_TIER",
+                "LOAN_LEAKAGE_TIER",
+                "TOTAL_ASSETS_GROWTH_TIER",
+                "ASSETS_PER_PARTCP_TIER")
+
+ordinal_vars <- c("PARTCP_GROWTH_TIER",
+                  "CONTRIB_PARTCP_GROWTH_TIER",
+                  "CONTRIB_EMPLR_GROWTH_TIER",
+                  "LOAN_LEAKAGE_TIER",
+                  "TOTAL_ASSETS_GROWTH_TIER",
+                  "ASSETS_PER_PARTCP_TIER")
+
+# ordinal_vars <- c("")
+
+# Run the function to generate correlations summary.
+
+assoc_summary <- test_predictor_associations(plans, predictors, ordinal_vars)
+
+write.csv(assoc_summary, "assoc_summary.csv")
+
+# rownames(assoc_summary) <- NULL
+```
+
+The Spearman correlation of 0.508 between CONTRIB_PARTCP_GROWTH_TIER and CONTRIB_EMPLR_GROWTH_TIER is almost certainly reflecting that matching dynamic: as employees contribute more, employers follow suit—up to the match cap. The association isn’t problematic—it’s structural, not spurious.
+
+# Multicollinearity
+
+Use the custom function `check_multicollinearity_factors` on the income dataset, using the specified predictors. Calculate Variance Inflation Factors (VIFs) to see how much each predictor is correlated with the others.
+
+```{r check_multicollinearity}
+predictors <- c("PLAN_VINTAGE_GROUP",
+                "SECTOR_TITLE_SHORT",
+                "PARTCP_GROWTH_TIER",
+                "CONTRIB_PARTCP_GROWTH_TIER",
+                "CONTRIB_EMPLR_GROWTH_TIER",
+                "LOAN_LEAKAGE_TIER",
+                "TOTAL_ASSETS_GROWTH_TIER",
+                "ASSETS_PER_PARTCP_TIER")
+
+vif_summary <- check_multicollinearity_factors(plans, predictors)
+
+rownames(vif_summary) <- NULL
+
+kable(vif_summary, 
+      col.names = c("Variable", "VIF"),
+      format.args = list(big.mark = ","),
+      align = c("l", "r"))
+```
+
+Split data.
+
+```{r}
+set.seed(91210)
+
+# Initial train/test split.
+
+train_idx <- caret::createDataPartition(plans$ADEQUACY_IND, p = 0.7, list = FALSE)
+
+plans_train <- plans[train_idx, ]
+
+temp  <- plans[-train_idx, ]
+
+# Split remaining into validation/test.
+
+valid_idx <- caret::createDataPartition(temp$ADEQUACY_IND, p = 0.5, list = FALSE)
+
+plans_validate <- temp[valid_idx, ]
+
+plans_test <- temp[-valid_idx, ]
+```
+
+Check class balance in the train, validation and test sets.
+
+```{r}
+# Check balance function.
+
+check_balance <- function(df, name) {
+  df %>%
+    count(ADEQUACY_IND) %>%
+    mutate(prop = round(n / sum(n), 2),
+           dataset = name) %>%
+    select(dataset,
+           ADEQUACY_IND, 
+           n,
+           prop)
+}
+
+# Generate data frame.
+
+check <- bind_rows(check_balance(plans_train, "Train"),
+                   check_balance(plans_validate, "Validation"),
+                   check_balance(plans_test, "Test"))
+
+# Produce table summary.
+
+kable(check,
+      col.names = c("Dataset", "Adequacy Level", "Count", "Percent"),
+      caption = "Dataset Class Balance",
+      format.args = list(big.mark = ","),
+      align = c("l", "r", "r", "r"))
+
+```
+
+
+
+
+# Subset Selection with LASSO
+
+```{r}
+X <- model.matrix(ADEQUACY_IND ~ 
+                    PLAN_VINTAGE_GROUP + 
+                    SECTOR_TITLE_SHORT + 
+                    PARTCP_GROWTH_TIER + 
+                    CONTRIB_PARTCP_GROWTH_TIER + 
+                    CONTRIB_EMPLR_GROWTH_TIER + 
+                    LOAN_LEAKAGE_TIER + 
+                    TOTAL_ASSETS_GROWTH_TIER + 
+                    ASSETS_PER_PARTCP_TIER, 
+                  data = plans)
+
+y <- plans$ADEQUACY_IND
+
+lasso_model <- cv.glmnet(X, y, alpha = 1)
+```
+
+```{r}
+
+# Step 3: Extract coefficients at best lambda
+coef_matrix <- coef(lasso_model, s = "lambda.min")
+
+# Step 4: Convert to data frame and filter non-zero coefficients
+selected_predictors <- as.data.frame(as.matrix(coef_matrix)) %>%
+  rename(estimate = 1) %>%
+  mutate(term = rownames(coef_matrix)) %>%
+  filter(estimate != 0) %>%
+  arrange(desc(abs(estimate)))
+
+# Step 5: Preview selected predictors
+selected_predictors
+
+
+```
+
+```{r}
+coef_df <- as.data.frame(as.matrix(coef_matrix)) %>%
+  rename(estimate = 1) %>%
+  mutate(term = rownames(coef_matrix))
+
+# Step 5: Filter eliminated predictors (estimate == 0)
+eliminated_predictors <- coef_df %>%
+  filter(estimate == 0)
+
+# Step 6: Preview eliminated terms
+print(eliminated_predictors$term)
+```
+
+# Subset Selection with Leaps
+
+```{r}
+library(leaps)
+
+# Step 1: Fit subset selection model
+subset_model <- regsubsets(ADEQUACY_IND ~ 
+                             PLAN_VINTAGE_GROUP + 
+                    SECTOR_TITLE_SHORT + 
+                    PARTCP_GROWTH_TIER + 
+                    CONTRIB_PARTCP_GROWTH_TIER + 
+                    CONTRIB_EMPLR_GROWTH_TIER + 
+                    LOAN_LEAKAGE_TIER + 
+                    TOTAL_ASSETS_GROWTH_TIER + 
+                    ASSETS_PER_PARTCP_TIER, , data = plans, nvmax = 20)
+
+# Step 2: Extract model summary
+subset_summary <- summary(subset_model)
+
+# Step 3: Identify the best model size (lowest BIC)
+best_size <- which.min(subset_summary$bic)
+
+# Step 4: Extract logical vector of selected predictors
+best_predictors_logical <- subset_summary$which[best_size, ]
+
+# Step 5: Convert to character vector of predictor names
+best_predictors <- names(best_predictors_logical[best_predictors_logical])  # includes intercept
+
+# Step 6: Remove intercept if present
+best_predictors <- setdiff(best_predictors, "(Intercept)")
+
+# Step 7: Preview selected predictors
+print(best_predictors)
+
+```
+
+# Logistic Model
+
+```{r}
+model_logistic <- glm(ADEQUACY_IND ~ 
+                        PARTCP_GROWTH_TIER + 
+                        CONTRIB_PARTCP_GROWTH_TIER + 
+                        LOAN_LEAKAGE_TIER + 
+                        TOTAL_ASSETS_GROWTH_TIER + 
+                        ASSETS_PER_PARTCP_TIER,
+                      data = plans, family = "binomial")
+
+```
+
+
+```{r}
+summary(model_logistic)
+```
+
+Plot residuals.
+
+```{r}
+resid_df <- data.frame(fitted = fitted(model_logistic),
+                       residuals = residuals(model_logistic, type = "pearson"),
+                       actual = plans$ADEQUACY_IND)
+
+# Convert actual outcome to factor for faceting.
+
+resid_df$class <- factor(resid_df$actual, levels = c(0, 1), labels = c("Class 0", "Class 1"))
+
+# Plot residuals vs. fitted by class.
+
+ggplot(resid_df, aes(x = fitted, y = residuals)) +
+  geom_point(alpha = 0.3, color = "blue") +
+  geom_smooth(method = "loess", se = TRUE, color = "blue", linewidth = 0.8) +
+  # facet_wrap(~ class) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(title = "Residuals vs Fitted by Class",
+       x = "Fitted Values",
+       y = "Pearson Residuals") +
+  theme_minimal()
+
+```
+
+Binned residuals
+
+```{r}
+arm::binnedplot(x = fitted(model_logistic),
+         y = residuals(model_logistic, type = "response"),
+         xlab = "Fitted Probabilities",
+         ylab = "Average Residuals",
+         main = "Binned Residual Plot")
+
+```
+
+Predict class scores.
+
+```{r}
+plans$predicted_prob <- predict(model_logistic, type = "response")
+```
+
+```{r}
+threshold <- 0.5
+
+plans$predicted_class <- ifelse(plans$predicted_prob > 0.5, 1, 0)
+
+cm_logistic_train <- caret::confusionMatrix(factor(plans$predicted_class),
+                                            factor(plans$ADEQUACY_IND))
+
+cm_logistic_train
+
+```
+
+Generate ROC.
+
+```{r}
+roc_obj_log <- pROC::roc(plans$ADEQUACY_IND, plans$predicted_prob)
+## Setting levels: control = 0, case = 1
+## Setting direction: controls < cases
+plot(roc_obj_log, col = "steelblue", main = "ROC Curve for Logistic Regression")
+
+```
+
+AUC.
+
+```{r}
+pROC::auc(roc_obj_log)
+```
 
