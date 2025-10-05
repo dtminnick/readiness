@@ -1121,7 +1121,7 @@ This response variable is designed to classify retirement plans as adequate or i
 * Employer Contribution Growth Rate > 7% indicates meaningful employer support for employee financial wellness, and
 * Loan Leakage Ratio < 1.3% captures erosion risk due to participant borrowing; lower ratios suggest stronger adequacy.
 
-Each condition is evaluated as a binary flag, and the adequacy score is the sum of conditions met. Plans meeting three or more criteria are classified as adequate.  A plan that has a score of four or more is identified as adequate.
+Each condition is evaluated as a binary flag, and the adequacy score is the sum of conditions met. Plans meeting four or more criteria are classified as adequate.
 
 ```{r}
 plans <- plans %>%
@@ -1245,6 +1245,8 @@ plans <- plans %>%
 
 saveRDS(plans, "../data/plans_final.rds")
 ```
+
+The final dataset includes `r format(nrow(plans), big.mark = ",", scientific = FALSE)` plans and `r format(ncol(plans), big.mark = ",", scientific = FALSE)` variables.
 
 # Next Steps
 

@@ -9,17 +9,24 @@ output:
 subtitle: "Candidate Model Training and Comparison"
 ---
 
-Logistic regression and random forest setup, cross-validation, fairness overlays, residual diagnostics, ROC/AUC curves, confusion matrices
+# Pipeline Scope 
+
+This notebook encompasses checking variable associations, multicollinearity checks, subset selection, and training and evaluation of logistic regression and random forest models.
 
 # Load Libraries
 
 This analysis leverages the following R packages: `dplyr`, `lubridate`, '`stringr` and `tidyr` for data manipulation, `knitr` for report formatting, and `ggplot2` and `ggridges` for visualization.
 
+I use two customized R functions for variable associations and multicollinearity checks.
+
 ```{r echo = FALSE, message = FALSE}
+library("caret")
 library("dplyr")
 library("ggplot2")
 library("glmnet")
 library("knitr")
+library("pROC")
+library("randomForest")
 
 source("../R/check_multicollinearity_factors.R")
 source("../R/test_predictor_associations.R")
@@ -35,11 +42,9 @@ plans <- readRDS("../data/plans_final.rds")
 
 # Check Correlations
 
-Check for correlations among predictors.
+Check for correlations among signal predictors.
 
-```{r check_correlations}
-# Set vectors.
-
+```{r}
 predictors <- c("PLAN_VINTAGE_GROUP",
                 "SECTOR_TITLE_SHORT",
                 "PARTCP_GROWTH_TIER",
@@ -56,24 +61,32 @@ ordinal_vars <- c("PARTCP_GROWTH_TIER",
                   "TOTAL_ASSETS_GROWTH_TIER",
                   "ASSETS_PER_PARTCP_TIER")
 
-# ordinal_vars <- c("")
-
 # Run the function to generate correlations summary.
 
 assoc_summary <- test_predictor_associations(plans, predictors, ordinal_vars)
 
-write.csv(assoc_summary, "assoc_summary.csv")
+rownames(assoc_summary) <- NULL
 
-# rownames(assoc_summary) <- NULL
+write.csv(assoc_summary, "../outputs/signal_association_summary.csv")
 ```
 
-The Spearman correlation of 0.508 between CONTRIB_PARTCP_GROWTH_TIER and CONTRIB_EMPLR_GROWTH_TIER is almost certainly reflecting that matching dynamic: as employees contribute more, employers follow suit—up to the match cap. The association isn’t problematic—it’s structural, not spurious.
+## Notable Signal Associations
+
+| Pair | Type	| Value	| Interpretation |
+| ---- | ---- | ----- | -------------- |
+| CONTRIB_PARTCP_GROWTH_TIER ~ CONTRIB_EMPLR_GROWTH_TIER | Spearman	| 0.485	| Strong mutual reinforcement between participant and employer contributions. |
+| PLAN_VINTAGE_GROUP ~ TOTAL_ASSETS_GROWTH_TIER	| Cramér’s V | 0.314 | Vintage moderately predicts asset growth; older plans tend to accumulate more. |
+| SECTOR_TITLE_SHORT ~ ASSETS_PER_PARTCP_TIER	| Cramér’s V | 0.321 | Sector strongly influences per-participant asset levels; structural disparities likely. |
+| LOAN_LEAKAGE_TIER ~ ASSETS_PER_PARTCP_TIER | Spearman	| -0.347 | Higher participant assets correlate with lower leakage; suggests financial resilience. |
+| TOTAL_ASSETS_GROWTH_TIER ~ ASSETS_PER_PARTCP_TIER	| Spearman | -0.298	| Inverse relationship; fast-growing plans may still have low per-participant balances. |
+
+The relationship between participant and employer contributions is structural.  The common form of employer contribution is a match, i.e. as an incentive to employee participation, employers common match deferrals up to a threshold.  So as participant contributions increase, so will employer matching contributions, subject to an upper limit.
 
 # Multicollinearity
 
-Use the custom function `check_multicollinearity_factors` on the income dataset, using the specified predictors. Calculate Variance Inflation Factors (VIFs) to see how much each predictor is correlated with the others.
+Calculate variance inflation factors to see how much each predictor is correlated with the others.
 
-```{r check_multicollinearity}
+```{r}
 predictors <- c("PLAN_VINTAGE_GROUP",
                 "SECTOR_TITLE_SHORT",
                 "PARTCP_GROWTH_TIER",
@@ -89,18 +102,110 @@ rownames(vif_summary) <- NULL
 
 kable(vif_summary, 
       col.names = c("Variable", "VIF"),
+      caption = "VIF Summary",
       format.args = list(big.mark = ","),
       align = c("l", "r"))
 ```
 
-Split data.
+VIFs across predictors are low with all values below 2.1, indicating minimal multicollinearity. Sector dummies show slightly higher VIFs of 1.8–2.0, which is expected due to categorical encoding. Core adequacy signals like growth tiers, leakage, and asset levels are low, supporting stable model interpretability. No immediate concerns for inflation or redundancy.
+
+# Subset Selection With LASSO
+
+Use LASSO with cross-validation to identify key predictors of plan adequacy.
+
+```{r}
+X <- model.matrix(ADEQUACY_IND ~ 
+                    PLAN_VINTAGE_GROUP + 
+                    SECTOR_TITLE_SHORT + 
+                    PARTCP_GROWTH_TIER + 
+                    CONTRIB_PARTCP_GROWTH_TIER + 
+                    CONTRIB_EMPLR_GROWTH_TIER + 
+                    LOAN_LEAKAGE_TIER + 
+                    TOTAL_ASSETS_GROWTH_TIER + 
+                    ASSETS_PER_PARTCP_TIER, 
+                  data = plans)
+
+y <- plans$ADEQUACY_IND
+
+lasso_model <- cv.glmnet(X, y, alpha = 1)
+```
+
+Extract selected predictors.
+
+```{r}
+# Extract coefficients at best lambda.
+
+coef_matrix <- coef(lasso_model, s = "lambda.min")
+
+# Convert to data frame and filter non-zero coefficients.
+
+selected_predictors <- as.data.frame(as.matrix(coef_matrix)) %>%
+  rename(estimate = 1) %>%
+  mutate(term = rownames(coef_matrix)) %>%
+  # filter(estimate != 0) %>%
+  arrange(desc(abs(estimate)))
+
+rownames(selected_predictors) <- NULL
+
+# Preview selected predictors; table summary.
+
+kable(selected_predictors,
+      col.names = c("Estimate", "Term"),
+      caption = "Selected Predictors",
+      format.args = list(big.mark = ","),
+      align = c("l", "l"))
+```
+
+Store original sector levels for comparison.
+
+```{r}
+original_levels <- levels(plans$SECTOR_TITLE_SHORT)
+```
+
+Filter out sector levels that LASSO shrunk to zero.  Keeps only the levels that contributed meaningfully to adequacy prediction.
+
+```{r}
+# Extract non-zero coefficients from lasso.
+
+coef_lasso <- coef(lasso_model, s = "lambda.min")
+
+nonzero_terms <- rownames(coef_lasso)[which(coef_lasso != 0)]
+
+# Identify retained sector levels.
+
+sector_terms <- grep("^SECTOR_TITLE_SHORT", nonzero_terms, value = TRUE)
+
+retained_levels <- gsub("^SECTOR_TITLE_SHORT", "", sector_terms)
+
+# Clean up factor levels in the dataset.
+
+plans$SECTOR_TITLE_SHORT <- factor(plans$SECTOR_TITLE_SHORT, levels = retained_levels)
+```
+
+Compare original and dropped levels; confirm the levels that were removed.
+
+```{r}
+# Show which levels were removed.
+
+setdiff(original_levels, levels(plans$SECTOR_TITLE_SHORT))
+```
+
+# Split Data
+
+Split the dataset into training (70%), validation (15%), and test (15%) sets to support model development, tuning, and final evaluation. This yields approximately:
+
+* Training: 1,165 observations,
+* Validation: 250 observations, and
+* Test: 250 observations.
+
+With 1,665 total observations, a 70/15/15 split is generally appropriate. Each subset remains large enough to support stable estimation and diagnostic review.
 
 ```{r}
 set.seed(91210)
 
 # Initial train/test split.
 
-train_idx <- caret::createDataPartition(plans$ADEQUACY_IND, p = 0.7, list = FALSE)
+train_idx <- createDataPartition(plans$ADEQUACY_IND, p = 0.7, list = FALSE)
 
 plans_train <- plans[train_idx, ]
 
@@ -108,7 +213,7 @@ temp  <- plans[-train_idx, ]
 
 # Split remaining into validation/test.
 
-valid_idx <- caret::createDataPartition(temp$ADEQUACY_IND, p = 0.5, list = FALSE)
+valid_idx <- createDataPartition(temp$ADEQUACY_IND, p = 0.5, list = FALSE)
 
 plans_validate <- temp[valid_idx, ]
 
@@ -133,133 +238,67 @@ check_balance <- function(df, name) {
 
 # Generate data frame.
 
-check <- bind_rows(check_balance(plans_train, "Train"),
+check_split <- bind_rows(check_balance(plans_train, "Train"),
                    check_balance(plans_validate, "Validation"),
                    check_balance(plans_test, "Test"))
 
 # Produce table summary.
 
-kable(check,
+kable(check_split,
       col.names = c("Dataset", "Adequacy Level", "Count", "Percent"),
       caption = "Dataset Class Balance",
       format.args = list(big.mark = ","),
       align = c("l", "r", "r", "r"))
-
 ```
 
-
-
-
-# Subset Selection with LASSO
-
-```{r}
-X <- model.matrix(ADEQUACY_IND ~ 
-                    PLAN_VINTAGE_GROUP + 
-                    SECTOR_TITLE_SHORT + 
-                    PARTCP_GROWTH_TIER + 
-                    CONTRIB_PARTCP_GROWTH_TIER + 
-                    CONTRIB_EMPLR_GROWTH_TIER + 
-                    LOAN_LEAKAGE_TIER + 
-                    TOTAL_ASSETS_GROWTH_TIER + 
-                    ASSETS_PER_PARTCP_TIER, 
-                  data = plans)
-
-y <- plans$ADEQUACY_IND
-
-lasso_model <- cv.glmnet(X, y, alpha = 1)
-```
-
-```{r}
-
-# Step 3: Extract coefficients at best lambda
-coef_matrix <- coef(lasso_model, s = "lambda.min")
-
-# Step 4: Convert to data frame and filter non-zero coefficients
-selected_predictors <- as.data.frame(as.matrix(coef_matrix)) %>%
-  rename(estimate = 1) %>%
-  mutate(term = rownames(coef_matrix)) %>%
-  filter(estimate != 0) %>%
-  arrange(desc(abs(estimate)))
-
-# Step 5: Preview selected predictors
-selected_predictors
-
-
-```
-
-```{r}
-coef_df <- as.data.frame(as.matrix(coef_matrix)) %>%
-  rename(estimate = 1) %>%
-  mutate(term = rownames(coef_matrix))
-
-# Step 5: Filter eliminated predictors (estimate == 0)
-eliminated_predictors <- coef_df %>%
-  filter(estimate == 0)
-
-# Step 6: Preview eliminated terms
-print(eliminated_predictors$term)
-```
-
-# Subset Selection with Leaps
-
-```{r}
-library(leaps)
-
-# Step 1: Fit subset selection model
-subset_model <- regsubsets(ADEQUACY_IND ~ 
-                             PLAN_VINTAGE_GROUP + 
-                    SECTOR_TITLE_SHORT + 
-                    PARTCP_GROWTH_TIER + 
-                    CONTRIB_PARTCP_GROWTH_TIER + 
-                    CONTRIB_EMPLR_GROWTH_TIER + 
-                    LOAN_LEAKAGE_TIER + 
-                    TOTAL_ASSETS_GROWTH_TIER + 
-                    ASSETS_PER_PARTCP_TIER, , data = plans, nvmax = 20)
-
-# Step 2: Extract model summary
-subset_summary <- summary(subset_model)
-
-# Step 3: Identify the best model size (lowest BIC)
-best_size <- which.min(subset_summary$bic)
-
-# Step 4: Extract logical vector of selected predictors
-best_predictors_logical <- subset_summary$which[best_size, ]
-
-# Step 5: Convert to character vector of predictor names
-best_predictors <- names(best_predictors_logical[best_predictors_logical])  # includes intercept
-
-# Step 6: Remove intercept if present
-best_predictors <- setdiff(best_predictors, "(Intercept)")
-
-# Step 7: Preview selected predictors
-print(best_predictors)
-
-```
+The 70/15/15 split maintains a reasonably balanced adequacy class distribution across all subsets. Each split preserves the slight majority of inadequate plans (~53–57%), ensuring consistency for training, tuning, and evaluation without introducing class imbalance bias.
 
 # Logistic Model
 
+Produce logistic model and summary output.
+
 ```{r}
 model_logistic <- glm(ADEQUACY_IND ~ 
-                        PARTCP_GROWTH_TIER + 
+                        SECTOR_TITLE_SHORT + 
+                        PLAN_VINTAGE_GROUP + 
+                        CONTRIB_EMPLR_GROWTH_TIER + 
                         CONTRIB_PARTCP_GROWTH_TIER + 
-                        LOAN_LEAKAGE_TIER + 
+                        PARTCP_GROWTH_TIER + 
+                        ASSETS_PER_PARTCP_TIER +
                         TOTAL_ASSETS_GROWTH_TIER + 
-                        ASSETS_PER_PARTCP_TIER,
-                      data = plans, family = "binomial")
+                        LOAN_LEAKAGE_TIER,
+                      data = plans_train, family = "binomial")
 
-```
-
-
-```{r}
 summary(model_logistic)
 ```
+
+The initial logistic regression model identifies strong, statistically significant predictors of plan adequacy, primarily driven by contribution and participant growth tiers, asset accumulation, and loan leakage. Sector and vintage group variables were retained from LASSO but show weak or inconsistent significance, suggesting limited standalone predictive power. Overall, the model confirms that structural growth and leakage dynamics are the dominant adequacy signals.
+
+Drop both variables and rerun the logistic model.
+
+```{r}
+model_logistic <- glm(ADEQUACY_IND ~ 
+                        CONTRIB_EMPLR_GROWTH_TIER + 
+                        CONTRIB_PARTCP_GROWTH_TIER + 
+                        PARTCP_GROWTH_TIER + 
+                        ASSETS_PER_PARTCP_TIER +
+                        TOTAL_ASSETS_GROWTH_TIER + 
+                        LOAN_LEAKAGE_TIER,
+                      data = plans_train, family = "binomial")
+
+summary(model_logistic)
+```
+
+The refined logistic regression model confirms that plan adequacy is strongly predicted by contribution growth, participant growth, asset accumulation, and loan leakage. All included predictors are statistically significant, with linear growth tiers showing the strongest positive effects. Quadratic terms reveal curvature in adequacy dynamics, i.e. some signals taper or reverse at higher levels. Loan leakage remains a powerful negative predictor, reinforcing its role as an erosion signal. 
+
+While the full model yielded a lower AIC, the refined model retains only statistically strong predictors, improving interpretability and stakeholder clarity without sacrificing diagnostic power.
 
 Plot residuals.
 
 ```{r}
 resid_df <- data.frame(fitted = fitted(model_logistic),
                        residuals = residuals(model_logistic, type = "pearson"),
-                       actual = plans$ADEQUACY_IND)
+                       actual = plans_train$ADEQUACY_IND)
 
 # Convert actual outcome to factor for faceting.
 
@@ -276,10 +315,11 @@ ggplot(resid_df, aes(x = fitted, y = residuals)) +
        x = "Fitted Values",
        y = "Pearson Residuals") +
   theme_minimal()
-
 ```
 
-Binned residuals
+The Pearson residuals plot shows a well-behaved model with residuals centered around zero and no visible patterns or heteroscedasticity. A few mild outliers appear, but overall, the residuals suggest stable fit and no major structural issues.
+
+Show binned residuals.
 
 ```{r}
 arm::binnedplot(x = fitted(model_logistic),
@@ -287,40 +327,137 @@ arm::binnedplot(x = fitted(model_logistic),
          xlab = "Fitted Probabilities",
          ylab = "Average Residuals",
          main = "Binned Residual Plot")
-
 ```
 
-Predict class scores.
+The binned residual plot shows a well-calibrated model overall, with residuals centered near zero and tight confidence bounds. Minor deviations at the probability extremes suggest possible nonlinear effects or sparse data, but no major signs of misspecification.
+
+Predict class scores on the training set.
 
 ```{r}
-plans$predicted_prob <- predict(model_logistic, type = "response")
-```
+plans_train$predicted_prob <- predict(model_logistic, type = "response")
 
-```{r}
 threshold <- 0.5
 
-plans$predicted_class <- ifelse(plans$predicted_prob > 0.5, 1, 0)
+plans_train$predicted_class <- ifelse(plans_train$predicted_prob > 0.5, 1, 0)
 
-cm_logistic_train <- caret::confusionMatrix(factor(plans$predicted_class),
-                                            factor(plans$ADEQUACY_IND))
+cm_logistic_train <- confusionMatrix(factor(plans_train$predicted_class),
+                                     factor(plans_train$ADEQUACY_IND))
 
 cm_logistic_train
-
 ```
+
+The confusion matrix shows strong model performance with nearly 90% accuracy, balanced sensitivity and specificity, and high predictive values. Classification is consistent across adequacy outcomes, with no significant bias in misclassification.
+
+McNemar’s Test evaluates whether the model’s misclassifications are symmetrically distributed; in other words, whether it tends to misclassify one class more than the other.
+
+A p-value of 0.5791 means there's no significant difference between false positives and false negatives. That’s good: it indicates the model isn’t biased toward predicting adequacy or inadequacy. It’s balanced in its errors.
+
+In short, the classifier is fair in how it misclassifies, with no directional skew.
 
 Generate ROC.
 
 ```{r}
-roc_obj_log <- pROC::roc(plans$ADEQUACY_IND, plans$predicted_prob)
-## Setting levels: control = 0, case = 1
-## Setting direction: controls < cases
-plot(roc_obj_log, col = "steelblue", main = "ROC Curve for Logistic Regression")
+roc_obj_log <- pROC::roc(plans_train$ADEQUACY_IND, plans_train$predicted_prob)
 
+plot(roc_obj_log, col = "steelblue", main = "ROC Curve for Logistic Regression")
 ```
 
-AUC.
+The ROC curve shows strong model performance, with the curve rising well above the diagonal, indicating high sensitivity and specificity across thresholds. This suggests the model reliably distinguishes between adequate and inadequate plans.
+
+Generate model AUC.
 
 ```{r}
 pROC::auc(roc_obj_log)
 ```
+
+An AUC of 0.9605 indicates excellent model performance. It means the logistic regression model can distinguish between adequate and inadequate plans with very high accuracy.  Over 96% of the time, it ranks a randomly chosen adequate plan higher than an inadequate one. This confirms strong diagnostic power and reliable classification across thresholds.
+
+# Random Forest Model
+
+Generate random forest model and show model performance.
+
+```{r}
+plans_train$ADEQUACY_IND <- as.factor(plans_train$ADEQUACY_IND)
+
+rf_model <- randomForest(ADEQUACY_IND ~ 
+                           CONTRIB_EMPLR_GROWTH_TIER + 
+                           CONTRIB_PARTCP_GROWTH_TIER +
+                           PARTCP_GROWTH_TIER + 
+                           ASSETS_PER_PARTCP_TIER + 
+                           TOTAL_ASSETS_GROWTH_TIER +
+                           LOAN_LEAKAGE_TIER,
+                         data = plans_train,
+                         ntree = 500,
+                         mtry = 3,
+                         importance = TRUE)
+
+print(rf_model)
+```
+
+The random forest model shows strong classification performance with an out-of-bag error rate of 11.66%. Class error rates are 9.6% for inadequate plans and 13.97% for adequate plans, indicating slightly more misclassification on the adequate side but overall balanced and reliable predictions.
+
+Generate a variable importance plot.
+
+```{r}
+varImpPlot(rf_model, type = 2, main = "Random Forest Variable Importance")
+```
+
+The random forest model confirms that contribution growth, especially participant-driven, is the strongest predictor of plan adequacy, followed closely by employer contributions and loan leakage. This resonates as industry studies confirm that those who contribute consistently to retirement savings are generally more financially prepared for this life event.   
+
+Asset-based tiers play a supporting role, while total asset growth shows the least influence.  Overall plan asset growth is often driven by quality of plan investments, economic drivers, and financial performance.
+
+Generate prediction on training data and confusion matrix.
+
+```{r}
+rf_preds <- predict(rf_model, newdata = plans_train, type = "response")
+
+table(Predicted = rf_preds, Actual = plans_train$ADEQUACY_IND)
+```
+
+The random forest model performs exceptionally well in-sample, correctly classifying over 92% of plans. It shows balanced sensitivity and specificity, with slightly more false positives than false negatives. Overall, the model demonstrates strong predictive power and fairness across adequacy outcomes.
+
+```{r}
+rf_probs <- predict(rf_model, newdata = plans_train, type = "prob")[,1]  # Class 0 probs
+
+roc_obj <- roc(plans_train$ADEQUACY_IND, rf_probs, levels = c("1", "0"), direction = "<")
+
+plot(roc_obj, col = "steelblue", main = "Random Forest ROC Curve")
+
+```
+
+The random forest ROC curve shows strong diagnostic performance, with the curve hugging the top-left corner.  This indicates high sensitivity and specificity across thresholds. It confirms the model’s ability to reliably distinguish between adequate and inadequate plans.
+
+Generate model AUC.
+
+```{r}
+auc(roc_obj)
+```
+
+An AUC of 0.9779 signals outstanding classification performance. The random forest model distinguishes adequate from inadequate plans with near-perfect precision.
+
+# Validate Models
+
+## Logistic Regression
+
+```{r}
+pred_probs_logistic <- predict(model_logistic, newdata = plans_validate, type = "response")
+
+class_pred_logistic <- ifelse(pred_probs_logistic >= 0.5, 1, 0)
+
+cm_logistic_validate <- caret::confusionMatrix(factor(class_pred_logistic),
+                                            factor(plans_validate$ADEQUACY_IND))
+
+cm_logistic_validate
+```
+
+Based on these metrics, the logistic model generalizes well. The slight drop in specificity on the validation set (compared to the metrics for the training set), paired with a significant McNemar result, hints at a modest skew toward false positives, i.e. adequate plans mis-classified as inadequate.  The model is accurate overall, but the error distribution isn’t balanced. This contrasts with the training set McNemar result (0.5791), which showed no directional bias.
+
+## Random Forest Model
+
+```{r}
+rf_preds <- predict(rf_model, newdata = plans_validate, type = "response")
+
+table(Predicted = rf_preds, Actual = plans_validate$ADEQUACY_IND)
+```
+
 
