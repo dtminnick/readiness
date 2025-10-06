@@ -42,13 +42,15 @@ A key challenge in this project was designing a response variable that reflects 
 
 ### Separation of Label Logic and Predictive Features
 
-The binary adequacy label was constructed using six interpretable indicators of financial readiness, each evaluated against fixed thresholds. However, these raw features and thresholds were not used directly in model training. Instead, I engineered sector-stratified tiered versions of each feature — ordinal factors based on intra-sector quartiles — to serve as predictors. This separation ensured that models learned relative structural signals, not the original rule logic.
+The binary adequacy label was constructed using six interpretable indicators of financial readiness, each evaluated against fixed thresholds. However, these raw features and thresholds were not used directly in model training. Instead, I engineered sector-stratified tiered versions of each feature — ordinal factors based on intra-sector quartiles — to serve as predictors. This separation ensured that models learned relative structural signals, not the original rule logic.  
 
 Example: While the adequacy label includes a rule for assets per participant > $59,000, the predictive feature is a tiered factor (Low, Moderate, Typical, High) based on sector-specific quartiles.
 
+Appendix C details the implementation of the adequacy label and tiered predictors.
+
 ### Thresholds as Diagnostic Heuristics
 
-The thresholds used in the adequacy score were selected to reflect meaningful benchmarks in retirement plan behavior — not to encode deterministic truths. For instance, the $59,000 asset-per-participant threshold approximates a mid-career savings benchmark, while the 1.3% loan leakage ratio reflects a tolerable level of plan borrowing. These thresholds were intended as diagnostic heuristics, not definitive cutoffs, and were applied uniformly across sectors to maintain interpretability.
+The thresholds used in the adequacy score were selected to reflect meaningful benchmarks in retirement plan behavior, not to encode deterministic truths. For instance, the $59,000 asset-per-participant threshold approximates a mid-career savings benchmark, while the 1.3% loan leakage ratio reflects a tolerable level of plan borrowing. These thresholds were intended as diagnostic heuristics, not definitive cutoffs, and were applied uniformly across sectors to maintain interpretability.
 
 ### Fairness-Aware Tiering to Promote Generalization
 
@@ -134,7 +136,7 @@ Future work could calibrate these thresholds using stakeholder input or longitud
 
 ### Objection 2: “A binary label oversimplifies a continuous concept.”
 
-This is true; financial adequacy does exist on a spectrum. However, binary classification was chosen for clarity, interpretability, and alignment with stakeholder decision-making (e.g. flagging plans for review). The composite score allows for gradation, and the cutoff at 4 out of 6 reflects a balance between inclusivity and rigor. 
+This is true; financial adequacy does exist on a spectrum and is multi-faceted. However, binary classification was chosen for clarity, interpretability, and alignment with stakeholder decision-making (e.g. flagging plans for review). The composite score allows for gradation, and the cutoff at 4 out of 6 reflects a balance between inclusivity and rigor. 
 
 I acknowledge this simplification and propose exploring ordinal tiers or probabilistic scoring in future iterations.
 
@@ -156,6 +158,37 @@ Form 5500 filings provide standardized, auditable plan-level data — ideal for 
 
 Future work could integrate individual-level data where available to refine adequacy modeling.
 
-## Appendix C: Glossary
+## Appendix C: Structural Adequacy Scoring and Tiered Feature Engineering
 
-Definitions of engineered features and adequacy logic
+### Adequacy Scoring
+
+To classify retirement plans as structurally “adequate” or “inadequate,” I developed a composite Adequacy Score based on six interpretable indicators of financial readiness: 
+
+* **Assets per Participant**: Is the average account balance above $59,000? 
+* **Asset Growth Rate**: Did total assets grow by more than 10%? 
+* **Participant Growth Rate**: Did the number of participants grow by more than 3%?
+* **Participant Contribution Growth**: Did participant contributions grow by more than 10%? 
+* **Employer Contribution Growth**: Did employer contributions grow by more than 7%? 
+* **Loan Leakage Ratio**: Is the ratio of outstanding loans to total assets below 1.3%? 
+
+Each condition contributes one point to the ADEQUACY_SCORE, yielding a range from 0 to 6. Plans scoring 4 or higher are labeled as “Adequate”, while others are labeled “Inadequate”. 
+
+**[Insert preview table: distribution of ADEQUACY_SCORE and label counts]**
+
+### Sector-Aware Tiering for Predictive Features
+
+To prevent models from memorizing the adequacy rules and to promote generalization, I engineered sector-stratified tiered features for prediction. 
+
+Each numeric feature was converted into a quartile-based ordinal factor within its sector: 
+
+| Feature                         | Tier Labels (Low to High)    | 
+|-------------------------------- | ---------------------------- | 
+| Assets per Participant          | Low, Moderate, Typical, High | 
+| Asset Growth Rate               | Low, Moderate, Typical, High |
+| Participant Growth Rate         | Low, Moderate, Typical, High | 
+| Participant Contribution Growth | Low, Moderate, Typical, High | 
+| Employer Contribution Growth    | Low, Moderate, Typical, High | 
+| Loan Leakage Ratio              | High, Typical, Moderate, Low | 
+
+This tiering approach ensures that models learn relative structural signals rather than absolute thresholds, improving fairness and interpretability across sectors.
+

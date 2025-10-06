@@ -3,9 +3,8 @@ title: "Classifying Retirement Plan Financial Adequacy Using Form 5500 Data"
 author: "Donnie Minnick, Statistical Learning - Fall A 2025"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output:
-  html_document:
-    df_print: paged
-  word_document: default
+  md_document:
+    variant: gfm   # GitHub-flavored Markdown (optional)
 subtitle: "A Structural Diagnostic Approach to Retirement Plan Adequacy"
 ---
 
