@@ -4,7 +4,7 @@ author: "Donnie Minnick, Statistical Learning - Fall A 2025"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output:
   md_document:
-    variant: gfm   # GitHub-flavored Markdown (optional)
+    variant: gfm
 subtitle: "A Structural Diagnostic Approach to Retirement Plan Adequacy"
 ---
 
@@ -36,23 +36,23 @@ This project is organized into a modular notebook structure that mirrors the ful
   </tr>
   <tr>
     <td style="text-align: left; vertical-align: top;">`2_eda_transform.Rmd`</td>
-    <td style="text-align: left; vertical-align: top;">Exploratory Data Analysis and Transformation</td>
+    <td style="text-align: left; vertical-align: top;">Exploratory Data Analysis and Data Transformation</td>
     <td style="text-align: left; vertical-align: top;">Data import, missingness diagnostics, feature engineering, and stratified sampling</td>
   </tr>
   <tr>
     <td style="text-align: left; vertical-align: top;">`3_multicol_split.Rmd`</td>
-    <td style="text-align: left; vertical-align: top;">Candidate Model Training</td>
-    <td style="text-align: left; vertical-align: top;">Logistic regression and random forest setup, cross-validation, fairness overlays, residual diagnostics, ROC/AUC curves, confusion matrices</td>
+    <td style="text-align: left; vertical-align: top;">Data Checks, Selection and Splits</td>
+    <td style="text-align: left; vertical-align: top;">Predictor associations, multicollinearity checks, subset selection, data splits</td>
   </tr>
   <tr>
-    <td style="text-align: left; vertical-align: top;">`5_final_evaluation.Rmd`</td>
-    <td style="text-align: left; vertical-align: top;">Holdout Test Evaluation</td>
-    <td style="text-align: left; vertical-align: top;">Final model performance, sector-level diagnostics, stakeholder-ready summary</td>
+    <td style="text-align: left; vertical-align: top;">`4_model_eval.Rmd`</td>
+    <td style="text-align: left; vertical-align: top;">Model Training and Evaluation</td>
+    <td style="text-align: left; vertical-align: top;">Model training and performance evaluation</td>
   </tr>
   <tr>
-    <td style="text-align: left; vertical-align: top;">`6_project_report.Rmd`</td>
+    <td style="text-align: left; vertical-align: top;">`5_final_report.Rmd`</td>
     <td style="text-align: left; vertical-align: top;">Final Report for Assignment Submission</td>
-    <td style="text-align: left; vertical-align: top;">Final Report for Assignment Submission</td>
+    <td style="text-align: left; vertical-align: top;">Summary of project and findings</td>
   </tr>
 </table>
 
@@ -64,7 +64,10 @@ The dataset provides a rich foundation for classifying retirement plans by parti
 
 Financial flows are well represented: employer and participant contributions, loans, distributions, and asset transfers offer a dynamic view of plan liquidity and engagement. Asset metrics at beginning and end of year support derived measures of growth, volatility, and adequacy.
 
+# Problem Type
+
 This is a classification problem, with the target variable defined as a binary label: adequate vs. inadequate, based on engineered thresholds for savings adequacy, engagement, and leakage.
+
 To classify retirement plans as structurally adequate or insufficient, I plan to engineer features that capture how well a plan enables saving, accommodates financial stress, and combats participant inertia. Ratios like participation rate, contribution per participant, and leakage burden offer interpretable signals of plan adequacy, while stratified diagnostics across industries and plan sizes support fairness and stakeholder relevance.
 
 # Model Selection
@@ -75,7 +78,7 @@ To build a principled and interpretable classifier, I plan to explore:
 
 * **Random Forest**: To capture nonlinear relationships and assess feature importance.
 
-Each model will be evaluated using ROC/AUC, confusion matrices, and fairness overlays across industries and plan sizes. I’ll also use residual diagnostics to identify misclassified plans and explore macroeconomic sensitivity.
+Each model will be evaluated using ROC/AUC, confusion matrices, and accuracy metrics. I’ll also use residual diagnostics to identify misclassified plans.
 
 # Data Leakage Avoidance
 
@@ -89,13 +92,13 @@ There is a risk that the classifier could be misinterpreted as a judgment of ind
 
 While investment selection and performance are undeniably a component of retirement readiness, this analysis intentionally excludes direct investment-level data, e.g. asset allocation, fund returns, volatility, from the classification model. The rationale is twofold:
 
-Structural Focus: This project emphasizes plan-level structural indicators, such as participation, contributions, leakage, and fee burden, that reflect how well a plan enables participants to save. These are actionable, interpretable, and directly tied to sponsor decisions.
+**Structural Focus**: This project emphasizes plan-level structural indicators, such as participation, contributions, leakage, and fee burden, that reflect how well a plan enables participants to save. These are actionable, interpretable, and directly tied to sponsor decisions.
 
-Data Limitations: Investment details in Form 5500 filings are often inconsistently reported, difficult to normalize across plans, and not reliably attributable to participant outcomes without individual-level data.
+**Data Limitations**: Investment details in Form 5500 filings are often inconsistently reported, difficult to normalize across plans, and not reliably attributable to participant outcomes without individual-level data.
 
 By focusing on structural adequacy rather than investment performance, the model aims to provide a principled, diagnostic view of retirement plan readiness that is both reproducible and stakeholder-relevant.
 
-#Lack of Participant-Level Financial Context
+# Lack of Participant-Level Financial Context
 
 One potential weakness is that this model cannot account for individual participant financial circumstances, such as income, debt, employment status, or household dynamics, that directly influence contribution and withdrawal behavior. While the classifier uses plan-level structural indicators, e.g. participation rate, average balance, leakage volume, it cannot infer whether low savings or high leakage is due to plan design or external financial hardship.
 
@@ -107,7 +110,8 @@ Another concern is that participation in retirement plans is shaped not only by 
 
 For many individuals, the ability to access funds through loans or hardship withdrawals is essential.  Locking up assets in a retirement plan without this flexibility can deter enrollment, especially in financially vulnerable populations. 
 
-Moreover, inertia plays a powerful role: if a participant is not automatically enrolled and contributions are not deducted from payroll, saving requires deliberate action. Most people don’t take that step. 
+Moreover, inertia plays a powerful role: if a participant is not automatically enrolled and contributions are not deducted from payroll, saving requires deliberate action. Most people don’t take that step.
+
 These behavioral dynamics mean that low participation or contribution rates may reflect financial constraints or plan accessibility issues, not simply a lack of retirement readiness. This underscores the importance of interpreting model outputs as structural diagnostics, not judgments of individual behavior.
 
 # Ethical Considerations

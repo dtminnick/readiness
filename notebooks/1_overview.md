@@ -73,7 +73,7 @@ Key Contents
 
 <td style="text-align: left; vertical-align: top;">
 
-Exploratory Data Analysis and Transformation
+Exploratory Data Analysis and Data Transformation
 </td>
 
 <td style="text-align: left; vertical-align: top;">
@@ -93,33 +93,13 @@ stratified sampling
 
 <td style="text-align: left; vertical-align: top;">
 
-Candidate Model Training
+Data Checks, Selection and Splits
 </td>
 
 <td style="text-align: left; vertical-align: top;">
 
-Logistic regression and random forest setup, cross-validation, fairness
-overlays, residual diagnostics, ROC/AUC curves, confusion matrices
-</td>
-
-</tr>
-
-<tr>
-
-<td style="text-align: left; vertical-align: top;">
-
-`5_final_evaluation.Rmd`
-</td>
-
-<td style="text-align: left; vertical-align: top;">
-
-Holdout Test Evaluation
-</td>
-
-<td style="text-align: left; vertical-align: top;">
-
-Final model performance, sector-level diagnostics, stakeholder-ready
-summary
+Predictor associations, multicollinearity checks, subset selection, data
+splits
 </td>
 
 </tr>
@@ -128,7 +108,26 @@ summary
 
 <td style="text-align: left; vertical-align: top;">
 
-`6_project_report.Rmd`
+`4_model_eval.Rmd`
+</td>
+
+<td style="text-align: left; vertical-align: top;">
+
+Model Training and Evaluation
+</td>
+
+<td style="text-align: left; vertical-align: top;">
+
+Model training and performance evaluation
+</td>
+
+</tr>
+
+<tr>
+
+<td style="text-align: left; vertical-align: top;">
+
+`5_final_report.Rmd`
 </td>
 
 <td style="text-align: left; vertical-align: top;">
@@ -138,7 +137,7 @@ Final Report for Assignment Submission
 
 <td style="text-align: left; vertical-align: top;">
 
-Final Report for Assignment Submission
+Summary of project and findings
 </td>
 
 </tr>
@@ -175,14 +174,17 @@ view of plan liquidity and engagement. Asset metrics at beginning and
 end of year support derived measures of growth, volatility, and
 adequacy.
 
+# Problem Type
+
 This is a classification problem, with the target variable defined as a
 binary label: adequate vs. inadequate, based on engineered thresholds
-for savings adequacy, engagement, and leakage. To classify retirement
-plans as structurally adequate or insufficient, I plan to engineer
-features that capture how well a plan enables saving, accommodates
-financial stress, and combats participant inertia. Ratios like
-participation rate, contribution per participant, and leakage burden
-offer interpretable signals of plan adequacy, while stratified
+for savings adequacy, engagement, and leakage.
+
+To classify retirement plans as structurally adequate or insufficient, I
+plan to engineer features that capture how well a plan enables saving,
+accommodates financial stress, and combats participant inertia. Ratios
+like participation rate, contribution per participant, and leakage
+burden offer interpretable signals of plan adequacy, while stratified
 diagnostics across industries and plan sizes support fairness and
 stakeholder relevance.
 
@@ -197,9 +199,8 @@ To build a principled and interpretable classifier, I plan to explore:
   feature importance.
 
 Each model will be evaluated using ROC/AUC, confusion matrices, and
-fairness overlays across industries and plan sizes. I’ll also use
-residual diagnostics to identify misclassified plans and explore
-macroeconomic sensitivity.
+accuracy metrics. I’ll also use residual diagnostics to identify
+misclassified plans.
 
 # Data Leakage Avoidance
 
@@ -227,12 +228,12 @@ retirement readiness, this analysis intentionally excludes direct
 investment-level data, e.g. asset allocation, fund returns, volatility,
 from the classification model. The rationale is twofold:
 
-Structural Focus: This project emphasizes plan-level structural
+**Structural Focus**: This project emphasizes plan-level structural
 indicators, such as participation, contributions, leakage, and fee
 burden, that reflect how well a plan enables participants to save. These
 are actionable, interpretable, and directly tied to sponsor decisions.
 
-Data Limitations: Investment details in Form 5500 filings are often
+**Data Limitations**: Investment details in Form 5500 filings are often
 inconsistently reported, difficult to normalize across plans, and not
 reliably attributable to participant outcomes without individual-level
 data.
@@ -241,7 +242,7 @@ By focusing on structural adequacy rather than investment performance,
 the model aims to provide a principled, diagnostic view of retirement
 plan readiness that is both reproducible and stakeholder-relevant.
 
-\#Lack of Participant-Level Financial Context
+# Lack of Participant-Level Financial Context
 
 One potential weakness is that this model cannot account for individual
 participant financial circumstances, such as income, debt, employment
@@ -271,6 +272,7 @@ financially vulnerable populations.
 Moreover, inertia plays a powerful role: if a participant is not
 automatically enrolled and contributions are not deducted from payroll,
 saving requires deliberate action. Most people don’t take that step.
+
 These behavioral dynamics mean that low participation or contribution
 rates may reflect financial constraints or plan accessibility issues,
 not simply a lack of retirement readiness. This underscores the
