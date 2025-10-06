@@ -3,9 +3,8 @@ title: "Classifying Retirement Plan Financial Adequacy Using Form 5500 Data"
 author: "Donnie Minnick, Statistical Learning - Fall A 2025"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output:
-  html_document:
-    df_print: paged
-  word_document: default
+  md_document:
+    variant: gfm
 subtitle: "Final Project Report"
 ---
 
@@ -61,13 +60,6 @@ By stratifying features within sectors and converting them to ordinal tiers, I r
 To validate that models were not simply reproducing the label rules, I conducted residual diagnostics and misclassification analysis. These revealed that models occasionally misclassified high-scoring plans and correctly identified borderline cases — suggesting that they were learning latent structural patterns, not just memorizing thresholds.
 
 I also considered potential objections to this approach and noted my responses in the Appendix to this report.
-
-
-
-
-
-
-
 
 # Modeling Approach
 
@@ -191,4 +183,3 @@ Each numeric feature was converted into a quartile-based ordinal factor within i
 | Loan Leakage Ratio              | High, Typical, Moderate, Low | 
 
 This tiering approach ensures that models learn relative structural signals rather than absolute thresholds, improving fairness and interpretability across sectors.
-
