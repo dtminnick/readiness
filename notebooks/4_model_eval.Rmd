@@ -3,10 +3,9 @@ title: "Classifying Retirement Plan Financial Adequacy Using Form 5500 Data"
 author: "Donnie Minnick, Statistical Learning - Fall A 2025"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output:
-  html_document:
-    df_print: paged
-  word_document: default
-subtitle: "Candidate Model Training and Comparison"
+  md_document:
+    variant: gfm
+subtitle: "Model Training and Evaluation"
 ---
 
 # Pipeline Scope 
@@ -421,16 +420,18 @@ misclass_long <- class_check %>%
                            grepl("^RF", Model_Error) ~ "Random Forest"),
          Error_Type = case_when(grepl("FN$", Model_Error) ~ "False Negative",
                                 grepl("FP$", Model_Error) ~ "False Positive"))
-
 ggplot(misclass_long, aes(x = factor(ADEQUACY_SCORE), y = Count, fill = Error_Type)) +
   geom_bar(stat = "identity", position = "dodge") +
-  geom_vline(xintercept = 5, linetype = "dashed", color = "black", linewidth = 0.8) +
+  # geom_vline(xintercept = 4.5, linetype = "dashed", color = "black", linewidth = 0.8) +
   facet_wrap(~ Model) +
+  scale_fill_manual(values = c("steelblue", "lightsteelblue")) +
   labs(title = "Misclassifications by Adequacy Score",
        x = "Adequacy Score",
        y = "Count",
        fill = "Error Type") +
-  theme_minimal()
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5),
+        plot.title = element_text(size = 14, face = "bold"))
 ```
 
 # High-Level Takeaways
