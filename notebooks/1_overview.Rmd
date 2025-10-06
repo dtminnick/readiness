@@ -36,17 +36,12 @@ This project is organized into a modular notebook structure that mirrors the ful
     <th style="width: 40%;">Key Contents</th>
   </tr>
   <tr>
-    <td style="text-align: left; vertical-align: top;">`2_eda_transformation.Rmd`</td>
+    <td style="text-align: left; vertical-align: top;">`2_eda_transform.Rmd`</td>
     <td style="text-align: left; vertical-align: top;">Exploratory Data Analysis and Transformation</td>
-    <td style="text-align: left; vertical-align: top;">Data import, missingness diagnostics, sector stratification, outlier flags, feature engineering</td>
+    <td style="text-align: left; vertical-align: top;">Data import, missingness diagnostics, feature engineering</td>
   </tr>
   <tr>
-    <td style="text-align: left; vertical-align: top;">`3_normalization.Rmd`</td>
-    <td style="text-align: left; vertical-align: top;">Normalization and Sector-Aware Scaling</td>
-    <td style="text-align: left; vertical-align: top;">Sector-level mean/SD, outlier exclusion, z-score normalization, fallback logic, density plots</td>
-  </tr>
-  <tr>
-    <td style="text-align: left; vertical-align: top;">`4_model_training_comparison.Rmd`</td>
+    <td style="text-align: left; vertical-align: top;">`3_multicol_split.Rmd`</td>
     <td style="text-align: left; vertical-align: top;">Candidate Model Training</td>
     <td style="text-align: left; vertical-align: top;">Logistic regression and random forest setup, cross-validation, fairness overlays, residual diagnostics, ROC/AUC curves, confusion matrices</td>
   </tr>
