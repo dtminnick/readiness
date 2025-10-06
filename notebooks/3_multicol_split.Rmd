@@ -1,0 +1,284 @@
+---
+title: "Classifying Retirement Plan Financial Adequacy Using Form 5500 Data"
+author: "Donnie Minnick, Statistical Learning - Fall A 2025"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output:
+  html_document:
+    df_print: paged
+  word_document: default
+subtitle: "Candidate Model Training and Comparison"
+---
+
+# Pipeline Scope 
+
+This notebook encompasses checking variable associations, multicollinearity checks, subset selection, and training and evaluation of logistic regression and random forest models.
+
+# Load Libraries
+
+This analysis leverages the following R packages: `dplyr`, `lubridate`, '`stringr` and `tidyr` for data manipulation, `knitr` for report formatting, and `ggplot2` and `ggridges` for visualization.
+
+I use two customized R functions for variable associations and multicollinearity checks.
+
+```{r echo = FALSE, message = FALSE}
+library("caret")
+library("dplyr")
+library("ggplot2")
+library("glmnet")
+library("knitr")
+library("pROC")
+library("randomForest")
+
+source("../R/check_multicollinearity_factors.R")
+source("../R/test_predictor_associations.R")
+```
+
+# Load Data
+
+Load transformed Form 5500 data.
+
+```{r}
+plans <- readRDS("../data/plans_transformed.rds")
+```
+
+# Check Correlations
+
+Check for correlations among signal predictors.
+
+```{r}
+predictors <- c("PLAN_VINTAGE_GROUP",
+                "SECTOR_TITLE_SHORT",
+                "PARTCP_GROWTH_TIER_Q",
+                "CONTRIB_PARTCP_GROWTH_TIER_Q",
+                "CONTRIB_EMPLR_GROWTH_TIER_Q",
+                "LOAN_LEAKAGE_TIER_Q",
+                "TOTAL_ASSETS_GROWTH_TIER_Q",
+                "ASSETS_PER_PARTCP_TIER_Q")
+
+ordinal_vars <- c("PARTCP_GROWTH_TIER_Q",
+                  "CONTRIB_PARTCP_GROWTH_TIER_Q",
+                  "CONTRIB_EMPLR_GROWTH_TIER_Q",
+                  "LOAN_LEAKAGE_TIER_Q",
+                  "TOTAL_ASSETS_GROWTH_TIER_Q",
+                  "ASSETS_PER_PARTCP_TIER_Q")
+
+# Run the function to generate correlations summary.
+
+assoc_summary <- test_predictor_associations(plans, predictors, ordinal_vars)
+
+rownames(assoc_summary) <- NULL
+
+write.csv(assoc_summary, "../outputs/signal_association_summary.csv")
+```
+
+## Notable Signal Associations
+
+| Pair | Type	| Value	| Interpretation |
+| ---- | ---- | ----- | -------------- |
+| CONTRIB_PARTCP_GROWTH_TIER ~ CONTRIB_EMPLR_GROWTH_TIER | Spearman	| 0.485	| Strong mutual reinforcement between participant and employer contributions. |
+| PLAN_VINTAGE_GROUP ~ TOTAL_ASSETS_GROWTH_TIER	| Cramér’s V | 0.314 | Vintage moderately predicts asset growth; older plans tend to accumulate more. |
+| SECTOR_TITLE_SHORT ~ ASSETS_PER_PARTCP_TIER	| Cramér’s V | 0.321 | Sector strongly influences per-participant asset levels; structural disparities likely. |
+| LOAN_LEAKAGE_TIER ~ ASSETS_PER_PARTCP_TIER | Spearman	| -0.347 | Higher participant assets correlate with lower leakage; suggests financial resilience. |
+| TOTAL_ASSETS_GROWTH_TIER ~ ASSETS_PER_PARTCP_TIER	| Spearman | -0.298	| Inverse relationship; fast-growing plans may still have low per-participant balances. |
+
+The relationship between participant and employer contributions is structural.  The common form of employer contribution is a match, i.e. as an incentive to employee participation, employers common match deferrals up to a threshold.  So as participant contributions increase, so will employer matching contributions, subject to an upper limit.
+
+# Multicollinearity
+
+Calculate variance inflation factors to see how much each predictor is correlated with the others.
+
+```{r}
+predictors <- c("PLAN_VINTAGE_GROUP",
+                "SECTOR_TITLE_SHORT",
+                "PARTCP_GROWTH_TIER_Q",
+                "CONTRIB_PARTCP_GROWTH_TIER_Q",
+                "CONTRIB_EMPLR_GROWTH_TIER_Q",
+                "LOAN_LEAKAGE_TIER_Q",
+                "TOTAL_ASSETS_GROWTH_TIER_Q",
+                "ASSETS_PER_PARTCP_TIER_Q")
+
+vif_summary <- check_multicollinearity_factors(plans, predictors)
+
+rownames(vif_summary) <- NULL
+
+kable(vif_summary, 
+      col.names = c("Variable", "VIF"),
+      caption = "VIF Summary",
+      format.args = list(big.mark = ","),
+      align = c("l", "r"))
+```
+
+VIFs across predictors are low with all values below 2.0, indicating minimal multicollinearity. Sector dummies show slightly higher VIFs of 1.10 to 1.91, which is expected due to categorical encoding. Core adequacy signals like growth tiers, leakage, and asset levels are low, supporting stable model interpretability. No immediate concerns for inflation or redundancy.
+
+# Subset Selection With LASSO
+
+Use LASSO with cross-validation to identify key predictors of plan adequacy.
+
+```{r}
+X <- model.matrix(ADEQUACY_IND ~ 
+                    PLAN_VINTAGE_GROUP + 
+                    SECTOR_TITLE_SHORT + 
+                    PARTCP_GROWTH_TIER_Q + 
+                    CONTRIB_PARTCP_GROWTH_TIER_Q + 
+                    CONTRIB_EMPLR_GROWTH_TIER_Q + 
+                    LOAN_LEAKAGE_TIER_Q + 
+                    TOTAL_ASSETS_GROWTH_TIER_Q + 
+                    ASSETS_PER_PARTCP_TIER_Q, 
+                  data = plans)
+
+y <- as.numeric(plans$ADEQUACY_IND) - 1
+
+lasso_model <- cv.glmnet(X, y, alpha = 1, family = "binomial")
+```
+
+Check the cross-validation curve.
+
+```{r}
+plot(lasso_model)
+```
+
+This cross-validation curve shows how model performance varies with the LASSO penalty parameter, $\lambda$. As $\lambda$ decreases (moving right), binomial deviance drops sharply, then plateaus, indicating diminishing returns from adding more predictors.
+
+The left dashed line ($\lambda_{min}$) marks the model with the lowest cross-validation error, offering the best predictive fit.
+
+The right dashed line ($\lambda_{1se}$) represents a simpler model with slightly higher error but far fewer predictors, still within one standard error of the minimum.
+
+As regularization weakens, the model becomes more flexible, but also more sensitive to noise. This increased sensitivity leads to greater variability across folds, reflected in the widening error bars. That’s why we favor the more regularized region near $-log(\lambda) \approx 5$, where deviance is low and performance is more stable.
+
+In practice $\lambda_{min}$ is chosen for maximum accuracy. $\lambda_{1se}$ is preferred for interpretability and parsimony. For this analysis, I’ll proceed with $\lambda_{min}$.
+
+Extract selected predictors.
+
+```{r}
+# Extract coefficients at best lambda.
+
+coef_matrix <- coef(lasso_model, s = "lambda.min")
+
+# Convert to data frame and filter non-zero coefficients.
+
+selected_predictors <- as.data.frame(as.matrix(coef_matrix)) %>%
+  rename(estimate = 1) %>%
+  mutate(term = rownames(coef_matrix)) %>%
+  # filter(estimate != 0) %>%
+  arrange(desc(abs(estimate)))
+
+rownames(selected_predictors) <- NULL
+
+# Preview selected predictors; table summary.
+
+kable(selected_predictors,
+      col.names = c("Estimate", "Term"),
+      caption = "Selected Predictors",
+      format.args = list(big.mark = ","),
+      align = c("l", "l"))
+```
+
+Store original sector levels for comparison.
+
+```{r}
+original_levels <- levels(plans$SECTOR_TITLE_SHORT)
+```
+
+Filter out sector levels that LASSO shrunk to zero.  Keeps only the levels that contributed meaningfully to adequacy prediction.
+
+```{r}
+# Extract non-zero coefficients from lasso.
+
+coef_lasso <- coef(lasso_model, s = "lambda.min")
+
+nonzero_terms <- rownames(coef_lasso)[which(coef_lasso != 0)]
+
+# Identify retained sector levels.
+
+sector_terms <- grep("^SECTOR_TITLE_SHORT", nonzero_terms, value = TRUE)
+
+retained_levels <- gsub("^SECTOR_TITLE_SHORT", "", sector_terms)
+
+# Clean up factor levels in the dataset.
+
+plans$SECTOR_TITLE_SHORT <- factor(plans$SECTOR_TITLE_SHORT, levels = retained_levels)
+```
+
+Compare original and dropped levels; confirm the levels that were removed.
+
+```{r}
+# Show which levels were removed.
+
+setdiff(original_levels, levels(plans$SECTOR_TITLE_SHORT))
+```
+
+# Split Data
+
+Split the dataset into training (70%), validation (15%), and test (15%) sets to support model development, tuning, and final evaluation. This yields approximately:
+
+* Training: 1,165 observations,
+* Validation: 250 observations, and
+* Test: 250 observations.
+
+With 1,665 total observations, a 70/15/15 split is generally appropriate. Each subset remains large enough to support stable estimation and diagnostic review.
+
+```{r}
+set.seed(91210)
+
+# Initial train/test split.
+
+train_idx <- createDataPartition(plans$ADEQUACY_IND, p = 0.7, list = FALSE)
+
+plans_train <- plans[train_idx, ]
+
+temp  <- plans[-train_idx, ]
+
+# Split remaining into validation/test.
+
+valid_idx <- createDataPartition(temp$ADEQUACY_IND, p = 0.5, list = FALSE)
+
+plans_validate <- temp[valid_idx, ]
+
+plans_test <- temp[-valid_idx, ]
+```
+
+Check class balance in the train, validation and test sets.
+
+```{r}
+# Check balance function.
+
+check_balance <- function(df, name) {
+  df %>%
+    count(ADEQUACY_IND) %>%
+    mutate(prop = round(n / sum(n), 2),
+           dataset = name) %>%
+    select(dataset,
+           ADEQUACY_IND, 
+           n,
+           prop)
+}
+
+# Generate data frame.
+
+check_split <- bind_rows(check_balance(plans_train, "Train"),
+                   check_balance(plans_validate, "Validation"),
+                   check_balance(plans_test, "Test"))
+
+# Produce table summary.
+
+kable(check_split,
+      col.names = c("Dataset", "Adequacy Level", "Count", "Percent"),
+      caption = "Dataset Class Balance",
+      format.args = list(big.mark = ","),
+      align = c("l", "r", "r", "r"))
+```
+
+The 70/15/15 split maintains a reasonably balanced adequacy class distribution across all subsets.  The splits retain the slightly higher proportion for the inadequate class.
+
+# Save Data
+
+```{r}
+saveRDS(plans_train, "../data/plans_train.rds")
+
+saveRDS(plans_validate, "../data/plans_validate.rds")
+
+saveRDS(plans_test, "../data/plans_test.rds")
+```
+
+# Next Step
+
+Train and validate models.
