@@ -3,9 +3,9 @@ title: "Classifying Retirement Plan Financial Adequacy Using Form 5500 Data"
 author: "Donnie Minnick, Statistical Learning - Fall A 2025"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output:
+  word_document: default
   html_document:
     df_print: paged
-  word_document: default
 subtitle: "Exploratory Data Analysis and Data Transformation"
 ---
 
@@ -1137,7 +1137,7 @@ plans <- plans %>%
                                  levels = c("Inadequate", "Adequate")))
 ```
 
-This approach offers several advantages.Stakeholders can trace adequacy classification to specific, transparent thresholds.  Each component reflects a distinct dimension of plan health, accumulation, growth, engagement, and leakage. By leveraging multiple criteria, the model avoids overfitting to any one sector or plan type. And the binary label supports classification tasks, while the tiered label enables stakeholder previews and fairness overlays.
+This approach offers several advantages. Stakeholders can trace adequacy classification to specific, transparent thresholds.  Each component reflects a distinct dimension of plan health, accumulation, growth, engagement, and leakage. By leveraging multiple criteria, the model avoids overfitting to any one sector or plan type. And the binary label supports classification tasks, while the tiered label enables stakeholder previews and fairness overlays.
 
 This response variable scaffolds ethical modeling, stakeholder trust, and reproducible diagnostics, all central to my analytic philosophy for this project.
 
@@ -1197,9 +1197,9 @@ ggplot(summary_by_adequacy_class, aes(x = ADEQUACY_LABEL, y = entries)) +
 
 Just over half of plans are classified as inadequate (51%), while 49% meet adequacy criteria, revealing a near-even split. This suggests that while many plans show structural strength, a slight majority still fall short on key indicators like contributions, growth, or leakage. The distribution underscores the need for targeted improvement across the plan landscape.
 
-# Tiering Test
+# Quartile-Based Predictor Tiering
 
-Applying sector-specific quartiles below to generate a consistent set of tiers for testing model prediction.  This ensures tiers are derived relative to the sample, and not the adequacy cutoffs I used to create the response variable.
+Generate a standard set of sector-specific quartiles for model prediction.  This ensures tiers are derived relative to the sample and not the adequacy cutoffs I used to create the response variable.
 
 ```{r}
 plans <- plans %>%

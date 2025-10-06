@@ -22,6 +22,7 @@ I use two customized R functions for variable associations and multicollinearity
 ```{r echo = FALSE, message = FALSE}
 library("caret")
 library("dplyr")
+library("forcats")
 library("ggplot2")
 library("glmnet")
 library("knitr")
@@ -195,7 +196,9 @@ retained_levels <- gsub("^SECTOR_TITLE_SHORT", "", sector_terms)
 
 # Clean up factor levels in the dataset.
 
-plans$SECTOR_TITLE_SHORT <- factor(plans$SECTOR_TITLE_SHORT, levels = retained_levels)
+plans$SECTOR_TITLE_SHORT <- fct_other(plans$SECTOR_TITLE_SHORT, keep = retained_levels, other_level = "Other")
+
+# plans$SECTOR_TITLE_SHORT <- factor(plans$SECTOR_TITLE_SHORT, levels = retained_levels)
 ```
 
 Compare original and dropped levels; confirm the levels that were removed.

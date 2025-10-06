@@ -364,6 +364,75 @@ kable(df_all_metrics,
 saveRDS(df_all_metrics, "../data/model_metrics.rds")
 ```
 
+# Misclassification Analysis
+
+To assess whether the models were simply reproducing the engineered adequacy score, I conducted a misclassification analysis across adequacy tiers using the unseen test data. Both the logistic regression and random forest models showed clear signs of structural learning.
+
+Tag misclassified plans with flags for false positives and false negatives using the test set.
+
+```{r}
+plans_test <- plans_test %>%
+  mutate(ADEQUACY_IND_NUM = as.numeric(as.character(ADEQUACY_IND)),
+         LOGISTIC_PRED_NUM = as.numeric(as.character(class_pred_logistic)),
+         RF_PRED_NUM = as.numeric(as.character(rf_preds))) %>%
+  mutate(LOGISTIC_FP = LOGISTIC_PRED_NUM == 1 & ADEQUACY_IND_NUM == 0,
+         LOGISTIC_FN = LOGISTIC_PRED_NUM == 0 & ADEQUACY_IND_NUM == 1,
+         RF_FP = RF_PRED_NUM == 1 & ADEQUACY_IND_NUM == 0,
+         RF_FN = RF_PRED_NUM == 0 & ADEQUACY_IND_NUM == 1)
+```
+
+Summarize misclassifications by adequacy score to show whether misclassified plans are near the threshold (e.g., score of 3 or 4).
+
+```{r}
+class_check <- plans_test %>%
+  group_by(ADEQUACY_SCORE) %>%
+  summarise(
+    Logistic_FN = sum(LOGISTIC_FN),
+    Logistic_FP = sum(LOGISTIC_FP),
+    RF_FN = sum(RF_FN),
+    RF_FP = sum(RF_FP),
+    Total = n()
+  ) %>%
+  arrange(ADEQUACY_SCORE)
+
+kable(class_check,
+      col.names = c("Adequacy Score", "Logistic_FN", "Logistic_FP", "RF_FN", "RF_FP", "Total"),
+      caption = "Misclassifications by Model",
+      format.args = list(big.mark = ","),
+      align = c("l", "r", "r", "r", "r", "r"))
+```
+
+Misclassifications clustered around borderline scores, particularly at score 3 (just below the adequacy threshold) and score 4 (just above it). 
+
+Both models flagged several score 3 plans as adequate and several score 4 plans as inadequate, suggesting they were responding to signals in tiered features rather than rigidly following the score cutoff. 
+
+At the extremes (scores 0, 1, and 6), both models classified plans cleanly, reinforcing that they respected strong adequacy signals. 
+
+These patterns validate that the models were not memorizing thresholds but learning nuanced structural patterns embedded in the feature space.
+
+Create faceted bar plot.
+
+```{r}
+misclass_long <- class_check %>%
+  tidyr::pivot_longer(cols = c(Logistic_FN, Logistic_FP, RF_FN, RF_FP),
+               names_to = "Model_Error",
+               values_to = "Count") %>%
+  mutate(Model = case_when(grepl("^Logistic", Model_Error) ~ "Logistic",
+                           grepl("^RF", Model_Error) ~ "Random Forest"),
+         Error_Type = case_when(grepl("FN$", Model_Error) ~ "False Negative",
+                                grepl("FP$", Model_Error) ~ "False Positive"))
+
+ggplot(misclass_long, aes(x = factor(ADEQUACY_SCORE), y = Count, fill = Error_Type)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_vline(xintercept = 5, linetype = "dashed", color = "black", linewidth = 0.8) +
+  facet_wrap(~ Model) +
+  labs(title = "Misclassifications by Adequacy Score",
+       x = "Adequacy Score",
+       y = "Count",
+       fill = "Error Type") +
+  theme_minimal()
+```
+
 # High-Level Takeaways
 
 Summary of observations from performance metrics.
