@@ -3,19 +3,18 @@ title: "Classifying Retirement Plan Financial Adequacy Using Form 5500 Data"
 author: "Donnie Minnick, Statistical Learning - Fall A 2025"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output:
-  html_document:
-    df_print: paged
-  word_document: default
-subtitle: "Candidate Model Training and Comparison"
+  md_document:
+    variant: gfm
+subtitle: "Data Checks, Selection and Splits"
 ---
 
 # Pipeline Scope 
 
-This notebook encompasses checking variable associations, multicollinearity checks, subset selection, and training and evaluation of logistic regression and random forest models.
+This notebook encompasses predictor associations, multicollinearity checks, subset selection, and data splits.
 
 # Load Libraries
 
-This analysis leverages the following R packages: `dplyr`, `lubridate`, '`stringr` and `tidyr` for data manipulation, `knitr` for report formatting, and `ggplot2` and `ggridges` for visualization.
+This analysis leverages the following R packages: `dplyr` and `forcats` for data manipulation, `knitr` for report formatting, `ggplot2` and for visualization, and `caret`, `glmnet`, `pROC` and `randomForest` for model development.
 
 I use two customized R functions for variable associations and multicollinearity checks.
 
@@ -73,13 +72,13 @@ write.csv(assoc_summary, "../outputs/signal_association_summary.csv")
 
 ## Notable Signal Associations
 
-| Pair | Type	| Value	| Interpretation |
-| ---- | ---- | ----- | -------------- |
-| CONTRIB_PARTCP_GROWTH_TIER ~ CONTRIB_EMPLR_GROWTH_TIER | Spearman	| 0.485	| Strong mutual reinforcement between participant and employer contributions. |
-| PLAN_VINTAGE_GROUP ~ TOTAL_ASSETS_GROWTH_TIER	| Cramér’s V | 0.314 | Vintage moderately predicts asset growth; older plans tend to accumulate more. |
-| SECTOR_TITLE_SHORT ~ ASSETS_PER_PARTCP_TIER	| Cramér’s V | 0.321 | Sector strongly influences per-participant asset levels; structural disparities likely. |
-| LOAN_LEAKAGE_TIER ~ ASSETS_PER_PARTCP_TIER | Spearman	| -0.347 | Higher participant assets correlate with lower leakage; suggests financial resilience. |
-| TOTAL_ASSETS_GROWTH_TIER ~ ASSETS_PER_PARTCP_TIER	| Spearman | -0.298	| Inverse relationship; fast-growing plans may still have low per-participant balances. |
+The strongest observed relationship is between participant and employer contribution growth tiers (ρ = 0.496), suggesting that when participants increase their contributions, employers tend to follow suit—an encouraging sign of synchronized engagement. This dynamic is echoed in the moderate alignment between participant growth and total asset growth (ρ = 0.403), reinforcing the idea that expanding participation often drives overall plan scale.
+
+Vintage stratification shows moderate associations with both total asset growth (V = 0.258) and assets per participant (V = 0.237), indicating that older plans may exhibit distinct growth and adequacy profiles.
+
+Several weaker but still informative correlations emerge between growth tiers and leakage, with loan leakage inversely related to assets per participant (ρ = -0.298) and total asset growth (ρ = -0.032). These negative associations may signal structural vulnerabilities in plan adequacy, especially in high-growth or low-balance environments.
+
+Sector ties to plan vintage and growth tiers are weak (V ≈ 0.012–0.167), implying that while sector may influence plan characteristics, it does not dominate growth dynamics—supporting the case for sector-aware but not sector-deterministic modeling.
 
 The relationship between participant and employer contributions is structural.  The common form of employer contribution is a match, i.e. as an incentive to employee participation, employers common match deferrals up to a threshold.  So as participant contributions increase, so will employer matching contributions, subject to an upper limit.
 
