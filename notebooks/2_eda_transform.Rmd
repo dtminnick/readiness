@@ -3,9 +3,9 @@ title: "Classifying Retirement Plan Financial Adequacy Using Form 5500 Data"
 author: "Donnie Minnick, Statistical Learning - Fall A 2025"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output:
-  word_document: default
   html_document:
     df_print: paged
+  word_document: default
 subtitle: "Exploratory Data Analysis and Data Transformation"
 ---
 
@@ -32,7 +32,7 @@ library("tidyr")
 Load the Form 5500 data.
 
 ```{r}
-plans <- readRDS("../data/plans.rds")
+plans <- readRDS("../data/plans_original.rds")
 ```
 
 This analysis focuses on 401(k) plans because they are the dominant defined contribution vehicle in the U.S. private sector, offering broad sector coverage and stable representation in Form 5500 data. While I initially considered 403(b) plans, their sparse and sector-specific presence, primarily in nonprofits and education, limits their utility for benchmarking and fairness diagnostics.
@@ -1131,8 +1131,10 @@ plans <- plans %>%
                           (CONTRIB_PARTCP_GROWTH_RATE > 0.10) + 
                           (CONTRIB_EMPLR_GROWTH_RATE > 0.07) + 
                           (LOAN_LEAKAGE_RATIO < 0.013),
-         ADEQUACY_IND = if_else(ADEQUACY_SCORE >= 4, 1L, 0L),
-         ADEQUACY_LABEL = if_else(ADEQUACY_IND == 1L, "Adequate", "Inadequate"))
+         ADEQUACY_IND = factor(if_else(ADEQUACY_SCORE >= 4, 1L, 0L),
+                               levels = c(0L, 1L)),
+         ADEQUACY_LABEL = factor(if_else(ADEQUACY_SCORE >= 4, "Adequate", "Inadequate"),
+                                 levels = c("Inadequate", "Adequate")))
 ```
 
 This approach offers several advantages.Stakeholders can trace adequacy classification to specific, transparent thresholds.  Each component reflects a distinct dimension of plan health, accumulation, growth, engagement, and leakage. By leveraging multiple criteria, the model avoids overfitting to any one sector or plan type. And the binary label supports classification tasks, while the tiered label enables stakeholder previews and fairness overlays.
@@ -1195,6 +1197,48 @@ ggplot(summary_by_adequacy_class, aes(x = ADEQUACY_LABEL, y = entries)) +
 
 Just over half of plans are classified as inadequate (51%), while 49% meet adequacy criteria, revealing a near-even split. This suggests that while many plans show structural strength, a slight majority still fall short on key indicators like contributions, growth, or leakage. The distribution underscores the need for targeted improvement across the plan landscape.
 
+# Tiering Test
+
+Applying sector-specific quartiles below to generate a consistent set of tiers for testing model prediction.  This ensures tiers are derived relative to the sample, and not the adequacy cutoffs I used to create the response variable.
+
+```{r}
+plans <- plans %>%
+  group_by(SECTOR_TITLE_SHORT) %>%
+  mutate(
+    ASSETS_PER_PARTCP_TIER_Q = ntile(ASSETS_PER_PARTCP, 4),
+    TOTAL_ASSETS_GROWTH_TIER_Q = ntile(TOTAL_ASSETS_GROWTH_RATE, 4),
+    PARTCP_GROWTH_TIER_Q = ntile(PARTCP_GROWTH_RATE, 4),
+    CONTRIB_PARTCP_GROWTH_TIER_Q = ntile(CONTRIB_PARTCP_GROWTH_RATE, 4),
+    CONTRIB_EMPLR_GROWTH_TIER_Q = ntile(CONTRIB_EMPLR_GROWTH_RATE, 4),
+    LOAN_LEAKAGE_TIER_Q = ntile(LOAN_LEAKAGE_RATIO, 4)
+  ) %>%
+  ungroup() %>%
+  mutate(
+    ASSETS_PER_PARTCP_TIER_Q = factor(ASSETS_PER_PARTCP_TIER_Q, 
+                                    levels = 1:4, 
+                                    labels = c("Low", "Moderate", "Typical", "High"), 
+                                    ordered = TRUE),
+    TOTAL_ASSETS_GROWTH_TIER_Q = factor(TOTAL_ASSETS_GROWTH_TIER_Q, 
+                                      levels = 1:4, 
+                                      labels = c("Low", "Moderate", "Typical", "High"), 
+                                      ordered = TRUE),
+    PARTCP_GROWTH_TIER_Q = factor(PARTCP_GROWTH_TIER_Q, levels = 1:4, 
+                                labels = c("Low", "Moderate", "Typical", "High"), 
+                                ordered = TRUE),
+    CONTRIB_PARTCP_GROWTH_TIER_Q = factor(CONTRIB_PARTCP_GROWTH_TIER_Q, 
+                                        levels = 1:4, 
+                                        labels = c("Low", "Moderate", "Typical", "High"), 
+                                        ordered = TRUE),
+    CONTRIB_EMPLR_GROWTH_TIER_Q = factor(CONTRIB_EMPLR_GROWTH_TIER_Q, 
+                                       levels = 1:4, 
+                                       labels = c("Low", "Moderate", "Typical", "High"), 
+                                       ordered = TRUE),
+    LOAN_LEAKAGE_TIER_Q = factor(LOAN_LEAKAGE_TIER_Q, 
+                               levels = 1:4, 
+                               labels = c("High", "Typical", "Moderate", "Low"), 
+                               ordered = TRUE))
+```
+
 # Finalize and Save Dataset
 
 Order variables and save plans data frame with updates and features.
@@ -1241,9 +1285,15 @@ plans <- plans %>%
          TOTAL_ASSETS_GROWTH_RATE,
          TOTAL_ASSETS_GROWTH_TIER,
          ASSETS_PER_PARTCP,
-         ASSETS_PER_PARTCP_TIER)
+         ASSETS_PER_PARTCP_TIER,
+         ASSETS_PER_PARTCP_TIER_Q,
+         TOTAL_ASSETS_GROWTH_TIER_Q,
+         PARTCP_GROWTH_TIER_Q,
+         CONTRIB_PARTCP_GROWTH_TIER_Q,
+         CONTRIB_EMPLR_GROWTH_TIER_Q,
+         LOAN_LEAKAGE_TIER_Q)
 
-saveRDS(plans, "../data/plans_final.rds")
+saveRDS(plans, "../data/plans_transformed.rds")
 ```
 
 The final dataset includes `r format(nrow(plans), big.mark = ",", scientific = FALSE)` plans and `r format(ncol(plans), big.mark = ",", scientific = FALSE)` variables.
