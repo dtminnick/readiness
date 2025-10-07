@@ -281,10 +281,10 @@ print(model_rf)
     ##                      Number of trees: 500
     ## No. of variables tried at each split: 3
     ## 
-    ##         OOB estimate of  error rate: 14.41%
+    ##         OOB estimate of  error rate: 14.49%
     ## Confusion matrix:
     ##     0   1 class.error
-    ## 0 532  81   0.1321370
+    ## 0 531  82   0.1337684
     ## 1  87 466   0.1573237
 
 This random forest model achieves ~86% accuracy with balanced error
@@ -331,15 +331,15 @@ train_results_rf$metrics_df
 ```
 
     ##              Metric Logistic_Train RF_Train
-    ## 1          Accuracy         0.9108   0.9640
-    ## 2               AUC         0.9701   0.9959
-    ## 3 Balanced Accuracy         0.9103   0.9634
-    ## 4             Kappa         0.8210   0.9277
-    ## 5     McnemarPValue         0.6239   0.1649
-    ## 6    Neg Pred Value         0.9104   0.9705
-    ## 7    Pos Pred Value         0.9111   0.9583
-    ## 8       Sensitivity         0.9201   0.9739
-    ## 9       Specificity         0.9005   0.9530
+    ## 1          Accuracy         0.9108   0.9648
+    ## 2               AUC         0.9701   0.9958
+    ## 3 Balanced Accuracy         0.9103   0.9644
+    ## 4             Kappa         0.8210   0.9294
+    ## 5     McnemarPValue         0.6239   0.3487
+    ## 6    Neg Pred Value         0.9104   0.9689
+    ## 7    Pos Pred Value         0.9111   0.9613
+    ## 8       Sensitivity         0.9201   0.9723
+    ## 9       Specificity         0.9005   0.9566
 
 This random forest model demonstrates exceptional performance, with high
 accuracy, balanced sensitivity and specificity, and strong agreement
@@ -399,15 +399,15 @@ validate_results_logistic$metrics_df
 ```
 
     ##              Metric Logistic_Train RF_Train Logistic_Validate
-    ## 1          Accuracy         0.9108   0.9640            0.8680
-    ## 2               AUC         0.9701   0.9959            0.9514
-    ## 3 Balanced Accuracy         0.9103   0.9634            0.8671
-    ## 4             Kappa         0.8210   0.9277            0.7351
-    ## 5     McnemarPValue         0.6239   0.1649            0.7277
-    ## 6    Neg Pred Value         0.9104   0.9705            0.8707
-    ## 7    Pos Pred Value         0.9111   0.9583            0.8657
-    ## 8       Sensitivity         0.9201   0.9739            0.8855
-    ## 9       Specificity         0.9005   0.9530            0.8487
+    ## 1          Accuracy         0.9108   0.9648            0.8680
+    ## 2               AUC         0.9701   0.9958            0.9514
+    ## 3 Balanced Accuracy         0.9103   0.9644            0.8671
+    ## 4             Kappa         0.8210   0.9294            0.7351
+    ## 5     McnemarPValue         0.6239   0.3487            0.7277
+    ## 6    Neg Pred Value         0.9104   0.9689            0.8707
+    ## 7    Pos Pred Value         0.9111   0.9613            0.8657
+    ## 8       Sensitivity         0.9201   0.9723            0.8855
+    ## 9       Specificity         0.9005   0.9566            0.8487
 
 The logistic model performs well on the validation set, with an AUC of
 0.951 and balanced accuracy of 0.867, indicating strong class separation
@@ -459,15 +459,15 @@ validate_results_rf$metrics_df
 ```
 
     ##              Metric Logistic_Train RF_Train Logistic_Validate RF_Validate
-    ## 1          Accuracy         0.9108   0.9640            0.8680      0.8320
-    ## 2               AUC         0.9701   0.9959            0.9514      0.9134
-    ## 3 Balanced Accuracy         0.9103   0.9634            0.8671      0.8316
-    ## 4             Kappa         0.8210   0.9277            0.7351      0.6632
-    ## 5     McnemarPValue         0.6239   0.1649            0.7277      1.0000
-    ## 6    Neg Pred Value         0.9104   0.9705            0.8707      0.8235
-    ## 7    Pos Pred Value         0.9111   0.9583            0.8657      0.8397
-    ## 8       Sensitivity         0.9201   0.9739            0.8855      0.8397
-    ## 9       Specificity         0.9005   0.9530            0.8487      0.8235
+    ## 1          Accuracy         0.9108   0.9648            0.8680      0.8280
+    ## 2               AUC         0.9701   0.9958            0.9514      0.9149
+    ## 3 Balanced Accuracy         0.9103   0.9644            0.8671      0.8278
+    ## 4             Kappa         0.8210   0.9294            0.7351      0.6553
+    ## 5     McnemarPValue         0.6239   0.3487            0.7277      1.0000
+    ## 6    Neg Pred Value         0.9104   0.9689            0.8707      0.8167
+    ## 7    Pos Pred Value         0.9111   0.9613            0.8657      0.8385
+    ## 8       Sensitivity         0.9201   0.9723            0.8855      0.8321
+    ## 9       Specificity         0.9005   0.9566            0.8487      0.8235
 
 The random forest model shows decent validation performance with an AUC
 of 0.914 and balanced accuracy of 0.832, but it trails the logistic
@@ -527,15 +527,15 @@ test_results_logistic$metrics_df
 ```
 
     ##              Metric Logistic_Train RF_Train Logistic_Validate RF_Validate
-    ## 1          Accuracy         0.9108   0.9640            0.8680      0.8320
-    ## 2               AUC         0.9701   0.9959            0.9514      0.9134
-    ## 3 Balanced Accuracy         0.9103   0.9634            0.8671      0.8316
-    ## 4             Kappa         0.8210   0.9277            0.7351      0.6632
-    ## 5     McnemarPValue         0.6239   0.1649            0.7277      1.0000
-    ## 6    Neg Pred Value         0.9104   0.9705            0.8707      0.8235
-    ## 7    Pos Pred Value         0.9111   0.9583            0.8657      0.8397
-    ## 8       Sensitivity         0.9201   0.9739            0.8855      0.8397
-    ## 9       Specificity         0.9005   0.9530            0.8487      0.8235
+    ## 1          Accuracy         0.9108   0.9648            0.8680      0.8280
+    ## 2               AUC         0.9701   0.9958            0.9514      0.9149
+    ## 3 Balanced Accuracy         0.9103   0.9644            0.8671      0.8278
+    ## 4             Kappa         0.8210   0.9294            0.7351      0.6553
+    ## 5     McnemarPValue         0.6239   0.3487            0.7277      1.0000
+    ## 6    Neg Pred Value         0.9104   0.9689            0.8707      0.8167
+    ## 7    Pos Pred Value         0.9111   0.9613            0.8657      0.8385
+    ## 8       Sensitivity         0.9201   0.9723            0.8855      0.8321
+    ## 9       Specificity         0.9005   0.9566            0.8487      0.8235
     ##   Logistic_Test
     ## 1        0.8795
     ## 2        0.9349
@@ -602,25 +602,25 @@ test_results_rf$metrics_df
 ```
 
     ##              Metric Logistic_Train RF_Train Logistic_Validate RF_Validate
-    ## 1          Accuracy         0.9108   0.9640            0.8680      0.8320
-    ## 2               AUC         0.9701   0.9959            0.9514      0.9134
-    ## 3 Balanced Accuracy         0.9103   0.9634            0.8671      0.8316
-    ## 4             Kappa         0.8210   0.9277            0.7351      0.6632
-    ## 5     McnemarPValue         0.6239   0.1649            0.7277      1.0000
-    ## 6    Neg Pred Value         0.9104   0.9705            0.8707      0.8235
-    ## 7    Pos Pred Value         0.9111   0.9583            0.8657      0.8397
-    ## 8       Sensitivity         0.9201   0.9739            0.8855      0.8397
-    ## 9       Specificity         0.9005   0.9530            0.8487      0.8235
+    ## 1          Accuracy         0.9108   0.9648            0.8680      0.8280
+    ## 2               AUC         0.9701   0.9958            0.9514      0.9149
+    ## 3 Balanced Accuracy         0.9103   0.9644            0.8671      0.8278
+    ## 4             Kappa         0.8210   0.9294            0.7351      0.6553
+    ## 5     McnemarPValue         0.6239   0.3487            0.7277      1.0000
+    ## 6    Neg Pred Value         0.9104   0.9689            0.8707      0.8167
+    ## 7    Pos Pred Value         0.9111   0.9613            0.8657      0.8385
+    ## 8       Sensitivity         0.9201   0.9723            0.8855      0.8321
+    ## 9       Specificity         0.9005   0.9566            0.8487      0.8235
     ##   Logistic_Test RF_Test
-    ## 1        0.8795  0.8554
-    ## 2        0.9349  0.9276
-    ## 3        0.8783  0.8550
-    ## 4        0.7580  0.7101
+    ## 1        0.8795  0.8514
+    ## 2        0.9349  0.9254
+    ## 3        0.8783  0.8508
+    ## 4        0.7580  0.7019
     ## 5        0.5839  1.0000
-    ## 6        0.8860  0.8475
-    ## 7        0.8741  0.8626
+    ## 6        0.8860  0.8462
+    ## 7        0.8741  0.8561
     ## 8        0.9008  0.8626
-    ## 9        0.8559  0.8475
+    ## 9        0.8559  0.8390
 
 The Random Forest model performs well on the test set, with an AUC of
 0.923 and balanced accuracy of 0.855, confirming strong generalization.
@@ -744,7 +744,7 @@ kable(class_check_summary,
 | 1              |           0 |           0 |     0 |     0 |    21 |
 | 2              |           0 |           0 |     0 |     3 |    43 |
 | 3              |           0 |          13 |     0 |    15 |    58 |
-| 4              |          16 |           0 |    17 |     0 |    70 |
+| 4              |          16 |           0 |    18 |     0 |    70 |
 | 5              |           1 |           0 |     1 |     0 |    34 |
 | 6              |           0 |           0 |     0 |     0 |    14 |
 
@@ -800,3 +800,11 @@ Their misclassification patterns reflect sensitivity to structural
 nuance, especially near the adequacy boundary, and reinforce their
 diagnostic value in modeling. This validates their use for
 stakeholder-facing classification.
+
+Save key data frames for final report.
+
+``` r
+saveRDS(df_all_metrics, "../data/model_metrics.rds")
+
+saveRDS(class_check_summary, "../data/check_class_summary.rds")
+```

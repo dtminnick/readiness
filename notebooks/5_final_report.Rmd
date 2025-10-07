@@ -5,181 +5,106 @@ date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output:
   md_document:
     variant: gfm
-subtitle: "Final Project Report"
+subtitle: "Final Report"
 ---
 
-# Executive Summary
+```{r}
+library("knitr")
+```
 
-This report investigates whether employer-sponsored retirement plans structurally support participant financial readiness. Using 2023 Form 5500 filings, I classify plans as “adequate” or “inadequate” based on engineered features like participation rate, contribution stability, and leakage burden. Two models, logistic regression and random forest, were trained and evaluated for interpretability, fairness, and diagnostic clarity. Sector-level disparities and feature importance diagnostics reveal actionable insights for sponsors and policymakers.
+# Pipeline Overview
 
-**[Insert key metrics from Notebook 5: ROC/AUC, confusion matrix, top features]**
+This project investigates whether employer-sponsored retirement plans structurally support participant financial readiness. Using 2023 Form 5500 filings, I classify plans as “adequate” or “inadequate” based on engineered features like participation rate, contribution stability, and leakage burden. Two models, logistic regression and random forest, were trained and evaluated for interpretability and diagnostic clarity.
 
-# Context and Motivation
+# Exploratory Data Analysis and Data Transformation
 
-Retirement plans vary widely in their ability to help participants save. Some plans foster long-term adequacy through stable contributions and low leakage, while others suffer from structural weaknesses. This project reframes adequacy as a classification problem grounded in plan-level diagnostics.
+The baseline dataset includes 5,579 single-employer defined contribution plans. Initial checks confirmed no missing or zero values, ensuring a clean foundation for modeling. Feature engineering focused on structural signals of adequacy: participation rate, contribution per participant, leakage burden, and asset growth. Plans were grouped into vintage cohorts based on effective year, and industry codes were collapsed into broader sectors to support benchmarking and fairness overlays.
 
-# Data Source and Selection
+# Structural Adequacy Scoring and Tiered Feature Engineering
 
-I use 2023 Form 5500 filings from the Department of Labor’s EFAST2 portal, filtered for single-employer defined contribution plans. These filings offer standardized, auditable data on plan assets, contributions, distributions, and participant counts.
+To classify plans as structurally “adequate,” I developed a composite adequacy score based on six interpretable indicators: assets per participant, asset growth, participant growth, contribution growth (participant and employer), and loan leakage ratio. Each condition contributes one point, yielding a score from 0 to 6. Plans scoring 4 or higher were labeled “Adequate.”
 
-**[Insert summary stats from Notebook 2: number of plans, sector breakdown, missingness diagnostics]**
+To prevent circularity and promote generalization, predictive features were converted into sector-stratified ordinal tiers using intra-sector quartiles. For example, instead of using the raw threshold of $59K assets per participant, the model learned from a tiered factor (Low, Moderate, Typical, High) based on sector-specific distributions. This separation ensured that models learned relative structural signals rather than memorizing rule logic.
 
-# Feature Engineering and Transformation
+**Insert sample by sector and plot.**
 
-To assess structural adequacy, I engineered features capturing savings behavior, engagement, and leakage:
+# Stratified Sampling and Data Splits
 
-- Participation rate
-- Contribution per participant
-- Leakage burden
-- Asset growth and volatility
+Given the dominance of a few sectors (e.g., Manufacturing, Professional Services), I implemented a stratified sampling strategy to ensure balanced representation. Plans were grouped by sector and vintage, and sample sizes were proportionally allocated with a minimum floor. Sector caps were applied to prevent over-representation, resulting in a structurally balanced sample of 1,665 plans across 27 variables. 
 
-**[Insert feature definitions and transformation logic from Notebook 2]**
+I split the sample into training (70%), validation (15%), and test (15%) sets for model training and evaluation.
 
-## Addressing Circularity and Threshold Sensitivity
+```{r}
+data_splits <- readRDS("../data/data_splits.rds")
 
-A key challenge in this project was designing a response variable that reflects structural adequacy without introducing circularity or enabling models to trivially memorize rule-based thresholds. To ensure that the classification task remained genuinely predictive and diagnostically meaningful, I implemented several safeguards:
+kable(data_splits,
+      col.names = c("Split", "Adequacy Indicator", "Observations", "Percent"),
+      caption = "Sample Records by Data Split",
+      format.args = list(big.mark = ","),
+      align = c("l", "r", "r", "r"))
+```
 
-### Separation of Label Logic and Predictive Features
-
-The binary adequacy label was constructed using six interpretable indicators of financial readiness, each evaluated against fixed thresholds. However, these raw features and thresholds were not used directly in model training. Instead, I engineered sector-stratified tiered versions of each feature — ordinal factors based on intra-sector quartiles — to serve as predictors. This separation ensured that models learned relative structural signals, not the original rule logic.  
-
-Example: While the adequacy label includes a rule for assets per participant > $59,000, the predictive feature is a tiered factor (Low, Moderate, Typical, High) based on sector-specific quartiles.
-
-Appendix C details the implementation of the adequacy label and tiered predictors.
-
-### Thresholds as Diagnostic Heuristics
-
-The thresholds used in the adequacy score were selected to reflect meaningful benchmarks in retirement plan behavior, not to encode deterministic truths. For instance, the $59,000 asset-per-participant threshold approximates a mid-career savings benchmark, while the 1.3% loan leakage ratio reflects a tolerable level of plan borrowing. These thresholds were intended as diagnostic heuristics, not definitive cutoffs, and were applied uniformly across sectors to maintain interpretability.
-
-### Fairness-Aware Tiering to Promote Generalization
-
-By stratifying features within sectors and converting them to ordinal tiers, I reduced the risk of overfitting to absolute values. This approach allowed models to generalize across industries with different plan structures, improving fairness and stakeholder relevance. It also prevented leakage of label logic into the modeling pipeline, preserving the independence of the learning process.
-
-### Residual Diagnostics and Misclassification Analysis
-
-To validate that models were not simply reproducing the label rules, I conducted residual diagnostics and misclassification analysis. These revealed that models occasionally misclassified high-scoring plans and correctly identified borderline cases — suggesting that they were learning latent structural patterns, not just memorizing thresholds.
-
-I also considered potential objections to this approach and noted my responses in the Appendix to this report.
-
-# Modeling Approach
+# Model Training and Evaluation
 
 Two classification models were trained:
 
-- **Logistic Regression**: For interpretability and fairness audits.
-- **Random Forest**: For capturing nonlinear relationships and feature importance.
+* **Logistic Regression**: Chosen for interpretability and fairness audits.
+* **Random Forest**: Used to capture nonlinear relationships and feature interactions.
 
-Data was split into training, validation, and test sets using stratified sampling.
+Models were evaluated on training, validation, and test sets using ROC/AUC curves, confusion matrices, and residual diagnostics. The logistic model showed consistent generalization and strong interpretability, while the RF model offered robust classification but showed signs of overfitting.
 
-**[Insert model setup and split logic from Notebook 3]**
+```{r}
+model_metrics <- readRDS("../data/model_metrics.rds")
 
-# Evaluation and Diagnostics
+kable(model_metrics,
+      col.names = c("Metric", 
+                    "Logistic Train", 
+                    "RF Train", 
+                    "Logistic Validate", 
+                    "RF Validate", 
+                    "Logistic Test", 
+                    "RF Test"),
+      caption = "Model Metrics by Model and Data Split",
+      format.args = list(big.mark = ","),
+      align = c("l", "r", "r", "r", "r", "r", "r"))
+```
 
-Models were evaluated using:
+The logistic regression model demonstrated consistent and reliable performance across all data splits, validating its strength as a classifier. On the test set, it achieved an AUC of 0.935, balanced accuracy of 0.878, and a Kappa score of 0.758, indicating strong discriminatory power and substantial agreement beyond chance. Sensitivity and specificity remained well-balanced at 0.901 and 0.856, respectively, confirming the model’s ability to identify both adequate and inadequate plans without directional bias (Mcnemar p-value: 0.584).
 
-- ROC/AUC curves
-- Confusion matrices
-- Residual plots
+Compared to the random forest model, logistic regression showed slightly lower training metrics but superior generalization on validation and test sets. This suggests lower overfitting risk and greater interpretability, which are key advantages for stakeholder-facing diagnostics. Its stable performance across splits make it the preferred model for structural adequacy classification in this context.
 
-**[Insert ROC/AUC plots, confusion matrices, and residual diagnostics from Notebook 4]**
+# Misclassification Analysis
 
-Misclassified plans were analyzed to identify structural blind spots.
+Misclassification analysis revealed that both models performed cleanly at adequacy score extremes (0, 1, and 6), while errors clustered around borderline scores (3 and 4). This pattern suggests that models were not simply reproducing the adequacy score but learning latent structural signals embedded in the feature space.
 
-**[Insert binned residual plots or misclassification tables from Notebook 4]**
+```{r}
+check_class_summary <- readRDS("../data/check_class_summary.rds")
 
-# Insights and Implications
+kable(check_class_summary,
+      col.names = c("Adequacy Score", 
+                    "Logistic FN", 
+                    "Logistic FP", 
+                    "RF FN", 
+                    "RF FP", 
+                    "Total"),
+      caption = "Misclassifications on Test Set by Adequacy Score and Model",
+      format.args = list(big.mark = ","),
+      align = c("l", "r", "r", "r", "r", "r"))
+```
 
-Key findings include:
+Misclassification patterns on the test set reveal that both models performed cleanly at the adequacy score extremes — scores 0, 1, and 6 — with zero false positives or false negatives. This confirms that strong adequacy signals were consistently recognized. Errors were concentrated around borderline scores, particularly at score 3 (just below the adequacy threshold) and score 4 (just above it). 
 
-- Plans with high leakage and low contribution stability are consistently flagged as inadequate.
-- Sector disparities suggest structural gaps in plan design and participant engagement.
-- Feature importance diagnostics highlight participation rate and leakage burden as dominant signals.
+Both models tended to overclassify score 3 plans as adequate and underclassify score 4 plans, suggesting they were responding to latent structural signals rather than rigidly replicating the adequacy score logic. These patterns reinforce that the models learned nuanced relationships in the feature space and did not simply memorize the scoring rubric.
 
-**[Insert top features and sector-level diagnostics from Notebook 5]**
+# Key Insights and Implications
 
-These insights can inform plan design, regulatory audits, and participant outreach strategies.
+* Plans with high leakage and low contribution stability were consistently flagged as inadequate.
+* Sector disparities revealed structural gaps in plan design and participant engagement.
+* Feature importance diagnostics highlighted participation rate and leakage burden as dominant signals.
+* The logistic model is preferred for stakeholder-facing diagnostics due to its interpretability and consistent performance.
 
-# Limitations and Future Work
+# Model Extention Opportunities
 
-## Aggregate-Level Data
-
-Form 5500 filings offer plan-level metrics, not individual participant data. This means adequacy is inferred from structural signals like average balances and contribution totals, which may mask intra-plan disparities.
-
-## Engineered Thresholds
-
-Adequacy thresholds (e.g., $59K assets per participant, 1.3% leakage) are heuristics chosen for interpretability. While meaningful, they’re not universal standards and could benefit from stakeholder calibration.
-
-## Single-Year Snapshot
-
-Using 2023 data provides a clean diagnostic view but limits insight into trends or resilience. Future work could incorporate multi-year filings and macroeconomic overlays to assess structural adequacy over time.
-
-# Appendices
-
-## Appendix A: Notebook References
-
-Modular pipeline from `01_overview.Rmd` to `05_final_report.Rmd`
-
-## Appendix B: Responses to Potential Objections Response Encoding Approach
-
-### Objection 1: “Aren’t your adequacy thresholds arbitrary?”
-
-The thresholds used in the adequacy score (e.g., $59,000 assets per participant, 1.3% loan leakage) are diagnostic heuristics, not absolute truths. They were selected to reflect meaningful benchmarks in retirement readiness, informed by distributional percentiles and sector norms. While not universally prescriptive, they offer a transparent and interpretable rubric for structural adequacy. 
-
-Future work could calibrate these thresholds using stakeholder input or longitudinal outcomes.
-
-### Objection 2: “A binary label oversimplifies a continuous concept.”
-
-This is true; financial adequacy does exist on a spectrum and is multi-faceted. However, binary classification was chosen for clarity, interpretability, and alignment with stakeholder decision-making (e.g. flagging plans for review). The composite score allows for gradation, and the cutoff at 4 out of 6 reflects a balance between inclusivity and rigor. 
-
-I acknowledge this simplification and propose exploring ordinal tiers or probabilistic scoring in future iterations.
-
-### Objection 3: “Aren’t your models just learning the rules you used to label the data?”
-
-To prevent circularity, I used sector-stratified tiered features for modeling, not the raw thresholds used in label construction. This separation ensures that models learn relative structural signals, not deterministic rules. 
-
-Residual diagnostics and misclassification analysis further confirm that models generalize beyond the label logic, identifying latent adequacy patterns rather than memorizing thresholds.
-
-### Objection 4: “Sector stratification might mask real disparities.”
-
-Sector-aware tiering was used to promote fairness and avoid penalizing plans in structurally lower-performing industries. While this may smooth over some disparities, it enables more equitable comparisons and prevents dominance by high-performing sectors. 
-
-I also conducted sector-level diagnostics to surface structural gaps and ensure transparency across industries.
-
-### Objection 5: “Why not use individual-level data instead of plan-level aggregates?”
-
-Form 5500 filings provide standardized, auditable plan-level data — ideal for structural diagnostics. While individual-level data would offer richer behavioral insights, it’s not publicly available at scale. This project focuses on plan design and structural adequacy, not participant behavior. 
-
-Future work could integrate individual-level data where available to refine adequacy modeling.
-
-## Appendix C: Structural Adequacy Scoring and Tiered Feature Engineering
-
-### Adequacy Scoring
-
-To classify retirement plans as structurally “adequate” or “inadequate,” I developed a composite Adequacy Score based on six interpretable indicators of financial readiness: 
-
-* **Assets per Participant**: Is the average account balance above $59,000? 
-* **Asset Growth Rate**: Did total assets grow by more than 10%? 
-* **Participant Growth Rate**: Did the number of participants grow by more than 3%?
-* **Participant Contribution Growth**: Did participant contributions grow by more than 10%? 
-* **Employer Contribution Growth**: Did employer contributions grow by more than 7%? 
-* **Loan Leakage Ratio**: Is the ratio of outstanding loans to total assets below 1.3%? 
-
-Each condition contributes one point to the ADEQUACY_SCORE, yielding a range from 0 to 6. Plans scoring 4 or higher are labeled as “Adequate”, while others are labeled “Inadequate”. 
-
-**[Insert preview table: distribution of ADEQUACY_SCORE and label counts]**
-
-### Sector-Aware Tiering for Predictive Features
-
-To prevent models from memorizing the adequacy rules and to promote generalization, I engineered sector-stratified tiered features for prediction. 
-
-Each numeric feature was converted into a quartile-based ordinal factor within its sector: 
-
-| Feature                         | Tier Labels (Low to High)    | 
-|-------------------------------- | ---------------------------- | 
-| Assets per Participant          | Low, Moderate, Typical, High | 
-| Asset Growth Rate               | Low, Moderate, Typical, High |
-| Participant Growth Rate         | Low, Moderate, Typical, High | 
-| Participant Contribution Growth | Low, Moderate, Typical, High | 
-| Employer Contribution Growth    | Low, Moderate, Typical, High | 
-| Loan Leakage Ratio              | High, Typical, Moderate, Low | 
-
-This tiering approach ensures that models learn relative structural signals rather than absolute thresholds, improving fairness and interpretability across sectors.
+* **Aggregate-Level Data**: Form 5500 filings offer plan-level metrics, not participant-level insights.
+* **Engineered Thresholds**: Adequacy thresholds are heuristic and could benefit from stakeholder calibration.
+* **Single-Year Snapshot**: Future work could incorporate multi-year filings and macroeconomic overlays to assess resilience and trends.

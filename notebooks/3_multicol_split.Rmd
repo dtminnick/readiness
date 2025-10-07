@@ -260,6 +260,8 @@ check_split <- bind_rows(check_balance(plans_train, "Train"),
                    check_balance(plans_validate, "Validation"),
                    check_balance(plans_test, "Test"))
 
+saveRDS(check_split, "../data/data_splits.rds")
+
 # Produce table summary.
 
 kable(check_split,

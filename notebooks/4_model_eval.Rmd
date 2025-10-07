@@ -458,3 +458,11 @@ ggplot(misclass_long, aes(x = factor(ADEQUACY_SCORE), y = Count, fill = Error_Ty
 The models demonstrate genuine learning from the feature space, not rote reproduction of the adequacy score.
 
 Their misclassification patterns reflect sensitivity to structural nuance, especially near the adequacy boundary, and reinforce their diagnostic value in modeling. This validates their use for stakeholder-facing classification.
+
+Save key data frames for final report.
+
+```{r}
+saveRDS(df_all_metrics, "../data/model_metrics.rds")
+
+saveRDS(class_check_summary, "../data/check_class_summary.rds")
+```
