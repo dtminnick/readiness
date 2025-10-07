@@ -11,6 +11,10 @@ engineered features like participation rate, contribution stability, and
 leakage burden. Two models, logistic regression and random forest, were
 trained and evaluated for interpretability and diagnostic clarity.
 
+Access \[this markdown
+document(<https://github.com/dtminnick/readiness/blob/main/notebooks/1_overview.md>)
+from my Github repository for an overview of this project.
+
 # Exploratory Data Analysis and Data Transformation
 
 The baseline dataset includes 5,579 single-employer defined contribution
@@ -20,6 +24,9 @@ signals of adequacy: participation rate, contribution per participant,
 leakage burden, and asset growth. Plans were grouped into vintage
 cohorts based on effective year, and industry codes were collapsed into
 broader sectors to support benchmarking and fairness overlays.
+
+Full analysis is documented
+(here)\[<https://github.com/dtminnick/readiness/blob/main/notebooks/2_eda_transform.md>\]
 
 # Structural Adequacy Scoring and Tiered Feature Engineering
 
@@ -39,6 +46,8 @@ separation ensured that models learned relative structural signals
 rather than memorizing rule logic.
 
 **Insert sample by sector and plot.**
+
+See **Appendix A** for additional details.
 
 # Stratified Sampling and Data Splits
 
@@ -72,6 +81,10 @@ kable(data_splits,
 | Test       |                  1 |          116 |    0.47 |
 
 Sample Records by Data Split
+
+Predictor association, multicollinearity checks, subset selection, and
+data splitting steps are documented
+(here)\[<https://github.com/dtminnick/readiness/blob/main/notebooks/3_multicol_split.md>\]
 
 # Model Training and Evaluation
 
@@ -133,6 +146,9 @@ test sets. This suggests lower overfitting risk and greater
 interpretability, which are key advantages for stakeholder-facing
 diagnostics. Its stable performance across splits make it the preferred
 model for structural adequacy classification in this context.
+
+Complete model training and evaluation steps are documented
+(here)\[<https://github.com/dtminnick/readiness/blob/main/notebooks/4_model_eval.md>\]
 
 # Misclassification Analysis
 
@@ -202,3 +218,50 @@ scoring rubric.
   benefit from stakeholder calibration.
 - **Single-Year Snapshot**: Future work could incorporate multi-year
   filings and macroeconomic overlays to assess resilience and trends.
+
+# Appendices
+
+## Appendix A: Adequacy Scoring and Tiered Feature Engineering
+
+### Adequacy Scoring
+
+To classify retirement plans as structurally “adequate” or “inadequate,”
+I developed a composite Adequacy Score based on six interpretable
+indicators of financial readiness:
+
+- **Assets per Participant**: Is the average account balance above
+  \$59,000?
+- **Asset Growth Rate**: Did total assets grow by more than 10%?
+- **Participant Growth Rate**: Did the number of participants grow by
+  more than 3%?
+- **Participant Contribution Growth**: Did participant contributions
+  grow by more than 10%?
+- **Employer Contribution Growth**: Did employer contributions grow by
+  more than 7%?
+- **Loan Leakage Ratio**: Is the ratio of outstanding loans to total
+  assets below 1.3%?
+
+Each condition contributes one point to the Adequacy Score, yielding a
+range from 0 to 6. Plans scoring 4 or higher were labeled as “Adequate”,
+while others are labeled “Inadequate”.
+
+### Sector-Aware Tiering for Predictive Features
+
+To prevent models from memorizing the adequacy rules and to promote
+generalization, I engineered sector-stratified tiered features for
+prediction.
+
+Each numeric feature was converted into a quartile-based ordinal factor
+within its sector:
+
+| Feature                         | Tier Labels (Low to High)    |
+|---------------------------------|------------------------------|
+| Assets per Participant          | Low, Moderate, Typical, High |
+| Asset Growth Rate               | Low, Moderate, Typical, High |
+| Participant Growth Rate         | Low, Moderate, Typical, High |
+| Participant Contribution Growth | Low, Moderate, Typical, High |
+| Employer Contribution Growth    | Low, Moderate, Typical, High |
+| Loan Leakage Ratio              | High, Typical, Moderate, Low |
+
+This tiering approach ensures that models learn relative structural
+signals rather than absolute thresholds.
