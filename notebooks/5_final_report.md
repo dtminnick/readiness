@@ -1,6 +1,24 @@
-``` r
-library("knitr")
-```
+---
+title: "Classifying Retirement Plan Financial Adequacy Using Form 5500 Data"
+author: "Donnie Minnick, Statistical Learning - Fall A 2025"
+date: "October 07, 2025"
+output:
+  md_document:
+    variant: gfm
+    preserve_yaml: TRUE
+subtitle: "Final Report"
+---
+
+    ## 
+    ## Attaching package: 'dplyr'
+
+    ## The following objects are masked from 'package:stats':
+    ## 
+    ##     filter, lag
+
+    ## The following objects are masked from 'package:base':
+    ## 
+    ##     intersect, setdiff, setequal, union
 
 # Pipeline Overview
 
@@ -20,11 +38,11 @@ The baseline dataset includes 5,579 single-employer defined contribution
 plans. Initial checks confirmed no missing or zero values, ensuring a
 clean foundation for modeling. Feature engineering focused on structural
 signals of adequacy: participation rate, contribution per participant,
-leakage burden, and asset growth. Plans were grouped into vintage
-cohorts based on effective year, and industry codes were collapsed into
-broader sectors to support benchmarking and fairness overlays.
+leakage burden, and asset growth. I grouped plans into vintage cohorts
+based on effective year, and industry codes were collapsed into broader
+sectors to support benchmarking.
 
-Full analysis is documented
+Full exploratory analysis is documented
 [here](https://github.com/dtminnick/readiness/blob/main/notebooks/2_eda_transform.md).
 
 # Structural Adequacy Scoring and Tiered Feature Engineering
@@ -36,15 +54,13 @@ participant, asset growth, participant growth, contribution growth
 contributes one point, yielding a score from 0 to 6. Plans scoring 4 or
 higher were labeled “Adequate.”
 
-To prevent circularity and promote generalization, predictive features
-were converted into sector-stratified ordinal tiers using intra-sector
-quartiles. For example, instead of using the raw threshold of \$59K
-assets per participant, the model learned from a tiered factor (Low,
-Moderate, Typical, High) based on sector-specific distributions. This
-separation ensured that models learned relative structural signals
+To prevent circularity and promote generalization, I converted
+predictive features into sector-stratified ordinal tiers using
+intra-sector quartiles. For example, instead of using the raw threshold
+of \$59K assets per participant, the model learned from a tiered factor
+(Low, Moderate, Typical, High) based on sector-specific distributions.
+This separation ensured that models learned relative structural signals
 rather than memorizing rule logic.
-
-**Insert sample by sector and plot.**
 
 See **Appendix A** for additional details.
 
@@ -55,20 +71,35 @@ Services), I implemented a stratified sampling strategy to ensure
 balanced representation. Plans were grouped by sector and vintage, and
 sample sizes were proportionally allocated with a minimum floor. Sector
 caps were applied to prevent over-representation, resulting in a
-structurally balanced sample of 1,665 plans across 27 variables.
+structurally balanced sample of 1,665 plans.
+
+| Sector Title    | Plans | Percent |
+|:----------------|------:|--------:|
+| Information     |   101 |    0.06 |
+| Accommodatio…   |   100 |    0.06 |
+| Administrati…   |   100 |    0.06 |
+| Agriculture,…   |    42 |    0.03 |
+| Arts, entert…   |    65 |    0.04 |
+| Construction    |   100 |    0.06 |
+| Educational …   |    69 |    0.04 |
+| Finance and …   |   101 |    0.06 |
+| Health care …   |    99 |    0.06 |
+| Management o…   |    84 |    0.05 |
+| Manufacturing   |   100 |    0.06 |
+| Mining, quar…   |    42 |    0.03 |
+| Other servic…   |   100 |    0.06 |
+| Professional…   |    99 |    0.06 |
+| Public admin…   |    10 |    0.01 |
+| Real estate …   |    99 |    0.06 |
+| Retail trade    |   100 |    0.06 |
+| Transportati…   |   100 |    0.06 |
+| Utilities       |    54 |    0.03 |
+| Wholesale trade |   100 |    0.06 |
+
+Summary By Sector Title - Stratified Sample
 
 I split the sample into training (70%), validation (15%), and test (15%)
 sets for model training and evaluation.
-
-``` r
-data_splits <- readRDS("../data/data_splits.rds")
-
-kable(data_splits,
-      col.names = c("Split", "Adequacy Indicator", "Observations", "Percent"),
-      caption = "Sample Records by Data Split",
-      format.args = list(big.mark = ","),
-      align = c("l", "r", "r", "r"))
-```
 
 | Split      | Adequacy Indicator | Observations | Percent |
 |:-----------|-------------------:|-------------:|--------:|
@@ -87,7 +118,7 @@ data splitting steps are documented
 
 # Model Training and Evaluation
 
-Two classification models were trained:
+I trained and evaluated two classification models:
 
 - **Logistic Regression**: Chosen for interpretability and fairness
   audits.
@@ -100,87 +131,56 @@ logistic model showed consistent generalization and strong
 interpretability, while the RF model offered robust classification but
 showed signs of overfitting.
 
-``` r
-model_metrics <- readRDS("../data/model_metrics.rds")
-
-kable(model_metrics,
-      col.names = c("Metric", 
-                    "Logistic Train", 
-                    "RF Train", 
-                    "Logistic Validate", 
-                    "RF Validate", 
-                    "Logistic Test", 
-                    "RF Test"),
-      caption = "Model Metrics by Model and Data Split",
-      format.args = list(big.mark = ","),
-      align = c("l", "r", "r", "r", "r", "r", "r"))
-```
-
 | Metric | Logistic Train | RF Train | Logistic Validate | RF Validate | Logistic Test | RF Test |
 |:---|---:|---:|---:|---:|---:|---:|
-| Accuracy | 0.9108 | 0.9648 | 0.8680 | 0.8280 | 0.8795 | 0.8514 |
-| AUC | 0.9701 | 0.9958 | 0.9514 | 0.9149 | 0.9349 | 0.9254 |
-| Balanced Accuracy | 0.9103 | 0.9644 | 0.8671 | 0.8278 | 0.8783 | 0.8508 |
-| Kappa | 0.8210 | 0.9294 | 0.7351 | 0.6553 | 0.7580 | 0.7019 |
-| McnemarPValue | 0.6239 | 0.3487 | 0.7277 | 1.0000 | 0.5839 | 1.0000 |
-| Neg Pred Value | 0.9104 | 0.9689 | 0.8707 | 0.8167 | 0.8860 | 0.8462 |
-| Pos Pred Value | 0.9111 | 0.9613 | 0.8657 | 0.8385 | 0.8741 | 0.8561 |
-| Sensitivity | 0.9201 | 0.9723 | 0.8855 | 0.8321 | 0.9008 | 0.8626 |
-| Specificity | 0.9005 | 0.9566 | 0.8487 | 0.8235 | 0.8559 | 0.8390 |
+| Accuracy | 0.8945 | 0.9983 | 0.8480 | 0.8720 | 0.8916 | 0.8635 |
+| AUC | 0.9627 | 0.9999 | 0.9377 | 0.9405 | 0.9408 | 0.9420 |
+| Balanced Accuracy | 0.8940 | 0.9982 | 0.8463 | 0.8751 | 0.8880 | 0.8628 |
+| Kappa | 0.7881 | 0.9966 | 0.6941 | 0.7448 | 0.7808 | 0.7256 |
+| McnemarPValue | 1.0000 | 0.4795 | 0.6265 | 0.0216 | 0.0543 | 1.0000 |
+| Neg Pred Value | 0.8879 | 1.0000 | 0.8496 | 0.8244 | 0.9238 | 0.8534 |
+| Pos Pred Value | 0.9003 | 0.9968 | 0.8467 | 0.9244 | 0.8681 | 0.8722 |
+| Sensitivity | 0.9018 | 1.0000 | 0.8722 | 0.8271 | 0.9398 | 0.8722 |
+| Specificity | 0.8862 | 0.9963 | 0.8205 | 0.9231 | 0.8362 | 0.8534 |
 
 Model Metrics by Model and Data Split
 
 The logistic regression model demonstrated consistent and reliable
 performance across all data splits, validating its strength as a
-classifier. On the test set, it achieved an AUC of 0.935, balanced
-accuracy of 0.878, and a Kappa score of 0.758, indicating strong
+classifier. On the test set, it achieved an AUC of 0.94, balanced
+accuracy of 0.88, and a Kappa score of 0.78, indicating strong
 discriminatory power and substantial agreement beyond chance.
-Sensitivity and specificity remained well-balanced at 0.901 and 0.856,
+Sensitivity and specificity remained well-balanced at 0.93 and 0.83,
 respectively, confirming the model’s ability to identify both adequate
-and inadequate plans without directional bias (Mcnemar p-value: 0.584).
+and inadequate plans without directional bias.
 
-Compared to the random forest model, logistic regression showed slightly
-lower training metrics but superior generalization on validation and
-test sets. This suggests lower overfitting risk and greater
-interpretability, which are key advantages for stakeholder-facing
-diagnostics. Its stable performance across splits make it the preferred
-model for structural adequacy classification in this context.
+Compared to the random forest model, logistic regression showed lower
+training metrics but superior generalization on validation and test
+sets. This suggests lower overfitting risk and greater interpretability,
+which are key advantages for stakeholder-facing diagnostics. Its stable
+performance across splits make it the preferred model for structural
+adequacy classification in this context.
 
 Complete model training and evaluation steps are documented
 [here](https://github.com/dtminnick/readiness/blob/main/notebooks/4_model_eval.md).
 
 # Misclassification Analysis
 
-Misclassification analysis revealed that both models performed cleanly
+Mis-classification analysis revealed that both models performed cleanly
 at adequacy score extremes (0, 1, and 6), while errors clustered around
 borderline scores (3 and 4). This pattern suggests that models were not
 simply reproducing the adequacy score but learning latent structural
 signals embedded in the feature space.
 
-``` r
-check_class_summary <- readRDS("../data/check_class_summary.rds")
-
-kable(check_class_summary,
-      col.names = c("Adequacy Score", 
-                    "Logistic FN", 
-                    "Logistic FP", 
-                    "RF FN", 
-                    "RF FP", 
-                    "Total"),
-      caption = "Misclassifications on Test Set by Adequacy Score and Model",
-      format.args = list(big.mark = ","),
-      align = c("l", "r", "r", "r", "r", "r"))
-```
-
 | Adequacy Score | Logistic FN | Logistic FP | RF FN | RF FP | Total |
 |:---------------|------------:|------------:|------:|------:|------:|
-| 0              |           0 |           0 |     0 |     0 |     9 |
-| 1              |           0 |           0 |     0 |     0 |    21 |
-| 2              |           0 |           0 |     0 |     3 |    43 |
-| 3              |           0 |          13 |     0 |    15 |    58 |
-| 4              |          16 |           0 |    18 |     0 |    70 |
-| 5              |           1 |           0 |     1 |     0 |    34 |
-| 6              |           0 |           0 |     0 |     0 |    14 |
+| 0              |           0 |           0 |     0 |     0 |     3 |
+| 1              |           0 |           0 |     0 |     0 |    16 |
+| 2              |           0 |           0 |     0 |     2 |    53 |
+| 3              |           0 |           8 |     0 |    15 |    61 |
+| 4              |          18 |           0 |    16 |     0 |    69 |
+| 5              |           1 |           0 |     1 |     0 |    32 |
+| 6              |           0 |           0 |     0 |     0 |    15 |
 
 Misclassifications on Test Set by Adequacy Score and Model
 
@@ -198,23 +198,62 @@ logic. These patterns reinforce that the models learned nuanced
 relationships in the feature space and did not simply memorize the
 scoring rubric.
 
+# Feature Importance
+
+Feature importance analysis done as part of model evaluation, from both
+the logistic regression and random forest models, reveals complementary
+insights into the drivers of predicted adequacy.
+
+The logistic model emphasized directional and contextual signals, with
+participant growth and sector affiliation, particularly in Human
+Services and Education, strongly associated with inadequacy.
+
+In contrast, the random forest model prioritized contribution dynamics,
+identifying participant and employer contribution growth tiers as the
+most influential features based on mean decrease in Gini. While
+lower-ranked features like loan leakage and asset accumulation played a
+role, the dominant signals in the random forest structure were tied to
+financial engagement.
+
+Together, these models suggest that adequacy is shaped by both
+structural momentum and sector-specific disparities, reinforcing the
+need for multifaceted diagnostics in plan evaluation.
+
+# Adequacy By Sector
+
+To surface disparities in predicted retirement plan adequacy across
+sectors, I developed a stakeholder-friendly visualization using model
+outputs. The following chart displays the proportion of plans classified
+as “adequate” or “inadequate” within each sector, revealing clear
+structural differences.
+
+![](5_final_report_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+
+Sectors such as Public Administration, Education, and Finance exhibit
+higher adequacy rates, suggesting stronger contribution dynamics and
+plan stability. In contrast, sectors like Accommodation & Food Services,
+Real Estate, and Arts & Entertainment show elevated inadequacy rates,
+pointing to potential gaps in plan design or participant engagement.
+This visualization provides a diagnostic lens for identifying sectors
+that may warrant targeted review or policy intervention.
+
 # Key Insights and Implications
 
 - Plans with high leakage and low contribution stability were
   consistently flagged as inadequate.
 - Sector disparities revealed structural gaps in plan design and
   participant engagement.
-- Feature importance diagnostics highlighted participation rate and
-  leakage burden as dominant signals.
+- Feature importance diagnostics highlighted that adequacy is shaped by
+  both structural momentum and sector-specific disparities.
 - The logistic model is preferred for stakeholder-facing diagnostics due
   to its interpretability and consistent performance.
 
-# Model Extention Opportunities
+# Model Extension Opportunities
 
-- **Aggregate-Level Data**: Form 5500 filings offer plan-level metrics,
-  not participant-level insights.
+- **Aggregate-Level Data**: Form 5500 filings offer plan-level metrics;
+  models can benefit from participant-level insights.
 - **Engineered Thresholds**: Adequacy thresholds are heuristic and could
-  benefit from stakeholder calibration.
+  be refined with stakeholder calibration.
 - **Single-Year Snapshot**: Future work could incorporate multi-year
   filings and macroeconomic overlays to assess resilience and trends.
 

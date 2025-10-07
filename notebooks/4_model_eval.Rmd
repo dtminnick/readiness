@@ -19,6 +19,7 @@ This analysis leverages the following R packages: `dplyr`, `lubridate`, `stringr
 I use a customized R functions to collect performance metrics across model runs and generate a common set of metrics for model evaluation.
 
 ```{r message = FALSE}
+library("broom")
 library("caret")
 library("dplyr")
 library("ggplot2")
@@ -106,7 +107,7 @@ arm::binnedplot(x = fitted(model_logistic),
          main = "Binned Residual Plot")
 ```
 
-Most binned residuals fall within the confidence bounds and fluctuate randomly around zero, with no consistent upward or downward trend. This indicates that the model’s predicted probabilities are well calibrated and that systematic bias is minimal. Some deviations appear in the midrange probabilities (around 0.2–0.4), but they are small and within acceptable limits.
+Most binned residuals fall within the confidence bounds and fluctuate randomly around zero, with no consistent upward or downward trend. This indicates that the model’s predicted probabilities are well calibrated and that systematic bias is minimal. Some deviations appear in the midrange probabilities, but they are small and within acceptable limits.
 
 Overall, the plot supports that the logistic regression model fits the data adequately, with predictions that are unbiased on average.
 
@@ -121,10 +122,11 @@ df_all_metrics <- train_results_logistic$metrics_df
 Show results of the confusion matrix.
 
 ```{r}
-train_results_logistic$metrics_df
+kable(train_results_logistic$metrics_df,
+      caption = "Metrics Table", align = "l")
 ```
 
-The confusion matrix reveals strong model performance, with high accuracy, balanced sensitivity and specificity, and substantial agreement beyond chance (Kappa = 0.82). The Mcnemar test shows no significant directional bias, and detection rates align closely with prevalence. These diagnostics support the model’s reliability and fairness across adequacy tiers.
+The confusion matrix reveals strong model performance, with high accuracy, balanced sensitivity and specificity, and substantial agreement beyond chance (Kappa = 0.78). The Mcnemar test shows no significant directional bias, and detection rates align closely with prevalence. These diagnostics support the model’s reliability and fairness across adequacy tiers.
 
 Show the ROC curve.
 
@@ -141,7 +143,7 @@ plot(train_results_logistic$roc_obj,
 
 The ROC curve shows strong model performance, with the curve rising well above the diagonal, indicating high sensitivity and specificity across thresholds. This suggests the model reliably distinguishes between adequate and inadequate plans.
 
-An AUC of 0.9701 indicates excellent model performance. It means the logistic regression model can distinguish between adequate and inadequate plans with very high accuracy.
+An AUC of 0.963 indicates excellent model performance. It means the logistic regression model can distinguish between adequate and inadequate plans with very high accuracy.
 
 ## Random Forest Model
 
@@ -151,6 +153,7 @@ Generate random forest model and show model performance.
 # plans_train$ADEQUACY_IND <- as.factor(plans_train$ADEQUACY_IND)
 
 model_rf <- randomForest(ADEQUACY_IND ~ 
+                           SECTOR_TITLE_SHORT + 
                            CONTRIB_EMPLR_GROWTH_TIER_Q + 
                            CONTRIB_PARTCP_GROWTH_TIER_Q +
                            PARTCP_GROWTH_TIER_Q + 
@@ -165,17 +168,7 @@ model_rf <- randomForest(ADEQUACY_IND ~
 print(model_rf)
 ```
 
-This random forest model achieves ~86% accuracy with balanced error rates across adequacy classes. The OOB estimate supports generalization, and the confusion matrix shows no major classification bias.
-
-Generate a variable importance plot.
-
-```{r}
-varImpPlot(model_rf, type = 2, main = "Random Forest Variable Importance")
-```
-
-The random forest model confirms that contribution growth, especially participant-driven growth, is the strongest predictor of plan adequacy, followed closely by employer contributions and loan leakage. This resonates as industry studies confirm that those who contribute consistently to retirement savings - and do not draw early on savings - are generally more financially prepared for this life event.   
-
-Asset-based tiers play a supporting role, while total asset growth shows the least influence.
+This random forest model achieves ~88% accuracy with balanced error rates across adequacy classes. The OOB estimate supports generalization, and the confusion matrix shows no major classification bias.
 
 Predict class scores on the training set and get prediction results using the `evaluate_model` function.
 
@@ -188,10 +181,11 @@ df_all_metrics <- train_results_rf$metrics_df
 Show results of the confusion matrix.
 
 ```{r}
-train_results_rf$metrics_df
+kable(train_results_rf$metrics_df,
+            caption = "Metrics Table", align = "l")
 ```
 
-This random forest model demonstrates exceptional performance, with high accuracy, balanced sensitivity and specificity, and strong agreement beyond chance (Kappa = 0.93). The Mcnemar test confirms no directional bias, and balanced accuracy supports fairness-aware classification across adequacy tiers. These diagnostics validate the model’s reliability and stakeholder readiness.
+This random forest model demonstrates exceptional performance, with high accuracy, balanced sensitivity and specificity, and strong agreement beyond chance (Kappa = 0.99). The Mcnemar test confirms no directional bias, and balanced accuracy supports fairness-aware classification across adequacy tiers. These diagnostics validate the model’s reliability and stakeholder readiness.
 
 Show the ROC curve.
 
@@ -206,7 +200,7 @@ plot(train_results_rf$roc_obj,
      legacy.axes = TRUE)       
 ```
 
-The near-perfect ROC curve, paired with 96% test accuracy and 84% OOB accuracy, suggests the model may be overfitting to training data.
+The near-perfect ROC curve, paired with 96% test accuracy and 88% OOB accuracy, suggests the model may be overfitting to training data.
 
 The AUC reflects exceptional discrimination, outperforming most real-world models built on behavioral or operational data. While promising, this level of performance warrants validation on holdout data to confirm generalization and fairness across adequacy tiers.
 
@@ -227,10 +221,11 @@ df_all_metrics <- validate_results_logistic$metrics_df
 Show results of the confusion matrix.
 
 ```{r}
-validate_results_logistic$metrics_df
+kable(validate_results_logistic$metrics_df,
+      caption = "Metrics Table", align = "l")
 ```
 
-The logistic model performs well on the validation set, with an AUC of 0.951 and balanced accuracy of 0.867, indicating strong class separation and fair treatment of positives and negatives. Sensitivity (0.886) slightly exceeds specificity (0.849), favoring detection of adequacy. Kappa (0.735) shows substantial agreement, and the McNemar p-value (0.728) confirms no directional bias in errors. Overall, the model generalizes well with no major fairness concerns.
+The logistic model performs well on the validation set, with an AUC of 0.937 and balanced accuracy of 0.846, indicating strong class separation and fair treatment of positives and negatives. Sensitivity (0.872) slightly exceeds specificity (0.825), favoring detection of adequacy. Kappa (0.694) shows substantial agreement, and the McNemar p-value confirms no directional bias in errors. Overall, the model generalizes well with no major fairness concerns.
 
 Show the ROC curve.
 
@@ -245,7 +240,7 @@ plot(validate_results_logistic$roc_obj,
      legacy.axes = TRUE)       
 ```
 
-The ROC curve for the logistic model on the validation set shows strong separation between classes, with an AUC of 0.951, indicating excellent discriminatory power. This suggests the model is highly effective.
+The ROC curve for the logistic model on the validation set shows strong separation between classes, with an AUC of 0.938, indicating excellent discriminatory power. This suggests the model is highly effective.
 
 ## Random Forest Model
 
@@ -260,10 +255,11 @@ df_all_metrics <- validate_results_rf$metrics_df
 Show results of the confusion matrix.
 
 ```{r}
-validate_results_rf$metrics_df
+kable(validate_results_rf$metrics_df,
+      caption = "Metrics Table", align = "l")
 ```
 
-The random forest model shows decent validation performance with an AUC of 0.914 and balanced accuracy of 0.832, but it trails the logistic model across most metrics. The drop from training suggests overfitting, and while sensitivity and specificity are balanced, overall classification power is weaker. The McNemar p-value of 1.000 indicates no directional bias, but the model generalizes less effectively than logistic.
+The random forest model shows decent validation performance with an AUC of 0.940 and balanced accuracy of 0.871, but it trails the logistic model across most metrics. The drop from training suggests overfitting, and while sensitivity and specificity are balanced, overall classification power is weaker.
 
 Show the ROC curve.
 
@@ -278,7 +274,7 @@ plot(validate_results_rf$roc_obj,
      legacy.axes = TRUE)       
 ```
 
-The ROC curve for the random forest model on the validation set shows solid classification performance, with the curve clearly above the diagonal, indicating better-than-random predictions. The AUC of 0.914 confirms strong discriminatory power, though it’s notably lower than the training AUC of 0.996 and slightly behind the logistic model’s validation AUC of 0.951. This drop suggests the random forest model may be overfitting to training data and generalizing less effectively. Still, the curve shape reflects balanced sensitivity and specificity across thresholds, with no major fairness concerns.
+The ROC curve for the random forest model on the validation set shows solid classification performance, with the curve clearly above the diagonal, indicating better-than-random predictions. The AUC of 0.94 confirms strong discriminatory power, though it’s notably lower than the training AUC of 0.99. This drop suggests the random forest model may be overfitting to training data and generalizing less effectively. Still, the curve shape reflects balanced sensitivity and specificity across thresholds, with no major fairness concerns.
 
 # Test Models
 
@@ -295,10 +291,11 @@ df_all_metrics <- test_results_logistic$metrics_df
 Show results of the confusion matrix.
 
 ```{r}
-test_results_logistic$metrics_df
+kable(test_results_logistic$metrics_df,
+      caption = "Metrics Table", align = "l")
 ```
 
-The logistic model performs consistently well on the test set, with an AUC of 0.935 and balanced accuracy of 0.878, confirming strong generalization. Sensitivity (0.901) and specificity (0.856) remain well-balanced, and the Kappa score of 0.758 reflects substantial agreement. The McNemar p-value (0.584) shows no directional bias in errors. Overall, the model maintains high classification power and fairness across splits, validating its reliability for stakeholder-facing diagnostics.
+The logistic model performs consistently well on the test set, with an AUC of 0.94 and balanced accuracy of 0.88, confirming strong generalization. Sensitivity (0.939) and specificity (0.836) remain well-balanced, and the Kappa score of 0.78 reflects substantial agreement. Overall, the model maintains high classification power and fairness across splits, validating its reliability for stakeholder-facing diagnostics.
 
 Show the ROC curve.
 
@@ -313,7 +310,7 @@ plot(test_results_logistic$roc_obj,
      legacy.axes = TRUE)       
 ```
 
-The ROC curve for the logistic model on the test set shows strong classification performance, with the curve well above the diagonal, indicating reliable separation between adequacy classes. The AUC of 0.935 confirms excellent discriminatory power, validating the model’s ability to generalize beyond training and validation data. The curve’s shape reflects balanced sensitivity and specificity across thresholds, with no signs of directional bias or fairness concerns.
+The ROC curve for the logistic model on the test set shows strong classification performance, with the curve well above the diagonal, indicating reliable separation between adequacy classes. The AUC of 0.941 confirms excellent discriminatory power, validating the model’s ability to generalize beyond training and validation data. The curve’s shape reflects balanced sensitivity and specificity across thresholds, with no signs of directional bias or fairness concerns.
 
 ## Random Forest Model
 
@@ -328,10 +325,11 @@ df_all_metrics <- test_results_rf$metrics_df
 Show results of the confusion matrix.
 
 ```{r}
-test_results_rf$metrics_df
+kable(test_results_rf$metrics_df,
+      caption = "Metrics Table", align = "l")
 ```
 
-The Random Forest model performs well on the test set, with an AUC of 0.923 and balanced accuracy of 0.855, confirming strong generalization. Sensitivity (0.863) and specificity (0.848) are well-balanced, and the Kappa score of 0.710 reflects substantial agreement. While slightly behind the logistic model in most metrics, the RF model maintains reliable classification power and fairness, with a McNemar p-value of 1.000 indicating no directional bias in errors.
+The Random Forest model performs well on the test set, with an AUC of 0.94 and balanced accuracy of 0.85, confirming strong generalization. Sensitivity (0.87) and specificity (0.83) are well-balanced, and the Kappa score of 0.71 reflects substantial agreement. While slightly behind the logistic model in most metrics, the RF model maintains reliable classification power and fairness, with a McNemar p-value of 0.73 indicating no directional bias in errors.
 
 Show the ROC curve.
 
@@ -346,7 +344,7 @@ plot(test_results_rf$roc_obj,
      legacy.axes = TRUE)       
 ```
 
-The ROC curve for the random forest model on the test set shows strong classification performance, with the curve clearly above the diagonal, indicating reliable separation between adequacy classes. The AUC of 0.923 confirms high discriminatory power, though slightly behind its training AUC of 0.996 and the logistic model’s test AUC of 0.935. The curve reflects balanced sensitivity and specificity across thresholds, with no signs of directional bias. Overall, the RF model generalizes well and remains a solid performer.
+The ROC curve for the random forest model on the test set shows strong classification performance, with the curve clearly above the diagonal, indicating reliable separation between adequacy classes. The AUC of 0.942 confirms high discriminatory power. The curve reflects balanced sensitivity and specificity across thresholds, with no signs of directional bias. Overall, the RF model generalizes well and remains a solid performer.
 
 # Final Comparison
 
@@ -356,9 +354,7 @@ The random forest model performs well but shows signs of overfitting, with a sha
 
 For applications prioritizing transparency and stakeholder clarity, the logistic model is the preferred choice. The random forest model may still be useful as a benchmark or ensemble component, but logistic offers the cleanest balance of performance and interpretability.
 
-# High-Level Takeaways from Model Evaluation
-
-# High-Level Takeaways
+# Takeaways from Model Evaluation
 
 Summary of observations from performance metrics.
 
@@ -466,3 +462,99 @@ saveRDS(df_all_metrics, "../data/model_metrics.rds")
 
 saveRDS(class_check_summary, "../data/check_class_summary.rds")
 ```
+
+# Feature Importance
+
+## Logistic Regression
+
+Standardized coefficients provide a view of what features are most important to predicting retirement plan adequacy.
+
+```{r}
+logistic_importance <- tidy(model_logistic) %>%
+  filter(term != "(Intercept)") %>%
+  mutate(abs_estimate = abs(estimate)) %>%
+  arrange(desc(abs_estimate))
+
+# Plot
+ggplot(logistic_importance, aes(x = reorder(term, abs_estimate), y = abs_estimate)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  labs(title = "Feature Importance (Logistic Regression)",
+       x = "Feature",
+       y = "Absolute Coefficient") +
+  theme_minimal()
+```
+
+The logistic regression feature importance plot highlights which predictors most influence adequacy classification. Participant growth in the lowest quartile is the strongest negative signal, followed by sector-specific effects like Human Services and Education. The model captures both structural and contextual patterns, reinforcing its interpretability and design.
+
+## Random Forest
+
+```{r}
+importance_df <- as.data.frame(importance(model_rf))
+importance_df$Feature <- rownames(importance_df)
+
+ggplot(importance_df, aes(x = reorder(Feature, MeanDecreaseGini), y = MeanDecreaseGini)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  labs(title = "Feature Importance (Random Forest)",
+       x = "Feature",
+       y = "Mean Decrease in Gini") +
+  theme_minimal()
+```
+
+The Random Forest model’s feature importance plot reveals which structural signals most influenced adequacy classification. The top-ranked feature is participant contribution growth tier, followed closely by employer contribution growth and participant growth. These features had the highest mean decrease in Gini, meaning they contributed most to reducing impurity in the model’s decision trees.
+
+Lower-ranked but still meaningful features include loan leakage, assets per participant, and total asset growth, suggesting that while savings and erosion matter, contribution dynamics were more decisive in the RF model’s structure.
+
+## Comparison
+
+The logistic regression model emphasized participant growth and sector context, with low growth and sectors like Human Services and Education strongly associated with inadequacy. In contrast, the random forest model prioritized contribution dynamics, participant and employer contribution growth tiers were the most influential, followed by participant growth. 
+
+While logistic regression highlighted directional and contextual signals, random forest captured nonlinear patterns tied to financial engagement. Together, they reveal that adequacy is driven by both structural momentum and sector-specific disparities.
+
+# Sector Adequacy Scores
+
+Create a stakeholder-friendly visualization that surfaces sector-level disparities in predicted adequacy based on predictions from the logistic model. Use the proportion of predicted adequacy classes across sectors.
+
+```{r}
+# Calculate proportions.
+
+adequacy_by_sector <- as.data.frame(test_results_logistic$predictions) %>%
+  group_by(SECTOR_TITLE_SHORT, predicted_class) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  group_by(SECTOR_TITLE_SHORT) %>%
+  mutate(Proportion = count / sum(count)) %>%
+  ungroup()
+
+saveRDS(adequacy_by_sector, "../data/adequacy_by_sector.rds")
+
+# Extract proportion of class 1 (adequate) for sorting.
+
+adequacy_sort_order <- adequacy_by_sector %>%
+  filter(predicted_class == 1) %>%
+  arrange(desc(Proportion)) %>%
+  pull(SECTOR_TITLE_SHORT)
+
+# Plot with custom sorting.
+
+ggplot(adequacy_by_sector, aes(x = factor(SECTOR_TITLE_SHORT, levels = adequacy_sort_order),
+                               y = Proportion,
+                               fill = factor(predicted_class, levels = c(0, 1),
+                                             labels = c("Inadequate", "Adequate")))) +
+  geom_col(position = "fill") +
+  scale_fill_manual(values = c("Inadequate" = "steelblue", "Adequate" = "lightsteelblue")) +
+  labs(title = "Proportion of Predicted Classes by Sector",
+       x = "Sector",
+       y = "Proportion",
+       fill = "Predicted Class") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 0.5),
+        plot.title = element_text(size = 14, face = "bold"))
+```
+
+The chart reveals clear sector-level disparities in predicted retirement plan adequacy. 
+
+Sectors like Public Administration, Education, and Finance show high proportions of plans classified as “adequate,” suggesting structural stability and stronger contribution dynamics. In contrast, sectors such as Accommodation & Food Services, Real Estate, and Arts & Entertainment are predominantly labeled “inadequate,” indicating potential gaps in plan design, engagement, or financial momentum. 
+
+This visualization offers a diagnostic snapshot for identifying where targeted interventions or deeper audits may be most needed.
+

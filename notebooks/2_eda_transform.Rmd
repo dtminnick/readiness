@@ -406,6 +406,8 @@ check_sample <- plans_stratified %>%
   summarise(entries = n()) %>%
   mutate(percent = round(entries / sum(entries), 2))
 
+saveRDS(check_sample, "../data/stratified_sample.rds")
+
 kable(check_sample,
       col.names = c("Sector Title", "Plans", "Percent"),
       caption = "Summary By Sector Title - Stratified Sample",

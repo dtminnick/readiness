@@ -5,11 +5,16 @@ date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output:
   md_document:
     variant: gfm
+    preserve_yaml: TRUE
 subtitle: "Final Report"
 ---
 
-```{r}
+
+
+```{r echo = FALSE}
+library("dplyr")
 library("knitr")
+library("ggplot2")
 ```
 
 # Pipeline Overview
@@ -20,27 +25,35 @@ My Github repository for this project can be accessed [here](https://github.com/
 
 # Exploratory Data Analysis and Data Transformation
 
-The baseline dataset includes 5,579 single-employer defined contribution plans. Initial checks confirmed no missing or zero values, ensuring a clean foundation for modeling. Feature engineering focused on structural signals of adequacy: participation rate, contribution per participant, leakage burden, and asset growth. Plans were grouped into vintage cohorts based on effective year, and industry codes were collapsed into broader sectors to support benchmarking and fairness overlays.
+The baseline dataset includes 5,579 single-employer defined contribution plans. Initial checks confirmed no missing or zero values, ensuring a clean foundation for modeling. Feature engineering focused on structural signals of adequacy: participation rate, contribution per participant, leakage burden, and asset growth. I grouped plans into vintage cohorts based on effective year, and industry codes were collapsed into broader sectors to support benchmarking.
 
-Full analysis is documented [here](https://github.com/dtminnick/readiness/blob/main/notebooks/2_eda_transform.md).
+Full exploratory analysis is documented [here](https://github.com/dtminnick/readiness/blob/main/notebooks/2_eda_transform.md).
 
 # Structural Adequacy Scoring and Tiered Feature Engineering
 
 To classify plans as structurally “adequate,” I developed a composite adequacy score based on six interpretable indicators: assets per participant, asset growth, participant growth, contribution growth (participant and employer), and loan leakage ratio. Each condition contributes one point, yielding a score from 0 to 6. Plans scoring 4 or higher were labeled “Adequate.”
 
-To prevent circularity and promote generalization, predictive features were converted into sector-stratified ordinal tiers using intra-sector quartiles. For example, instead of using the raw threshold of $59K assets per participant, the model learned from a tiered factor (Low, Moderate, Typical, High) based on sector-specific distributions. This separation ensured that models learned relative structural signals rather than memorizing rule logic.
-
-**Insert sample by sector and plot.**
+To prevent circularity and promote generalization, I converted predictive features into sector-stratified ordinal tiers using intra-sector quartiles. For example, instead of using the raw threshold of $59K assets per participant, the model learned from a tiered factor (Low, Moderate, Typical, High) based on sector-specific distributions. This separation ensured that models learned relative structural signals rather than memorizing rule logic.
 
 See **Appendix A** for additional details.
 
 # Stratified Sampling and Data Splits
 
-Given the dominance of a few sectors (e.g., Manufacturing, Professional Services), I implemented a stratified sampling strategy to ensure balanced representation. Plans were grouped by sector and vintage, and sample sizes were proportionally allocated with a minimum floor. Sector caps were applied to prevent over-representation, resulting in a structurally balanced sample of 1,665 plans across 27 variables. 
+Given the dominance of a few sectors (e.g., Manufacturing, Professional Services), I implemented a stratified sampling strategy to ensure balanced representation. Plans were grouped by sector and vintage, and sample sizes were proportionally allocated with a minimum floor. Sector caps were applied to prevent over-representation, resulting in a structurally balanced sample of 1,665 plans. 
+
+```{r echo = FALSE}
+stratified_sample <- readRDS("../data/stratified_sample.rds")
+
+kable(stratified_sample,
+      col.names = c("Sector Title", "Plans", "Percent"),
+      caption = "Summary By Sector Title - Stratified Sample",
+      format.args = list(big.mark = ","),
+      align = c("l", "r", "r"))
+```
 
 I split the sample into training (70%), validation (15%), and test (15%) sets for model training and evaluation.
 
-```{r}
+```{r echo = FALSE}
 data_splits <- readRDS("../data/data_splits.rds")
 
 kable(data_splits,
@@ -54,14 +67,14 @@ Predictor association, multicollinearity checks, subset selection, and data spli
 
 # Model Training and Evaluation
 
-Two classification models were trained:
+I trained and evaluated two classification models:
 
 * **Logistic Regression**: Chosen for interpretability and fairness audits.
 * **Random Forest**: Used to capture nonlinear relationships and feature interactions.
 
 Models were evaluated on training, validation, and test sets using ROC/AUC curves, confusion matrices, and residual diagnostics. The logistic model showed consistent generalization and strong interpretability, while the RF model offered robust classification but showed signs of overfitting.
 
-```{r}
+```{r echo = FALSE}
 model_metrics <- readRDS("../data/model_metrics.rds")
 
 kable(model_metrics,
@@ -77,17 +90,17 @@ kable(model_metrics,
       align = c("l", "r", "r", "r", "r", "r", "r"))
 ```
 
-The logistic regression model demonstrated consistent and reliable performance across all data splits, validating its strength as a classifier. On the test set, it achieved an AUC of 0.935, balanced accuracy of 0.878, and a Kappa score of 0.758, indicating strong discriminatory power and substantial agreement beyond chance. Sensitivity and specificity remained well-balanced at 0.901 and 0.856, respectively, confirming the model’s ability to identify both adequate and inadequate plans without directional bias (Mcnemar p-value: 0.584).
+The logistic regression model demonstrated consistent and reliable performance across all data splits, validating its strength as a classifier. On the test set, it achieved an AUC of 0.94, balanced accuracy of 0.88, and a Kappa score of 0.78, indicating strong discriminatory power and substantial agreement beyond chance. Sensitivity and specificity remained well-balanced at 0.93 and 0.83, respectively, confirming the model’s ability to identify both adequate and inadequate plans without directional bias.
 
-Compared to the random forest model, logistic regression showed slightly lower training metrics but superior generalization on validation and test sets. This suggests lower overfitting risk and greater interpretability, which are key advantages for stakeholder-facing diagnostics. Its stable performance across splits make it the preferred model for structural adequacy classification in this context.
+Compared to the random forest model, logistic regression showed lower training metrics but superior generalization on validation and test sets. This suggests lower overfitting risk and greater interpretability, which are key advantages for stakeholder-facing diagnostics. Its stable performance across splits make it the preferred model for structural adequacy classification in this context.
 
 Complete model training and evaluation steps are documented [here](https://github.com/dtminnick/readiness/blob/main/notebooks/4_model_eval.md).
 
 # Misclassification Analysis
 
-Misclassification analysis revealed that both models performed cleanly at adequacy score extremes (0, 1, and 6), while errors clustered around borderline scores (3 and 4). This pattern suggests that models were not simply reproducing the adequacy score but learning latent structural signals embedded in the feature space.
+Mis-classification analysis revealed that both models performed cleanly at adequacy score extremes (0, 1, and 6), while errors clustered around borderline scores (3 and 4). This pattern suggests that models were not simply reproducing the adequacy score but learning latent structural signals embedded in the feature space.
 
-```{r}
+```{r echo = FALSE}
 check_class_summary <- readRDS("../data/check_class_summary.rds")
 
 kable(check_class_summary,
@@ -106,17 +119,58 @@ Misclassification patterns on the test set reveal that both models performed cle
 
 Both models tended to overclassify score 3 plans as adequate and underclassify score 4 plans, suggesting they were responding to latent structural signals rather than rigidly replicating the adequacy score logic. These patterns reinforce that the models learned nuanced relationships in the feature space and did not simply memorize the scoring rubric.
 
+# Feature Importance
+
+Feature importance analysis done as part of model evaluation, from both the logistic regression and random forest models, reveals complementary insights into the drivers of predicted adequacy. 
+
+The logistic model emphasized directional and contextual signals, with participant growth and sector affiliation, particularly in Human Services and Education, strongly associated with inadequacy. 
+
+In contrast, the random forest model prioritized contribution dynamics, identifying participant and employer contribution growth tiers as the most influential features based on mean decrease in Gini. While lower-ranked features like loan leakage and asset accumulation played a role, the dominant signals in the random forest structure were tied to financial engagement. 
+
+Together, these models suggest that adequacy is shaped by both structural momentum and sector-specific disparities, reinforcing the need for multifaceted diagnostics in plan evaluation.
+
+# Adequacy By Sector
+
+To surface disparities in predicted retirement plan adequacy across sectors, I developed a stakeholder-friendly visualization using  model outputs. The following chart displays the proportion of plans classified as “adequate” or “inadequate” within each sector, revealing clear structural differences.
+
+```{r echo = FALSE}
+adequacy_by_sector <- readRDS("../data/adequacy_by_sector.rds")
+
+adequacy_sort_order <- adequacy_by_sector %>%
+  filter(predicted_class == 1) %>%
+  arrange(desc(Proportion)) %>%
+  pull(SECTOR_TITLE_SHORT)
+
+# Plot with custom sorting.
+
+ggplot(adequacy_by_sector, aes(x = factor(SECTOR_TITLE_SHORT, levels = adequacy_sort_order),
+                               y = Proportion,
+                               fill = factor(predicted_class, levels = c(0, 1),
+                                             labels = c("Inadequate", "Adequate")))) +
+  geom_col(position = "fill") +
+  scale_fill_manual(values = c("Inadequate" = "steelblue", "Adequate" = "lightsteelblue")) +
+  labs(title = "Proportion of Predicted Classes by Sector",
+       x = "Sector",
+       y = "Proportion",
+       fill = "Predicted Class") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 0.5),
+        plot.title = element_text(size = 14, face = "bold"))
+```
+
+Sectors such as Public Administration, Education, and Finance exhibit higher adequacy rates, suggesting stronger contribution dynamics and plan stability. In contrast, sectors like Accommodation & Food Services, Real Estate, and Arts & Entertainment show elevated inadequacy rates, pointing to potential gaps in plan design or participant engagement. This visualization provides a diagnostic lens for identifying sectors that may warrant targeted review or policy intervention.
+
 # Key Insights and Implications
 
 * Plans with high leakage and low contribution stability were consistently flagged as inadequate.
 * Sector disparities revealed structural gaps in plan design and participant engagement.
-* Feature importance diagnostics highlighted participation rate and leakage burden as dominant signals.
+* Feature importance diagnostics highlighted that adequacy is shaped by both structural momentum and sector-specific disparities.
 * The logistic model is preferred for stakeholder-facing diagnostics due to its interpretability and consistent performance.
 
-# Model Extention Opportunities
+# Model Extension Opportunities
 
-* **Aggregate-Level Data**: Form 5500 filings offer plan-level metrics, not participant-level insights.
-* **Engineered Thresholds**: Adequacy thresholds are heuristic and could benefit from stakeholder calibration.
+* **Aggregate-Level Data**: Form 5500 filings offer plan-level metrics; models can benefit from participant-level insights.
+* **Engineered Thresholds**: Adequacy thresholds are heuristic and could be refined with stakeholder calibration.
 * **Single-Year Snapshot**: Future work could incorporate multi-year filings and macroeconomic overlays to assess resilience and trends.
 
 # Appendices

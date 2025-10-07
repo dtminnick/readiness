@@ -19,6 +19,8 @@ This analysis leverages the following R packages: `dplyr` and `forcats` for data
 I use two customized R functions for variable associations and multicollinearity checks.
 
 ```{r echo = FALSE, message = FALSE}
+set.seed(91210)
+
 library("caret")
 library("dplyr")
 library("forcats")
@@ -219,8 +221,6 @@ Split the dataset into training (70%), validation (15%), and test (15%) sets to 
 With 1,665 total observations, a 70/15/15 split is generally appropriate. Each subset remains large enough to support stable estimation and diagnostic review.
 
 ```{r}
-set.seed(91210)
-
 # Initial train/test split.
 
 train_idx <- createDataPartition(plans$ADEQUACY_IND, p = 0.7, list = FALSE)

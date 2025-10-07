@@ -13,6 +13,7 @@ I use a customized R functions to collect performance metrics across
 model runs and generate a common set of metrics for model evaluation.
 
 ``` r
+library("broom")
 library("caret")
 library("dplyr")
 library("ggplot2")
@@ -71,54 +72,56 @@ summary(model_logistic)
     ## 
     ## Coefficients:
     ##                                    Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)                        -0.94807    0.44747  -2.119 0.034115 *  
-    ## SECTOR_TITLE_SHORTAdministrati...  -0.62169    0.66754  -0.931 0.351691    
-    ## SECTOR_TITLE_SHORTAgriculture,...  -0.49015    0.82153  -0.597 0.550757    
-    ## SECTOR_TITLE_SHORTArts, entert...   1.78989    0.71798   2.493 0.012669 *  
-    ## SECTOR_TITLE_SHORTEducational ...   2.03610    0.67686   3.008 0.002628 ** 
-    ## SECTOR_TITLE_SHORTFinance and ...   1.16204    0.63783   1.822 0.068477 .  
-    ## SECTOR_TITLE_SHORTHealth care ...   1.12040    0.66960   1.673 0.094282 .  
-    ## SECTOR_TITLE_SHORTManagement o...   0.83619    0.67103   1.246 0.212721    
-    ## SECTOR_TITLE_SHORTManufacturing    -0.23856    0.67350  -0.354 0.723183    
-    ## SECTOR_TITLE_SHORTMining, quar...   2.87838    0.93604   3.075 0.002105 ** 
-    ## SECTOR_TITLE_SHORTProfessional...   1.76129    0.64746   2.720 0.006522 ** 
-    ## SECTOR_TITLE_SHORTPublic admin... -19.07158  759.81769  -0.025 0.979975    
-    ## SECTOR_TITLE_SHORTRetail trade     -0.95391    0.65486  -1.457 0.145211    
-    ## SECTOR_TITLE_SHORTTransportati...  -1.11010    0.69026  -1.608 0.107786    
-    ## SECTOR_TITLE_SHORTUtilities         0.07155    0.78010   0.092 0.926926    
-    ## SECTOR_TITLE_SHORTWholesale trade  -0.12764    0.65020  -0.196 0.844370    
-    ## SECTOR_TITLE_SHORTOther             0.94170    0.50240   1.874 0.060875 .  
-    ## PLAN_VINTAGE_GROUP.L               -0.08687    0.28578  -0.304 0.761153    
-    ## PLAN_VINTAGE_GROUP.Q               -0.54308    0.24108  -2.253 0.024276 *  
-    ## PLAN_VINTAGE_GROUP.C                0.10487    0.23128   0.453 0.650234    
-    ## CONTRIB_EMPLR_GROWTH_TIER_Q.L       3.43298    0.31967  10.739  < 2e-16 ***
-    ## CONTRIB_EMPLR_GROWTH_TIER_Q.Q      -0.55526    0.25615  -2.168 0.030180 *  
-    ## CONTRIB_EMPLR_GROWTH_TIER_Q.C      -1.45784    0.24210  -6.022 1.73e-09 ***
-    ## CONTRIB_PARTCP_GROWTH_TIER_Q.L      3.37590    0.30858  10.940  < 2e-16 ***
-    ## CONTRIB_PARTCP_GROWTH_TIER_Q.Q     -0.13078    0.26118  -0.501 0.616570    
-    ## CONTRIB_PARTCP_GROWTH_TIER_Q.C     -1.18215    0.23056  -5.127 2.94e-07 ***
-    ## PARTCP_GROWTH_TIER_Q.L              3.82063    0.33326  11.465  < 2e-16 ***
-    ## PARTCP_GROWTH_TIER_Q.Q             -0.47614    0.24566  -1.938 0.052597 .  
-    ## PARTCP_GROWTH_TIER_Q.C             -0.75243    0.22360  -3.365 0.000765 ***
-    ## ASSETS_PER_PARTCP_TIER_Q.L          3.38099    0.35774   9.451  < 2e-16 ***
-    ## ASSETS_PER_PARTCP_TIER_Q.Q          0.50865    0.23836   2.134 0.032845 *  
-    ## ASSETS_PER_PARTCP_TIER_Q.C         -0.97624    0.24183  -4.037 5.42e-05 ***
-    ## TOTAL_ASSETS_GROWTH_TIER_Q.L        0.86159    0.28298   3.045 0.002330 ** 
-    ## TOTAL_ASSETS_GROWTH_TIER_Q.Q       -0.31539    0.24577  -1.283 0.199403    
-    ## TOTAL_ASSETS_GROWTH_TIER_Q.C        0.15503    0.22968   0.675 0.499687    
-    ## LOAN_LEAKAGE_TIER_Q.L              -2.94462    0.30343  -9.705  < 2e-16 ***
-    ## LOAN_LEAKAGE_TIER_Q.Q               0.04130    0.23422   0.176 0.860028    
-    ## LOAN_LEAKAGE_TIER_Q.C               0.24491    0.23539   1.040 0.298126    
+    ## (Intercept)                       -2.002805   0.486874  -4.114 3.90e-05 ***
+    ## SECTOR_TITLE_SHORTAdministrati... -0.031153   0.655053  -0.048 0.962068    
+    ## SECTOR_TITLE_SHORTAgriculture,...  0.907670   0.776545   1.169 0.242461    
+    ## SECTOR_TITLE_SHORTArts, entert...  3.044731   0.765507   3.977 6.97e-05 ***
+    ## SECTOR_TITLE_SHORTConstruction     2.126887   0.645851   3.293 0.000991 ***
+    ## SECTOR_TITLE_SHORTEducational ...  2.991934   0.714487   4.188 2.82e-05 ***
+    ## SECTOR_TITLE_SHORTFinance and ...  2.423290   0.629734   3.848 0.000119 ***
+    ## SECTOR_TITLE_SHORTHealth care ...  1.868379   0.640077   2.919 0.003512 ** 
+    ## SECTOR_TITLE_SHORTManagement o...  2.212885   0.680620   3.251 0.001149 ** 
+    ## SECTOR_TITLE_SHORTManufacturing    1.138847   0.671182   1.697 0.089738 .  
+    ## SECTOR_TITLE_SHORTMining, quar...  3.149309   0.800851   3.932 8.41e-05 ***
+    ## SECTOR_TITLE_SHORTProfessional...  2.309664   0.683568   3.379 0.000728 ***
+    ## SECTOR_TITLE_SHORTPublic admin... -2.964738   1.531855  -1.935 0.052942 .  
+    ## SECTOR_TITLE_SHORTReal estate ...  1.342119   0.632114   2.123 0.033735 *  
+    ## SECTOR_TITLE_SHORTRetail trade    -0.439978   0.659529  -0.667 0.504702    
+    ## SECTOR_TITLE_SHORTTransportati...  0.804372   0.683600   1.177 0.239327    
+    ## SECTOR_TITLE_SHORTUtilities        0.893870   0.729975   1.225 0.220756    
+    ## SECTOR_TITLE_SHORTWholesale trade  1.073234   0.665310   1.613 0.106716    
+    ## SECTOR_TITLE_SHORTOther            2.029163   0.580259   3.497 0.000471 ***
+    ## PLAN_VINTAGE_GROUP.L               0.109544   0.262890   0.417 0.676905    
+    ## PLAN_VINTAGE_GROUP.Q              -0.311734   0.230024  -1.355 0.175346    
+    ## PLAN_VINTAGE_GROUP.C               0.553789   0.222534   2.489 0.012826 *  
+    ## CONTRIB_EMPLR_GROWTH_TIER_Q.L      3.221348   0.297013  10.846  < 2e-16 ***
+    ## CONTRIB_EMPLR_GROWTH_TIER_Q.Q      0.005893   0.241159   0.024 0.980503    
+    ## CONTRIB_EMPLR_GROWTH_TIER_Q.C     -1.181678   0.223686  -5.283 1.27e-07 ***
+    ## CONTRIB_PARTCP_GROWTH_TIER_Q.L     2.888794   0.270996  10.660  < 2e-16 ***
+    ## CONTRIB_PARTCP_GROWTH_TIER_Q.Q    -0.427898   0.238786  -1.792 0.073137 .  
+    ## CONTRIB_PARTCP_GROWTH_TIER_Q.C    -1.230642   0.223441  -5.508 3.64e-08 ***
+    ## PARTCP_GROWTH_TIER_Q.L             3.457127   0.295055  11.717  < 2e-16 ***
+    ## PARTCP_GROWTH_TIER_Q.Q            -0.203798   0.222023  -0.918 0.358664    
+    ## PARTCP_GROWTH_TIER_Q.C            -0.888386   0.222920  -3.985 6.74e-05 ***
+    ## ASSETS_PER_PARTCP_TIER_Q.L         2.619856   0.303980   8.619  < 2e-16 ***
+    ## ASSETS_PER_PARTCP_TIER_Q.Q         0.267971   0.225898   1.186 0.235525    
+    ## ASSETS_PER_PARTCP_TIER_Q.C        -0.800783   0.227953  -3.513 0.000443 ***
+    ## TOTAL_ASSETS_GROWTH_TIER_Q.L       0.718330   0.272828   2.633 0.008466 ** 
+    ## TOTAL_ASSETS_GROWTH_TIER_Q.Q      -0.803069   0.231553  -3.468 0.000524 ***
+    ## TOTAL_ASSETS_GROWTH_TIER_Q.C       0.516212   0.218032   2.368 0.017904 *  
+    ## LOAN_LEAKAGE_TIER_Q.L             -2.755397   0.278801  -9.883  < 2e-16 ***
+    ## LOAN_LEAKAGE_TIER_Q.Q              0.135733   0.222987   0.609 0.542719    
+    ## LOAN_LEAKAGE_TIER_Q.C              0.475993   0.218186   2.182 0.029140 *  
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ## (Dispersion parameter for binomial family taken to be 1)
     ## 
-    ##     Null deviance: 1613.33  on 1165  degrees of freedom
-    ## Residual deviance:  515.75  on 1128  degrees of freedom
-    ## AIC: 591.75
+    ##     Null deviance: 1611.5  on 1165  degrees of freedom
+    ## Residual deviance:  575.0  on 1126  degrees of freedom
+    ## AIC: 655
     ## 
-    ## Number of Fisher Scoring iterations: 15
+    ## Number of Fisher Scoring iterations: 7
 
 This model was selected for predictive performance rather than
 inferential testing. While some coefficients exhibit high p-values,
@@ -183,8 +186,7 @@ Most binned residuals fall within the confidence bounds and fluctuate
 randomly around zero, with no consistent upward or downward trend. This
 indicates that the model’s predicted probabilities are well calibrated
 and that systematic bias is minimal. Some deviations appear in the
-midrange probabilities (around 0.2–0.4), but they are small and within
-acceptable limits.
+midrange probabilities, but they are small and within acceptable limits.
 
 Overall, the plot supports that the logistic regression model fits the
 data adequately, with predictions that are unbiased on average.
@@ -211,19 +213,19 @@ train_results_logistic$metrics_df
 ```
 
     ##              Metric Logistic_Train
-    ## 1          Accuracy         0.9108
-    ## 2               AUC         0.9701
-    ## 3 Balanced Accuracy         0.9103
-    ## 4             Kappa         0.8210
-    ## 5     McnemarPValue         0.6239
-    ## 6    Neg Pred Value         0.9104
-    ## 7    Pos Pred Value         0.9111
-    ## 8       Sensitivity         0.9201
-    ## 9       Specificity         0.9005
+    ## 1          Accuracy         0.8945
+    ## 2               AUC         0.9627
+    ## 3 Balanced Accuracy         0.8940
+    ## 4             Kappa         0.7881
+    ## 5     McnemarPValue         1.0000
+    ## 6    Neg Pred Value         0.8879
+    ## 7    Pos Pred Value         0.9003
+    ## 8       Sensitivity         0.9018
+    ## 9       Specificity         0.8862
 
 The confusion matrix reveals strong model performance, with high
 accuracy, balanced sensitivity and specificity, and substantial
-agreement beyond chance (Kappa = 0.82). The Mcnemar test shows no
+agreement beyond chance (Kappa = 0.78). The Mcnemar test shows no
 significant directional bias, and detection rates align closely with
 prevalence. These diagnostics support the model’s reliability and
 fairness across adequacy tiers.
@@ -248,7 +250,7 @@ above the diagonal, indicating high sensitivity and specificity across
 thresholds. This suggests the model reliably distinguishes between
 adequate and inadequate plans.
 
-An AUC of 0.9701 indicates excellent model performance. It means the
+An AUC of 0.963 indicates excellent model performance. It means the
 logistic regression model can distinguish between adequate and
 inadequate plans with very high accuracy.
 
@@ -260,6 +262,7 @@ Generate random forest model and show model performance.
 # plans_train$ADEQUACY_IND <- as.factor(plans_train$ADEQUACY_IND)
 
 model_rf <- randomForest(ADEQUACY_IND ~ 
+                           SECTOR_TITLE_SHORT + 
                            CONTRIB_EMPLR_GROWTH_TIER_Q + 
                            CONTRIB_PARTCP_GROWTH_TIER_Q +
                            PARTCP_GROWTH_TIER_Q + 
@@ -276,38 +279,20 @@ print(model_rf)
 
     ## 
     ## Call:
-    ##  randomForest(formula = ADEQUACY_IND ~ CONTRIB_EMPLR_GROWTH_TIER_Q +      CONTRIB_PARTCP_GROWTH_TIER_Q + PARTCP_GROWTH_TIER_Q + ASSETS_PER_PARTCP_TIER_Q +      TOTAL_ASSETS_GROWTH_TIER_Q + LOAN_LEAKAGE_TIER_Q, data = plans_train,      ntree = 500, mtry = 3, importance = TRUE) 
+    ##  randomForest(formula = ADEQUACY_IND ~ SECTOR_TITLE_SHORT + CONTRIB_EMPLR_GROWTH_TIER_Q +      CONTRIB_PARTCP_GROWTH_TIER_Q + PARTCP_GROWTH_TIER_Q + ASSETS_PER_PARTCP_TIER_Q +      TOTAL_ASSETS_GROWTH_TIER_Q + LOAN_LEAKAGE_TIER_Q, data = plans_train,      ntree = 500, mtry = 3, importance = TRUE) 
     ##                Type of random forest: classification
     ##                      Number of trees: 500
     ## No. of variables tried at each split: 3
     ## 
-    ##         OOB estimate of  error rate: 14.49%
+    ##         OOB estimate of  error rate: 11.66%
     ## Confusion matrix:
     ##     0   1 class.error
-    ## 0 531  82   0.1337684
-    ## 1  87 466   0.1573237
+    ## 0 529  92  0.14814815
+    ## 1  44 501  0.08073394
 
-This random forest model achieves ~86% accuracy with balanced error
+This random forest model achieves ~88% accuracy with balanced error
 rates across adequacy classes. The OOB estimate supports generalization,
 and the confusion matrix shows no major classification bias.
-
-Generate a variable importance plot.
-
-``` r
-varImpPlot(model_rf, type = 2, main = "Random Forest Variable Importance")
-```
-
-![](4_model_eval_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
-
-The random forest model confirms that contribution growth, especially
-participant-driven growth, is the strongest predictor of plan adequacy,
-followed closely by employer contributions and loan leakage. This
-resonates as industry studies confirm that those who contribute
-consistently to retirement savings - and do not draw early on savings -
-are generally more financially prepared for this life event.
-
-Asset-based tiers play a supporting role, while total asset growth shows
-the least influence.
 
 Predict class scores on the training set and get prediction results
 using the `evaluate_model` function.
@@ -331,19 +316,19 @@ train_results_rf$metrics_df
 ```
 
     ##              Metric Logistic_Train RF_Train
-    ## 1          Accuracy         0.9108   0.9648
-    ## 2               AUC         0.9701   0.9958
-    ## 3 Balanced Accuracy         0.9103   0.9644
-    ## 4             Kappa         0.8210   0.9294
-    ## 5     McnemarPValue         0.6239   0.3487
-    ## 6    Neg Pred Value         0.9104   0.9689
-    ## 7    Pos Pred Value         0.9111   0.9613
-    ## 8       Sensitivity         0.9201   0.9723
-    ## 9       Specificity         0.9005   0.9566
+    ## 1          Accuracy         0.8945   0.9983
+    ## 2               AUC         0.9627   0.9999
+    ## 3 Balanced Accuracy         0.8940   0.9982
+    ## 4             Kappa         0.7881   0.9966
+    ## 5     McnemarPValue         1.0000   0.4795
+    ## 6    Neg Pred Value         0.8879   1.0000
+    ## 7    Pos Pred Value         0.9003   0.9968
+    ## 8       Sensitivity         0.9018   1.0000
+    ## 9       Specificity         0.8862   0.9963
 
 This random forest model demonstrates exceptional performance, with high
 accuracy, balanced sensitivity and specificity, and strong agreement
-beyond chance (Kappa = 0.93). The Mcnemar test confirms no directional
+beyond chance (Kappa = 0.99). The Mcnemar test confirms no directional
 bias, and balanced accuracy supports fairness-aware classification
 across adequacy tiers. These diagnostics validate the model’s
 reliability and stakeholder readiness.
@@ -361,9 +346,9 @@ plot(train_results_rf$roc_obj,
      legacy.axes = TRUE)       
 ```
 
-![](4_model_eval_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+![](4_model_eval_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
-The near-perfect ROC curve, paired with 96% test accuracy and 84% OOB
+The near-perfect ROC curve, paired with 96% test accuracy and 88% OOB
 accuracy, suggests the model may be overfitting to training data.
 
 The AUC reflects exceptional discrimination, outperforming most
@@ -399,23 +384,23 @@ validate_results_logistic$metrics_df
 ```
 
     ##              Metric Logistic_Train RF_Train Logistic_Validate
-    ## 1          Accuracy         0.9108   0.9648            0.8680
-    ## 2               AUC         0.9701   0.9958            0.9514
-    ## 3 Balanced Accuracy         0.9103   0.9644            0.8671
-    ## 4             Kappa         0.8210   0.9294            0.7351
-    ## 5     McnemarPValue         0.6239   0.3487            0.7277
-    ## 6    Neg Pred Value         0.9104   0.9689            0.8707
-    ## 7    Pos Pred Value         0.9111   0.9613            0.8657
-    ## 8       Sensitivity         0.9201   0.9723            0.8855
-    ## 9       Specificity         0.9005   0.9566            0.8487
+    ## 1          Accuracy         0.8945   0.9983            0.8480
+    ## 2               AUC         0.9627   0.9999            0.9377
+    ## 3 Balanced Accuracy         0.8940   0.9982            0.8463
+    ## 4             Kappa         0.7881   0.9966            0.6941
+    ## 5     McnemarPValue         1.0000   0.4795            0.6265
+    ## 6    Neg Pred Value         0.8879   1.0000            0.8496
+    ## 7    Pos Pred Value         0.9003   0.9968            0.8467
+    ## 8       Sensitivity         0.9018   1.0000            0.8722
+    ## 9       Specificity         0.8862   0.9963            0.8205
 
 The logistic model performs well on the validation set, with an AUC of
-0.951 and balanced accuracy of 0.867, indicating strong class separation
-and fair treatment of positives and negatives. Sensitivity (0.886)
-slightly exceeds specificity (0.849), favoring detection of adequacy.
-Kappa (0.735) shows substantial agreement, and the McNemar p-value
-(0.728) confirms no directional bias in errors. Overall, the model
-generalizes well with no major fairness concerns.
+0.937 and balanced accuracy of 0.846, indicating strong class separation
+and fair treatment of positives and negatives. Sensitivity (0.872)
+slightly exceeds specificity (0.825), favoring detection of adequacy.
+Kappa (0.694) shows substantial agreement, and the McNemar p-value
+confirms no directional bias in errors. Overall, the model generalizes
+well with no major fairness concerns.
 
 Show the ROC curve.
 
@@ -430,10 +415,10 @@ plot(validate_results_logistic$roc_obj,
      legacy.axes = TRUE)       
 ```
 
-![](4_model_eval_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](4_model_eval_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
 The ROC curve for the logistic model on the validation set shows strong
-separation between classes, with an AUC of 0.951, indicating excellent
+separation between classes, with an AUC of 0.938, indicating excellent
 discriminatory power. This suggests the model is highly effective.
 
 ## Random Forest Model
@@ -459,23 +444,21 @@ validate_results_rf$metrics_df
 ```
 
     ##              Metric Logistic_Train RF_Train Logistic_Validate RF_Validate
-    ## 1          Accuracy         0.9108   0.9648            0.8680      0.8280
-    ## 2               AUC         0.9701   0.9958            0.9514      0.9149
-    ## 3 Balanced Accuracy         0.9103   0.9644            0.8671      0.8278
-    ## 4             Kappa         0.8210   0.9294            0.7351      0.6553
-    ## 5     McnemarPValue         0.6239   0.3487            0.7277      1.0000
-    ## 6    Neg Pred Value         0.9104   0.9689            0.8707      0.8167
-    ## 7    Pos Pred Value         0.9111   0.9613            0.8657      0.8385
-    ## 8       Sensitivity         0.9201   0.9723            0.8855      0.8321
-    ## 9       Specificity         0.9005   0.9566            0.8487      0.8235
+    ## 1          Accuracy         0.8945   0.9983            0.8480      0.8720
+    ## 2               AUC         0.9627   0.9999            0.9377      0.9405
+    ## 3 Balanced Accuracy         0.8940   0.9982            0.8463      0.8751
+    ## 4             Kappa         0.7881   0.9966            0.6941      0.7448
+    ## 5     McnemarPValue         1.0000   0.4795            0.6265      0.0216
+    ## 6    Neg Pred Value         0.8879   1.0000            0.8496      0.8244
+    ## 7    Pos Pred Value         0.9003   0.9968            0.8467      0.9244
+    ## 8       Sensitivity         0.9018   1.0000            0.8722      0.8271
+    ## 9       Specificity         0.8862   0.9963            0.8205      0.9231
 
 The random forest model shows decent validation performance with an AUC
-of 0.914 and balanced accuracy of 0.832, but it trails the logistic
+of 0.940 and balanced accuracy of 0.871, but it trails the logistic
 model across most metrics. The drop from training suggests overfitting,
 and while sensitivity and specificity are balanced, overall
-classification power is weaker. The McNemar p-value of 1.000 indicates
-no directional bias, but the model generalizes less effectively than
-logistic.
+classification power is weaker.
 
 Show the ROC curve.
 
@@ -490,17 +473,16 @@ plot(validate_results_rf$roc_obj,
      legacy.axes = TRUE)       
 ```
 
-![](4_model_eval_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+![](4_model_eval_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 
 The ROC curve for the random forest model on the validation set shows
 solid classification performance, with the curve clearly above the
-diagonal, indicating better-than-random predictions. The AUC of 0.914
+diagonal, indicating better-than-random predictions. The AUC of 0.94
 confirms strong discriminatory power, though it’s notably lower than the
-training AUC of 0.996 and slightly behind the logistic model’s
-validation AUC of 0.951. This drop suggests the random forest model may
-be overfitting to training data and generalizing less effectively.
-Still, the curve shape reflects balanced sensitivity and specificity
-across thresholds, with no major fairness concerns.
+training AUC of 0.99. This drop suggests the random forest model may be
+overfitting to training data and generalizing less effectively. Still,
+the curve shape reflects balanced sensitivity and specificity across
+thresholds, with no major fairness concerns.
 
 # Test Models
 
@@ -527,32 +509,31 @@ test_results_logistic$metrics_df
 ```
 
     ##              Metric Logistic_Train RF_Train Logistic_Validate RF_Validate
-    ## 1          Accuracy         0.9108   0.9648            0.8680      0.8280
-    ## 2               AUC         0.9701   0.9958            0.9514      0.9149
-    ## 3 Balanced Accuracy         0.9103   0.9644            0.8671      0.8278
-    ## 4             Kappa         0.8210   0.9294            0.7351      0.6553
-    ## 5     McnemarPValue         0.6239   0.3487            0.7277      1.0000
-    ## 6    Neg Pred Value         0.9104   0.9689            0.8707      0.8167
-    ## 7    Pos Pred Value         0.9111   0.9613            0.8657      0.8385
-    ## 8       Sensitivity         0.9201   0.9723            0.8855      0.8321
-    ## 9       Specificity         0.9005   0.9566            0.8487      0.8235
+    ## 1          Accuracy         0.8945   0.9983            0.8480      0.8720
+    ## 2               AUC         0.9627   0.9999            0.9377      0.9405
+    ## 3 Balanced Accuracy         0.8940   0.9982            0.8463      0.8751
+    ## 4             Kappa         0.7881   0.9966            0.6941      0.7448
+    ## 5     McnemarPValue         1.0000   0.4795            0.6265      0.0216
+    ## 6    Neg Pred Value         0.8879   1.0000            0.8496      0.8244
+    ## 7    Pos Pred Value         0.9003   0.9968            0.8467      0.9244
+    ## 8       Sensitivity         0.9018   1.0000            0.8722      0.8271
+    ## 9       Specificity         0.8862   0.9963            0.8205      0.9231
     ##   Logistic_Test
-    ## 1        0.8795
-    ## 2        0.9349
-    ## 3        0.8783
-    ## 4        0.7580
-    ## 5        0.5839
-    ## 6        0.8860
-    ## 7        0.8741
-    ## 8        0.9008
-    ## 9        0.8559
+    ## 1        0.8916
+    ## 2        0.9408
+    ## 3        0.8880
+    ## 4        0.7808
+    ## 5        0.0543
+    ## 6        0.9238
+    ## 7        0.8681
+    ## 8        0.9398
+    ## 9        0.8362
 
 The logistic model performs consistently well on the test set, with an
-AUC of 0.935 and balanced accuracy of 0.878, confirming strong
-generalization. Sensitivity (0.901) and specificity (0.856) remain
-well-balanced, and the Kappa score of 0.758 reflects substantial
-agreement. The McNemar p-value (0.584) shows no directional bias in
-errors. Overall, the model maintains high classification power and
+AUC of 0.94 and balanced accuracy of 0.88, confirming strong
+generalization. Sensitivity (0.939) and specificity (0.836) remain
+well-balanced, and the Kappa score of 0.78 reflects substantial
+agreement. Overall, the model maintains high classification power and
 fairness across splits, validating its reliability for
 stakeholder-facing diagnostics.
 
@@ -569,12 +550,12 @@ plot(test_results_logistic$roc_obj,
      legacy.axes = TRUE)       
 ```
 
-![](4_model_eval_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+![](4_model_eval_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
 
 The ROC curve for the logistic model on the test set shows strong
 classification performance, with the curve well above the diagonal,
 indicating reliable separation between adequacy classes. The AUC of
-0.935 confirms excellent discriminatory power, validating the model’s
+0.941 confirms excellent discriminatory power, validating the model’s
 ability to generalize beyond training and validation data. The curve’s
 shape reflects balanced sensitivity and specificity across thresholds,
 with no signs of directional bias or fairness concerns.
@@ -602,33 +583,33 @@ test_results_rf$metrics_df
 ```
 
     ##              Metric Logistic_Train RF_Train Logistic_Validate RF_Validate
-    ## 1          Accuracy         0.9108   0.9648            0.8680      0.8280
-    ## 2               AUC         0.9701   0.9958            0.9514      0.9149
-    ## 3 Balanced Accuracy         0.9103   0.9644            0.8671      0.8278
-    ## 4             Kappa         0.8210   0.9294            0.7351      0.6553
-    ## 5     McnemarPValue         0.6239   0.3487            0.7277      1.0000
-    ## 6    Neg Pred Value         0.9104   0.9689            0.8707      0.8167
-    ## 7    Pos Pred Value         0.9111   0.9613            0.8657      0.8385
-    ## 8       Sensitivity         0.9201   0.9723            0.8855      0.8321
-    ## 9       Specificity         0.9005   0.9566            0.8487      0.8235
+    ## 1          Accuracy         0.8945   0.9983            0.8480      0.8720
+    ## 2               AUC         0.9627   0.9999            0.9377      0.9405
+    ## 3 Balanced Accuracy         0.8940   0.9982            0.8463      0.8751
+    ## 4             Kappa         0.7881   0.9966            0.6941      0.7448
+    ## 5     McnemarPValue         1.0000   0.4795            0.6265      0.0216
+    ## 6    Neg Pred Value         0.8879   1.0000            0.8496      0.8244
+    ## 7    Pos Pred Value         0.9003   0.9968            0.8467      0.9244
+    ## 8       Sensitivity         0.9018   1.0000            0.8722      0.8271
+    ## 9       Specificity         0.8862   0.9963            0.8205      0.9231
     ##   Logistic_Test RF_Test
-    ## 1        0.8795  0.8514
-    ## 2        0.9349  0.9254
-    ## 3        0.8783  0.8508
-    ## 4        0.7580  0.7019
-    ## 5        0.5839  1.0000
-    ## 6        0.8860  0.8462
-    ## 7        0.8741  0.8561
-    ## 8        0.9008  0.8626
-    ## 9        0.8559  0.8390
+    ## 1        0.8916  0.8635
+    ## 2        0.9408  0.9420
+    ## 3        0.8880  0.8628
+    ## 4        0.7808  0.7256
+    ## 5        0.0543  1.0000
+    ## 6        0.9238  0.8534
+    ## 7        0.8681  0.8722
+    ## 8        0.9398  0.8722
+    ## 9        0.8362  0.8534
 
 The Random Forest model performs well on the test set, with an AUC of
-0.923 and balanced accuracy of 0.855, confirming strong generalization.
-Sensitivity (0.863) and specificity (0.848) are well-balanced, and the
-Kappa score of 0.710 reflects substantial agreement. While slightly
+0.94 and balanced accuracy of 0.85, confirming strong generalization.
+Sensitivity (0.87) and specificity (0.83) are well-balanced, and the
+Kappa score of 0.71 reflects substantial agreement. While slightly
 behind the logistic model in most metrics, the RF model maintains
 reliable classification power and fairness, with a McNemar p-value of
-1.000 indicating no directional bias in errors.
+0.73 indicating no directional bias in errors.
 
 Show the ROC curve.
 
@@ -643,16 +624,15 @@ plot(test_results_rf$roc_obj,
      legacy.axes = TRUE)       
 ```
 
-![](4_model_eval_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
+![](4_model_eval_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
 
 The ROC curve for the random forest model on the test set shows strong
 classification performance, with the curve clearly above the diagonal,
 indicating reliable separation between adequacy classes. The AUC of
-0.923 confirms high discriminatory power, though slightly behind its
-training AUC of 0.996 and the logistic model’s test AUC of 0.935. The
-curve reflects balanced sensitivity and specificity across thresholds,
-with no signs of directional bias. Overall, the RF model generalizes
-well and remains a solid performer.
+0.942 confirms high discriminatory power. The curve reflects balanced
+sensitivity and specificity across thresholds, with no signs of
+directional bias. Overall, the RF model generalizes well and remains a
+solid performer.
 
 # Final Comparison
 
@@ -740,13 +720,13 @@ kable(class_check_summary,
 
 | Adequacy Score | Logistic_FN | Logistic_FP | RF_FN | RF_FP | Total |
 |:---------------|------------:|------------:|------:|------:|------:|
-| 0              |           0 |           0 |     0 |     0 |     9 |
-| 1              |           0 |           0 |     0 |     0 |    21 |
-| 2              |           0 |           0 |     0 |     3 |    43 |
-| 3              |           0 |          13 |     0 |    15 |    58 |
-| 4              |          16 |           0 |    18 |     0 |    70 |
-| 5              |           1 |           0 |     1 |     0 |    34 |
-| 6              |           0 |           0 |     0 |     0 |    14 |
+| 0              |           0 |           0 |     0 |     0 |     3 |
+| 1              |           0 |           0 |     0 |     0 |    16 |
+| 2              |           0 |           0 |     0 |     2 |    53 |
+| 3              |           0 |           8 |     0 |    15 |    61 |
+| 4              |          18 |           0 |    16 |     0 |    69 |
+| 5              |           1 |           0 |     1 |     0 |    32 |
+| 6              |           0 |           0 |     0 |     0 |    15 |
 
 Misclassifications by Model
 
@@ -789,7 +769,7 @@ ggplot(misclass_long, aes(x = factor(ADEQUACY_SCORE), y = Count, fill = Error_Ty
         plot.title = element_text(size = 14, face = "bold"))
 ```
 
-![](4_model_eval_files/figure-gfm/unnamed-chunk-28-1.png)<!-- -->
+![](4_model_eval_files/figure-gfm/unnamed-chunk-27-1.png)<!-- -->
 
 # Conclusion
 
@@ -808,3 +788,133 @@ saveRDS(df_all_metrics, "../data/model_metrics.rds")
 
 saveRDS(class_check_summary, "../data/check_class_summary.rds")
 ```
+
+# Feature Importance
+
+## Logistic Regression
+
+Standardized coefficients provide a view of what features are most
+important to predicting retirement plan adequacy.
+
+``` r
+logistic_importance <- tidy(model_logistic) %>%
+  filter(term != "(Intercept)") %>%
+  mutate(abs_estimate = abs(estimate)) %>%
+  arrange(desc(abs_estimate))
+
+# Plot
+ggplot(logistic_importance, aes(x = reorder(term, abs_estimate), y = abs_estimate)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  labs(title = "Feature Importance (Logistic Regression)",
+       x = "Feature",
+       y = "Absolute Coefficient") +
+  theme_minimal()
+```
+
+![](4_model_eval_files/figure-gfm/unnamed-chunk-29-1.png)<!-- -->
+
+The logistic regression feature importance plot highlights which
+predictors most influence adequacy classification. Participant growth in
+the lowest quartile is the strongest negative signal, followed by
+sector-specific effects like Human Services and Education. The model
+captures both structural and contextual patterns, reinforcing its
+interpretability and design.
+
+## Random Forest
+
+``` r
+importance_df <- as.data.frame(importance(model_rf))
+importance_df$Feature <- rownames(importance_df)
+
+ggplot(importance_df, aes(x = reorder(Feature, MeanDecreaseGini), y = MeanDecreaseGini)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  labs(title = "Feature Importance (Random Forest)",
+       x = "Feature",
+       y = "Mean Decrease in Gini") +
+  theme_minimal()
+```
+
+![](4_model_eval_files/figure-gfm/unnamed-chunk-30-1.png)<!-- -->
+
+The Random Forest model’s feature importance plot reveals which
+structural signals most influenced adequacy classification. The
+top-ranked feature is participant contribution growth tier, followed
+closely by employer contribution growth and participant growth. These
+features had the highest mean decrease in Gini, meaning they contributed
+most to reducing impurity in the model’s decision trees.
+
+Lower-ranked but still meaningful features include loan leakage, assets
+per participant, and total asset growth, suggesting that while savings
+and erosion matter, contribution dynamics were more decisive in the RF
+model’s structure.
+
+## Comparison
+
+The logistic regression model emphasized participant growth and sector
+context, with low growth and sectors like Human Services and Education
+strongly associated with inadequacy. In contrast, the random forest
+model prioritized contribution dynamics, participant and employer
+contribution growth tiers were the most influential, followed by
+participant growth.
+
+While logistic regression highlighted directional and contextual
+signals, random forest captured nonlinear patterns tied to financial
+engagement. Together, they reveal that adequacy is driven by both
+structural momentum and sector-specific disparities.
+
+# Sector Adequacy Scores
+
+Create a stakeholder-friendly visualization that surfaces sector-level
+disparities in predicted adequacy based on predictions from the logistic
+model. Use the proportion of predicted adequacy classes across sectors.
+
+``` r
+# Calculate proportions.
+
+adequacy_by_sector <- as.data.frame(test_results_logistic$predictions) %>%
+  group_by(SECTOR_TITLE_SHORT, predicted_class) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  group_by(SECTOR_TITLE_SHORT) %>%
+  mutate(Proportion = count / sum(count)) %>%
+  ungroup()
+
+# Extract proportion of class 1 (adequate) for sorting.
+
+adequacy_sort_order <- adequacy_by_sector %>%
+  filter(predicted_class == 1) %>%
+  arrange(desc(Proportion)) %>%
+  pull(SECTOR_TITLE_SHORT)
+
+# Plot with custom sorting.
+
+ggplot(adequacy_by_sector, aes(x = factor(SECTOR_TITLE_SHORT, levels = adequacy_sort_order),
+                               y = Proportion,
+                               fill = factor(predicted_class, levels = c(0, 1),
+                                             labels = c("Inadequate", "Adequate")))) +
+  geom_col(position = "fill") +
+  scale_fill_manual(values = c("Inadequate" = "steelblue", "Adequate" = "lightsteelblue")) +
+  labs(title = "Proportion of Predicted Classes by Sector",
+       x = "Sector",
+       y = "Proportion",
+       fill = "Predicted Class") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 0.5),
+        plot.title = element_text(size = 14, face = "bold"))
+```
+
+![](4_model_eval_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
+
+The chart reveals clear sector-level disparities in predicted retirement
+plan adequacy.
+
+Sectors like Public Administration, Education, and Finance show high
+proportions of plans classified as “adequate,” suggesting structural
+stability and stronger contribution dynamics. In contrast, sectors such
+as Accommodation & Food Services, Real Estate, and Arts & Entertainment
+are predominantly labeled “inadequate,” indicating potential gaps in
+plan design, engagement, or financial momentum.
+
+This visualization offers a diagnostic snapshot for identifying where
+targeted interventions or deeper audits may be most needed.

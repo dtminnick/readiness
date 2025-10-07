@@ -260,44 +260,44 @@ kable(selected_predictors,
 
 | Estimate   | Term                              |
 |:-----------|:----------------------------------|
-| 2.8404904  | PARTCP_GROWTH_TIER_Q.L            |
-| 2.5770894  | CONTRIB_EMPLR_GROWTH_TIER_Q.L     |
-| 2.5511273  | CONTRIB_PARTCP_GROWTH_TIER_Q.L    |
-| 2.2612941  | ASSETS_PER_PARTCP_TIER_Q.L        |
-| -2.1126520 | LOAN_LEAKAGE_TIER_Q.L             |
-| -1.9758276 | SECTOR_TITLE_SHORTPublic admin…   |
-| -1.4334454 | SECTOR_TITLE_SHORTAdministrati…   |
-| -1.3526131 | SECTOR_TITLE_SHORTRetail trade    |
-| -1.3439765 | SECTOR_TITLE_SHORTAccommodatio…   |
-| 1.1403433  | SECTOR_TITLE_SHORTArts, entert…   |
-| 1.0569815  | SECTOR_TITLE_SHORTMining, quar…   |
-| -0.8605137 | CONTRIB_PARTCP_GROWTH_TIER_Q.C    |
-| -0.8575168 | CONTRIB_EMPLR_GROWTH_TIER_Q.C     |
-| -0.6883688 | PARTCP_GROWTH_TIER_Q.C            |
-| 0.6555861  | SECTOR_TITLE_SHORTEducational …   |
-| 0.5658221  | TOTAL_ASSETS_GROWTH_TIER_Q.L      |
-| 0.5644947  | SECTOR_TITLE_SHORTProfessional…   |
-| -0.5420635 | SECTOR_TITLE_SHORTTransportati…   |
-| -0.5099138 | SECTOR_TITLE_SHORTReal estate …   |
-| 0.4632473  | SECTOR_TITLE_SHORTHealth care …   |
-| -0.4446785 | TOTAL_ASSETS_GROWTH_TIER_Q.Q      |
-| -0.4416415 | SECTOR_TITLE_SHORTUtilities       |
-| -0.3983856 | ASSETS_PER_PARTCP_TIER_Q.C        |
-| -0.3927410 | SECTOR_TITLE_SHORTManufacturing   |
-| 0.3227815  | LOAN_LEAKAGE_TIER_Q.C             |
-| -0.3077513 | SECTOR_TITLE_SHORTAgriculture,…   |
-| 0.2828411  | ASSETS_PER_PARTCP_TIER_Q.Q        |
-| 0.2638551  | SECTOR_TITLE_SHORTFinance and …   |
-| -0.2406768 | SECTOR_TITLE_SHORTWholesale trade |
-| -0.2225931 | CONTRIB_PARTCP_GROWTH_TIER_Q.Q    |
-| 0.2190828  | SECTOR_TITLE_SHORTManagement o…   |
-| 0.1849959  | SECTOR_TITLE_SHORTConstruction    |
-| 0.1622698  | PLAN_VINTAGE_GROUP.C              |
-| -0.1472126 | PARTCP_GROWTH_TIER_Q.Q            |
-| -0.1441342 | PLAN_VINTAGE_GROUP.Q              |
-| -0.1279699 | (Intercept)                       |
-| 0.0624403  | TOTAL_ASSETS_GROWTH_TIER_Q.C      |
-| -0.0329657 | CONTRIB_EMPLR_GROWTH_TIER_Q.Q     |
+| 2.9472618  | PARTCP_GROWTH_TIER_Q.L            |
+| 2.6781273  | CONTRIB_EMPLR_GROWTH_TIER_Q.L     |
+| 2.6455346  | CONTRIB_PARTCP_GROWTH_TIER_Q.L    |
+| 2.3669462  | ASSETS_PER_PARTCP_TIER_Q.L        |
+| -2.2258062 | SECTOR_TITLE_SHORTPublic admin…   |
+| -2.2068610 | LOAN_LEAKAGE_TIER_Q.L             |
+| -1.5690921 | SECTOR_TITLE_SHORTAdministrati…   |
+| -1.4742881 | SECTOR_TITLE_SHORTRetail trade    |
+| -1.4677788 | SECTOR_TITLE_SHORTAccommodatio…   |
+| 1.2044195  | SECTOR_TITLE_SHORTArts, entert…   |
+| 1.1371315  | SECTOR_TITLE_SHORTMining, quar…   |
+| -0.9076554 | CONTRIB_PARTCP_GROWTH_TIER_Q.C    |
+| -0.8978261 | CONTRIB_EMPLR_GROWTH_TIER_Q.C     |
+| -0.7310083 | PARTCP_GROWTH_TIER_Q.C            |
+| 0.6826569  | SECTOR_TITLE_SHORTEducational …   |
+| -0.6381888 | SECTOR_TITLE_SHORTTransportati…   |
+| 0.6129200  | TOTAL_ASSETS_GROWTH_TIER_Q.L      |
+| -0.6073291 | SECTOR_TITLE_SHORTReal estate …   |
+| 0.5871542  | SECTOR_TITLE_SHORTProfessional…   |
+| -0.5330235 | SECTOR_TITLE_SHORTUtilities       |
+| -0.4898578 | SECTOR_TITLE_SHORTManufacturing   |
+| 0.4797082  | SECTOR_TITLE_SHORTHealth care …   |
+| -0.4717660 | TOTAL_ASSETS_GROWTH_TIER_Q.Q      |
+| -0.4395711 | ASSETS_PER_PARTCP_TIER_Q.C        |
+| -0.4108022 | SECTOR_TITLE_SHORTAgriculture,…   |
+| 0.3453455  | LOAN_LEAKAGE_TIER_Q.C             |
+| -0.3245826 | SECTOR_TITLE_SHORTWholesale trade |
+| 0.3180723  | ASSETS_PER_PARTCP_TIER_Q.Q        |
+| 0.2709753  | SECTOR_TITLE_SHORTFinance and …   |
+| -0.2454851 | CONTRIB_PARTCP_GROWTH_TIER_Q.Q    |
+| 0.2362938  | SECTOR_TITLE_SHORTManagement o…   |
+| 0.1993981  | SECTOR_TITLE_SHORTConstruction    |
+| 0.1866661  | PLAN_VINTAGE_GROUP.C              |
+| -0.1723449 | PARTCP_GROWTH_TIER_Q.Q            |
+| -0.1663189 | PLAN_VINTAGE_GROUP.Q              |
+| -0.0999284 | (Intercept)                       |
+| 0.0876867  | TOTAL_ASSETS_GROWTH_TIER_Q.C      |
+| -0.0437137 | CONTRIB_EMPLR_GROWTH_TIER_Q.Q     |
 | 0.0000000  | (Intercept)                       |
 | 0.0000000  | PLAN_VINTAGE_GROUP.L              |
 | 0.0000000  | SECTOR_TITLE_SHORTOther servic…   |
@@ -360,8 +360,6 @@ appropriate. Each subset remains large enough to support stable
 estimation and diagnostic review.
 
 ``` r
-set.seed(91210)
-
 # Initial train/test split.
 
 train_idx <- createDataPartition(plans$ADEQUACY_IND, p = 0.7, list = FALSE)
