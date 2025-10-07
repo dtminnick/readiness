@@ -11,9 +11,8 @@ engineered features like participation rate, contribution stability, and
 leakage burden. Two models, logistic regression and random forest, were
 trained and evaluated for interpretability and diagnostic clarity.
 
-Access \[this markdown
-document(<https://github.com/dtminnick/readiness/blob/main/notebooks/1_overview.md>)
-from my Github repository for an overview of this project.
+My Github repository for this project can be accessed
+[here](https://github.com/dtminnick/readiness).
 
 # Exploratory Data Analysis and Data Transformation
 
@@ -26,7 +25,7 @@ cohorts based on effective year, and industry codes were collapsed into
 broader sectors to support benchmarking and fairness overlays.
 
 Full analysis is documented
-(here)\[<https://github.com/dtminnick/readiness/blob/main/notebooks/2_eda_transform.md>\]
+[here](https://github.com/dtminnick/readiness/blob/main/notebooks/2_eda_transform.md).
 
 # Structural Adequacy Scoring and Tiered Feature Engineering
 
@@ -84,7 +83,7 @@ Sample Records by Data Split
 
 Predictor association, multicollinearity checks, subset selection, and
 data splitting steps are documented
-(here)\[<https://github.com/dtminnick/readiness/blob/main/notebooks/3_multicol_split.md>\]
+[here](https://github.com/dtminnick/readiness/blob/main/notebooks/3_multicol_split.md).
 
 # Model Training and Evaluation
 
@@ -148,7 +147,7 @@ diagnostics. Its stable performance across splits make it the preferred
 model for structural adequacy classification in this context.
 
 Complete model training and evaluation steps are documented
-(here)\[<https://github.com/dtminnick/readiness/blob/main/notebooks/4_model_eval.md>\]
+[here](https://github.com/dtminnick/readiness/blob/main/notebooks/4_model_eval.md).
 
 # Misclassification Analysis
 
