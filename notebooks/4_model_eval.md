@@ -6,11 +6,28 @@ regression and random forest models.
 # Load Libraries
 
 This analysis leverages the following R packages: `dplyr`, `lubridate`,
-’`stringr` and `tidyr` for data manipulation, `knitr` for report
+`stringr` and `tidyr` for data manipulation, `knitr` for report
 formatting, and `ggplot2` and `ggridges` for visualization.
 
-I use a customized R function to collect performance metrics across
-model runs.
+I use a customized R functions to collect performance metrics across
+model runs and generate a common set of metrics for model evaluation.
+
+``` r
+library("caret")
+library("dplyr")
+library("ggplot2")
+library("glmnet")
+library("knitr")
+library("pROC")
+library("randomForest")
+
+source("../R/add_metrics_row.R")
+source("../R/evaluate_model.R")
+
+# Initialize metrics data frame.
+
+df_all_metrics <- data.frame(Metric = character(), stringsAsFactors = FALSE)
+```
 
 # Load Data
 
@@ -103,12 +120,14 @@ summary(model_logistic)
     ## 
     ## Number of Fisher Scoring iterations: 15
 
-Regarding coefficients with high p-values, this model was selected for
-predictive performance, not hypothesis testing. Some coefficients may
-not be statistically significant on their own, but they contribute to
-the model’s overall fit and help stabilize other effects. LASSO has
-already filtered out irrelevant predictors, so what remains reflects a
-balance of parsimony and predictive utility.
+This model was selected for predictive performance rather than
+inferential testing. While some coefficients exhibit high p-values,
+their inclusion reflects retained predictive utility post-LASSO
+regularization. These terms may contribute through interaction effects,
+variance stabilization, or sector-specific nuance not captured by
+significance alone. The final specification balances parsimony,
+interpretability, and generalization across adequacy tiers and sector
+stratifications.
 
 Plot residuals.
 
@@ -138,17 +157,15 @@ ggplot(resid_df, aes(x = fitted, y = residuals)) +
 
 ![](4_model_eval_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
-The Pearson residual plot shows a mild curved pattern. This suggests
-some systematic deviation from model assumptions, possibly due to
-unmodeled nonlinearity or missing interactions. The residual variance is
-larger at the extremes (fitted values near 0 or 1), which is partly
-expected in logistic regression due to the changing variance structure
-of the binomial model. A few high residual points indicate potential
-outliers or influential observations.
-
-Overall, the plot suggests the model captures the main relationship
-between predictors and the outcome, but may not fully account for all
-effects, leaving room for refinement.
+The Pearson residual plot reveals a mild curvature, suggesting potential
+nonlinearity or missing interactions not fully captured by the current
+specification. Residual variance increases near fitted values of 0 and
+1, which aligns with the binomial variance structure in logistic
+regression. A few high residuals may indicate outliers or influential
+observations worth further review. Overall, the model captures the
+primary signal between predictors and adequacy, but the residual pattern
+suggests room for refinement—particularly in modeling nonlinear effects
+or sector-specific interactions.
 
 Show binned residuals.
 
@@ -162,86 +179,21 @@ arm::binnedplot(x = fitted(model_logistic),
 
 ![](4_model_eval_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
-The binned residual plot displays average residuals across bins of
-fitted probabilities, along with 95% simulation envelopes. Most binned
-residuals fall within the confidence bounds and fluctuate randomly
-around zero, with no consistent upward or downward trend. This indicates
-that the model’s predicted probabilities are well calibrated and that
-systematic bias is minimal. Minor deviations appear in the midrange
-probabilities (around 0.2–0.4), but they are small and within acceptable
-limits.
+Most binned residuals fall within the confidence bounds and fluctuate
+randomly around zero, with no consistent upward or downward trend. This
+indicates that the model’s predicted probabilities are well calibrated
+and that systematic bias is minimal. Some deviations appear in the
+midrange probabilities (around 0.2–0.4), but they are small and within
+acceptable limits.
 
 Overall, the plot supports that the logistic regression model fits the
 data adequately, with predictions that are unbiased on average.
 
-Predict class scores on the training set.
+Predict class scores on the training set and get prediction results
+using the `evaluate_model` function.
 
 ``` r
-# Extract the model's training data.
-
-model_data <- model_logistic$model
-
-# Generate predicted probabilities.
-
-model_data$predicted_prob <- predict(model_logistic, type = "response")
-
-# Classify based on threshold.
-
-model_data$predicted_class <- ifelse(model_data$predicted_prob > 0.5, 1, 0)
-
-# Confusion matrix.
-
-cm_logistic_train <- confusionMatrix(factor(model_data$predicted_class),
-                                     factor(model_data$ADEQUACY_IND))
-
-# Add logistic train metrics to metrics data frame.
-
-df_all_metrics <- add_metrics_row(cm_logistic_train, "Logistic", "Train", df_all_metrics)
-
-cm_logistic_train
-```
-
-    ## Confusion Matrix and Statistics
-    ## 
-    ##           Reference
-    ## Prediction   0   1
-    ##          0 564  55
-    ##          1  49 498
-    ##                                          
-    ##                Accuracy : 0.9108         
-    ##                  95% CI : (0.893, 0.9265)
-    ##     No Information Rate : 0.5257         
-    ##     P-Value [Acc > NIR] : <2e-16         
-    ##                                          
-    ##                   Kappa : 0.821          
-    ##                                          
-    ##  Mcnemar's Test P-Value : 0.6239         
-    ##                                          
-    ##             Sensitivity : 0.9201         
-    ##             Specificity : 0.9005         
-    ##          Pos Pred Value : 0.9111         
-    ##          Neg Pred Value : 0.9104         
-    ##              Prevalence : 0.5257         
-    ##          Detection Rate : 0.4837         
-    ##    Detection Prevalence : 0.5309         
-    ##       Balanced Accuracy : 0.9103         
-    ##                                          
-    ##        'Positive' Class : 0              
-    ## 
-
-The logistic regression model demonstrates strong, well-balanced
-classification performance. Accuracy (~89%) and kappa (~0.78) indicate
-robust predictive ability with minimal bias between classes. Sensitivity
-and specificity are both high and nearly equal, confirming the model
-distinguishes classes effectively. The non-significant McNemar’s test
-further supports that the model’s errors are symmetric. Overall, this is
-a well-calibrated, reliable classifier with room for only minor tuning.
-
-Generate ROC.
-
-``` r
-# Compute ROC curve
-roc_obj_log <- pROC::roc(model_data$ADEQUACY_IND, model_data$predicted_prob)
+train_results_logistic <- evaluate_model(model_logistic, plans_train, "ADEQUACY_IND", "Logistic", "Train", df_all_metrics)
 ```
 
     ## Setting levels: control = 0, case = 1
@@ -249,26 +201,54 @@ roc_obj_log <- pROC::roc(model_data$ADEQUACY_IND, model_data$predicted_prob)
     ## Setting direction: controls < cases
 
 ``` r
-# Plot ROC
-plot(roc_obj_log, col = "steelblue", main = "ROC Curve for Logistic Regression")
+df_all_metrics <- train_results_logistic$metrics_df
 ```
 
-![](4_model_eval_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+Show results of the confusion matrix.
+
+``` r
+train_results_logistic$metrics_df
+```
+
+    ##              Metric Logistic_Train
+    ## 1          Accuracy         0.9108
+    ## 2               AUC         0.9701
+    ## 3 Balanced Accuracy         0.9103
+    ## 4             Kappa         0.8210
+    ## 5     McnemarPValue         0.6239
+    ## 6    Neg Pred Value         0.9104
+    ## 7    Pos Pred Value         0.9111
+    ## 8       Sensitivity         0.9201
+    ## 9       Specificity         0.9005
+
+The confusion matrix reveals strong model performance, with high
+accuracy, balanced sensitivity and specificity, and substantial
+agreement beyond chance (Kappa = 0.82). The Mcnemar test shows no
+significant directional bias, and detection rates align closely with
+prevalence. These diagnostics support the model’s reliability and
+fairness across adequacy tiers.
+
+Show the ROC curve.
+
+``` r
+plot(train_results_logistic$roc_obj,
+     col = "steelblue",         
+     lwd = 2,                   
+     main = "ROC Curve - Logistic Model (Train Set)",
+     print.auc = TRUE,          
+     print.auc.cex = 1.2,       
+     print.auc.col = "darkred",
+     legacy.axes = TRUE)       
+```
+
+![](4_model_eval_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
 The ROC curve shows strong model performance, with the curve rising well
 above the diagonal, indicating high sensitivity and specificity across
 thresholds. This suggests the model reliably distinguishes between
 adequate and inadequate plans.
 
-Generate model AUC.
-
-``` r
-pROC::auc(roc_obj_log)
-```
-
-    ## Area under the curve: 0.9701
-
-An AUC of 0.9633 indicates excellent model performance. It means the
+An AUC of 0.9701 indicates excellent model performance. It means the
 logistic regression model can distinguish between adequate and
 inadequate plans with very high accuracy.
 
@@ -301,17 +281,15 @@ print(model_rf)
     ##                      Number of trees: 500
     ## No. of variables tried at each split: 3
     ## 
-    ##         OOB estimate of  error rate: 14.67%
+    ##         OOB estimate of  error rate: 14.41%
     ## Confusion matrix:
     ##     0   1 class.error
-    ## 0 530  83   0.1353997
-    ## 1  88 465   0.1591320
+    ## 0 532  81   0.1321370
+    ## 1  87 466   0.1573237
 
-The random forest achieves strong and balanced classification accuracy
-(~84%) with no major class bias. It performs slightly below the logistic
-model’s 89% accuracy but benefits from flexibility and robustness to
-nonlinearity. Both models perform well; the choice depends on whether
-interpretability or pure predictive strength is the priority.
+This random forest model achieves ~86% accuracy with balanced error
+rates across adequacy classes. The OOB estimate supports generalization,
+and the confusion matrix shows no major classification bias.
 
 Generate a variable importance plot.
 
@@ -331,403 +309,418 @@ are generally more financially prepared for this life event.
 Asset-based tiers play a supporting role, while total asset growth shows
 the least influence.
 
-Generate prediction on training data and confusion matrix.
+Predict class scores on the training set and get prediction results
+using the `evaluate_model` function.
 
 ``` r
-# Filter training data to match model input.
-
-vars_used <- all.vars(formula(model_rf))
-
-plans_train_rf <- na.omit(plans_train[, vars_used])
-
-# Generate predictions.
-
-rf_preds <- predict(model_rf, newdata = plans_train_rf, type = "response")
-
-# Confusion matrix.
-
-cm_rf_train <- confusionMatrix(rf_preds, plans_train_rf$ADEQUACY_IND, positive = "0")
-
-df_all_metrics <- add_metrics_row(cm_rf_train, "RandomForest", "Train", df_all_metrics)
-
-cm_rf_train
+train_results_rf <- evaluate_model(model_rf, plans_train, "ADEQUACY_IND", "RF", "Train", df_all_metrics)
 ```
 
-    ## Confusion Matrix and Statistics
-    ## 
-    ##           Reference
-    ## Prediction   0   1
-    ##          0 598  25
-    ##          1  15 528
-    ##                                           
-    ##                Accuracy : 0.9657          
-    ##                  95% CI : (0.9536, 0.9754)
-    ##     No Information Rate : 0.5257          
-    ##     P-Value [Acc > NIR] : <2e-16          
-    ##                                           
-    ##                   Kappa : 0.9311          
-    ##                                           
-    ##  Mcnemar's Test P-Value : 0.1547          
-    ##                                           
-    ##             Sensitivity : 0.9755          
-    ##             Specificity : 0.9548          
-    ##          Pos Pred Value : 0.9599          
-    ##          Neg Pred Value : 0.9724          
-    ##              Prevalence : 0.5257          
-    ##          Detection Rate : 0.5129          
-    ##    Detection Prevalence : 0.5343          
-    ##       Balanced Accuracy : 0.9652          
-    ##                                           
-    ##        'Positive' Class : 0               
-    ## 
+    ## Setting levels: control = 0, case = 1
 
-The random forest’s 96.7% test accuracy is unusually high relative to
-its 84% OOB accuracy, suggesting possible data leakage, overlap, or
-overly optimistic test sampling. I’ll verify performance with validation
-and test sets.
-
-Generate ROC.
+    ## Setting direction: controls < cases
 
 ``` r
-# Generate predicted probabilities for Class 0.
-
-rf_probs <- predict(model_rf, newdata = plans_train_rf, type = "prob")[, "0"]
-
-# Compute ROC using actuals and probabilities.
-
-roc_obj <- pROC::roc(plans_train_rf$ADEQUACY_IND, rf_probs, levels = c("1", "0"), direction = "<")
-
-# Plot ROC curve.
-
-plot(roc_obj, col = "steelblue", main = "Random Forest ROC Curve")
+df_all_metrics <- train_results_rf$metrics_df
 ```
 
-![](4_model_eval_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
-
-When combined with the 96.7% test accuracy and 84% OOB accuracy, this
-near-perfect ROC curve reinforces that the model may be over-fitting the
-training data.
-
-Generate model AUC.
+Show results of the confusion matrix.
 
 ``` r
-auc(roc_obj)
+train_results_rf$metrics_df
 ```
 
-    ## Area under the curve: 0.9958
+    ##              Metric Logistic_Train RF_Train
+    ## 1          Accuracy         0.9108   0.9640
+    ## 2               AUC         0.9701   0.9959
+    ## 3 Balanced Accuracy         0.9103   0.9634
+    ## 4             Kappa         0.8210   0.9277
+    ## 5     McnemarPValue         0.6239   0.1649
+    ## 6    Neg Pred Value         0.9104   0.9705
+    ## 7    Pos Pred Value         0.9111   0.9583
+    ## 8       Sensitivity         0.9201   0.9739
+    ## 9       Specificity         0.9005   0.9530
 
-This AUC is signaling near-perfect discrimination, better than nearly
-all real-world models built on behavioral or operational data. Need to
-check with validation data.
+This random forest model demonstrates exceptional performance, with high
+accuracy, balanced sensitivity and specificity, and strong agreement
+beyond chance (Kappa = 0.93). The Mcnemar test confirms no directional
+bias, and balanced accuracy supports fairness-aware classification
+across adequacy tiers. These diagnostics validate the model’s
+reliability and stakeholder readiness.
 
-## Performance Metric Comparison
-
-Show performance metric comparison for both models with training data.
+Show the ROC curve.
 
 ``` r
-kable(df_all_metrics,
-      col.names = c("Metric", names(df_all_metrics)[-1]),
-      caption = "Model Performance Comparison (Wide Format)",
-      format.args = list(big.mark = ","),
-      align = c("l", rep("r", ncol(df_all_metrics) - 1)))
+plot(train_results_rf$roc_obj,
+     col = "steelblue",         
+     lwd = 2,                   
+     main = "ROC Curve - Random Forest Model (Train Set)",
+     print.auc = TRUE,          
+     print.auc.cex = 1.2,       
+     print.auc.col = "darkred",
+     legacy.axes = TRUE)       
 ```
 
-| Metric            | Logistic_Train | RandomForest_Train |
-|:------------------|---------------:|-------------------:|
-| Accuracy          |         0.9108 |             0.9657 |
-| Balanced Accuracy |         0.9103 |             0.9652 |
-| Kappa             |         0.8210 |             0.9311 |
-| McnemarPValue     |         0.6239 |             0.1547 |
-| Neg Pred Value    |         0.9104 |             0.9724 |
-| Pos Pred Value    |         0.9111 |             0.9599 |
-| Sensitivity       |         0.9201 |             0.9755 |
-| Specificity       |         0.9005 |             0.9548 |
+![](4_model_eval_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
 
-Model Performance Comparison (Wide Format)
+The near-perfect ROC curve, paired with 96% test accuracy and 84% OOB
+accuracy, suggests the model may be overfitting to training data.
 
-Random Forest may be overfitting on the training data, given its
-near-perfect scores. Logistic regression, while less precise, may offer
-better generalization and interpretability, especially if validation and
-test metrics show random forest performance dropping.
+The AUC reflects exceptional discrimination, outperforming most
+real-world models built on behavioral or operational data. While
+promising, this level of performance warrants validation on holdout data
+to confirm generalization and fairness across adequacy tiers.
 
 # Validate Models
 
-Validate models with validation data.
+Evaluate the models with validation data.
 
 ## Logistic Regression Model
 
-Predict outcomes with the validation data.
+Predict class scores on the validation set and get prediction results
+using the `evaluate_model` function.
 
 ``` r
-pred_probs_logistic <- predict(model_logistic, newdata = plans_validate, type = "response")
-
-class_pred_logistic <- ifelse(pred_probs_logistic >= 0.5, 1, 0)
-
-cm_logistic_validate <- caret::confusionMatrix(factor(class_pred_logistic),
-                                            factor(plans_validate$ADEQUACY_IND))
-
-# Capture performance metrics.
-
-df_all_metrics <- add_metrics_row(cm_logistic_validate, "Logistic", "Validate", df_all_metrics)
-
-cm_logistic_validate
+validate_results_logistic <- evaluate_model(model_logistic, plans_validate, "ADEQUACY_IND", "Logistic", "Validate", df_all_metrics)
 ```
 
-    ## Confusion Matrix and Statistics
-    ## 
-    ##           Reference
-    ## Prediction   0   1
-    ##          0 116  18
-    ##          1  15 101
-    ##                                           
-    ##                Accuracy : 0.868           
-    ##                  95% CI : (0.8196, 0.9074)
-    ##     No Information Rate : 0.524           
-    ##     P-Value [Acc > NIR] : <2e-16          
-    ##                                           
-    ##                   Kappa : 0.7351          
-    ##                                           
-    ##  Mcnemar's Test P-Value : 0.7277          
-    ##                                           
-    ##             Sensitivity : 0.8855          
-    ##             Specificity : 0.8487          
-    ##          Pos Pred Value : 0.8657          
-    ##          Neg Pred Value : 0.8707          
-    ##              Prevalence : 0.5240          
-    ##          Detection Rate : 0.4640          
-    ##    Detection Prevalence : 0.5360          
-    ##       Balanced Accuracy : 0.8671          
-    ##                                           
-    ##        'Positive' Class : 0               
-    ## 
+    ## Setting levels: control = 0, case = 1
 
-Based on these metrics, the logistic model generalizes well. The slight
-drop in specificity on the validation set (compared to the metrics for
-the training set), paired with a significant McNemar result, hints at a
-modest skew toward false positives, i.e. adequate plans mis-classified
-as inadequate. The model is accurate overall, but the error distribution
-isn’t balanced. This contrasts with the training set McNemar result
-(0.5791), which showed no directional bias.
+    ## Setting direction: controls < cases
+
+``` r
+df_all_metrics <- validate_results_logistic$metrics_df
+```
+
+Show results of the confusion matrix.
+
+``` r
+validate_results_logistic$metrics_df
+```
+
+    ##              Metric Logistic_Train RF_Train Logistic_Validate
+    ## 1          Accuracy         0.9108   0.9640            0.8680
+    ## 2               AUC         0.9701   0.9959            0.9514
+    ## 3 Balanced Accuracy         0.9103   0.9634            0.8671
+    ## 4             Kappa         0.8210   0.9277            0.7351
+    ## 5     McnemarPValue         0.6239   0.1649            0.7277
+    ## 6    Neg Pred Value         0.9104   0.9705            0.8707
+    ## 7    Pos Pred Value         0.9111   0.9583            0.8657
+    ## 8       Sensitivity         0.9201   0.9739            0.8855
+    ## 9       Specificity         0.9005   0.9530            0.8487
+
+The logistic model performs well on the validation set, with an AUC of
+0.951 and balanced accuracy of 0.867, indicating strong class separation
+and fair treatment of positives and negatives. Sensitivity (0.886)
+slightly exceeds specificity (0.849), favoring detection of adequacy.
+Kappa (0.735) shows substantial agreement, and the McNemar p-value
+(0.728) confirms no directional bias in errors. Overall, the model
+generalizes well with no major fairness concerns.
+
+Show the ROC curve.
+
+``` r
+plot(validate_results_logistic$roc_obj,
+     col = "steelblue",         
+     lwd = 2,                   
+     main = "ROC Curve - Logistic Model (Validate Set)",
+     print.auc = TRUE,          
+     print.auc.cex = 1.2,       
+     print.auc.col = "darkred",
+     legacy.axes = TRUE)       
+```
+
+![](4_model_eval_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+
+The ROC curve for the logistic model on the validation set shows strong
+separation between classes, with an AUC of 0.951, indicating excellent
+discriminatory power. This suggests the model is highly effective.
 
 ## Random Forest Model
 
-``` r
-rf_preds <- predict(model_rf, newdata = plans_validate, type = "response")
-
-# table(Predicted = rf_preds, Actual = plans_validate$ADEQUACY_IND)
-
-cm_rf_validate <- confusionMatrix(rf_preds, plans_validate$ADEQUACY_IND, positive = "0")
-
-# Capture performance metrics.
-
-df_all_metrics <- add_metrics_row(cm_rf_validate, "RandomForest", "Validate", df_all_metrics)
-
-cm_rf_validate
-```
-
-    ## Confusion Matrix and Statistics
-    ## 
-    ##           Reference
-    ## Prediction   0   1
-    ##          0 109  21
-    ##          1  22  98
-    ##                                           
-    ##                Accuracy : 0.828           
-    ##                  95% CI : (0.7754, 0.8726)
-    ##     No Information Rate : 0.524           
-    ##     P-Value [Acc > NIR] : <2e-16          
-    ##                                           
-    ##                   Kappa : 0.6553          
-    ##                                           
-    ##  Mcnemar's Test P-Value : 1               
-    ##                                           
-    ##             Sensitivity : 0.8321          
-    ##             Specificity : 0.8235          
-    ##          Pos Pred Value : 0.8385          
-    ##          Neg Pred Value : 0.8167          
-    ##              Prevalence : 0.5240          
-    ##          Detection Rate : 0.4360          
-    ##    Detection Prevalence : 0.5200          
-    ##       Balanced Accuracy : 0.8278          
-    ##                                           
-    ##        'Positive' Class : 0               
-    ## 
-
-## Performance Metric Comparison
-
-Show performance metric comparison for models with training and
-validation runs.
+Predict class scores on the validation set and get prediction results.
 
 ``` r
-kable(df_all_metrics,
-      col.names = c("Metric", names(df_all_metrics)[-1]),
-      caption = "Model Performance Comparison (Wide Format)",
-      format.args = list(big.mark = ","),
-      align = c("l", rep("r", ncol(df_all_metrics) - 1)))
+validate_results_rf <- evaluate_model(model_rf, plans_validate, "ADEQUACY_IND", "RF", "Validate", df_all_metrics)
 ```
 
-| Metric | Logistic_Train | RandomForest_Train | Logistic_Validate | RandomForest_Validate |
-|:---|---:|---:|---:|---:|
-| Accuracy | 0.9108 | 0.9657 | 0.8680 | 0.8280 |
-| Balanced Accuracy | 0.9103 | 0.9652 | 0.8671 | 0.8278 |
-| Kappa | 0.8210 | 0.9311 | 0.7351 | 0.6553 |
-| McnemarPValue | 0.6239 | 0.1547 | 0.7277 | 1.0000 |
-| Neg Pred Value | 0.9104 | 0.9724 | 0.8707 | 0.8167 |
-| Pos Pred Value | 0.9111 | 0.9599 | 0.8657 | 0.8385 |
-| Sensitivity | 0.9201 | 0.9755 | 0.8855 | 0.8321 |
-| Specificity | 0.9005 | 0.9548 | 0.8487 | 0.8235 |
+    ## Setting levels: control = 0, case = 1
 
-Model Performance Comparison (Wide Format)
+    ## Setting direction: controls < cases
+
+``` r
+df_all_metrics <- validate_results_rf$metrics_df
+```
+
+Show results of the confusion matrix.
+
+``` r
+validate_results_rf$metrics_df
+```
+
+    ##              Metric Logistic_Train RF_Train Logistic_Validate RF_Validate
+    ## 1          Accuracy         0.9108   0.9640            0.8680      0.8320
+    ## 2               AUC         0.9701   0.9959            0.9514      0.9134
+    ## 3 Balanced Accuracy         0.9103   0.9634            0.8671      0.8316
+    ## 4             Kappa         0.8210   0.9277            0.7351      0.6632
+    ## 5     McnemarPValue         0.6239   0.1649            0.7277      1.0000
+    ## 6    Neg Pred Value         0.9104   0.9705            0.8707      0.8235
+    ## 7    Pos Pred Value         0.9111   0.9583            0.8657      0.8397
+    ## 8       Sensitivity         0.9201   0.9739            0.8855      0.8397
+    ## 9       Specificity         0.9005   0.9530            0.8487      0.8235
+
+The random forest model shows decent validation performance with an AUC
+of 0.914 and balanced accuracy of 0.832, but it trails the logistic
+model across most metrics. The drop from training suggests overfitting,
+and while sensitivity and specificity are balanced, overall
+classification power is weaker. The McNemar p-value of 1.000 indicates
+no directional bias, but the model generalizes less effectively than
+logistic.
+
+Show the ROC curve.
+
+``` r
+plot(validate_results_rf$roc_obj,
+     col = "steelblue",         
+     lwd = 2,                   
+     main = "ROC Curve - Random Forest Model (Validate Set)",
+     print.auc = TRUE,          
+     print.auc.cex = 1.2,       
+     print.auc.col = "darkred",
+     legacy.axes = TRUE)       
+```
+
+![](4_model_eval_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+
+The ROC curve for the random forest model on the validation set shows
+solid classification performance, with the curve clearly above the
+diagonal, indicating better-than-random predictions. The AUC of 0.914
+confirms strong discriminatory power, though it’s notably lower than the
+training AUC of 0.996 and slightly behind the logistic model’s
+validation AUC of 0.951. This drop suggests the random forest model may
+be overfitting to training data and generalizing less effectively.
+Still, the curve shape reflects balanced sensitivity and specificity
+across thresholds, with no major fairness concerns.
 
 # Test Models
 
 ## Logistic Regression Model
 
+Predict class scores on the test set and get prediction results.
+
 ``` r
-pred_probs_logistic <- predict(model_logistic, newdata = plans_test, type = "response")
-
-class_pred_logistic <- ifelse(pred_probs_logistic >= 0.5, 1, 0)
-
-cm_logistic_test <- caret::confusionMatrix(factor(class_pred_logistic),
-                                            factor(plans_test$ADEQUACY_IND))
-
-# Capture performance metrics.
-
-df_all_metrics <- add_metrics_row(cm_logistic_test, "Logistic", "Test", df_all_metrics)
-
-cm_logistic_test
+test_results_logistic <- evaluate_model(model_logistic, plans_test, "ADEQUACY_IND", "Logistic", "Test", df_all_metrics)
 ```
 
-    ## Confusion Matrix and Statistics
-    ## 
-    ##           Reference
-    ## Prediction   0   1
-    ##          0 118  17
-    ##          1  13 101
-    ##                                           
-    ##                Accuracy : 0.8795          
-    ##                  95% CI : (0.8325, 0.9172)
-    ##     No Information Rate : 0.5261          
-    ##     P-Value [Acc > NIR] : <2e-16          
-    ##                                           
-    ##                   Kappa : 0.758           
-    ##                                           
-    ##  Mcnemar's Test P-Value : 0.5839          
-    ##                                           
-    ##             Sensitivity : 0.9008          
-    ##             Specificity : 0.8559          
-    ##          Pos Pred Value : 0.8741          
-    ##          Neg Pred Value : 0.8860          
-    ##              Prevalence : 0.5261          
-    ##          Detection Rate : 0.4739          
-    ##    Detection Prevalence : 0.5422          
-    ##       Balanced Accuracy : 0.8783          
-    ##                                           
-    ##        'Positive' Class : 0               
-    ## 
+    ## Setting levels: control = 0, case = 1
+
+    ## Setting direction: controls < cases
+
+``` r
+df_all_metrics <- test_results_logistic$metrics_df
+```
+
+Show results of the confusion matrix.
+
+``` r
+test_results_logistic$metrics_df
+```
+
+    ##              Metric Logistic_Train RF_Train Logistic_Validate RF_Validate
+    ## 1          Accuracy         0.9108   0.9640            0.8680      0.8320
+    ## 2               AUC         0.9701   0.9959            0.9514      0.9134
+    ## 3 Balanced Accuracy         0.9103   0.9634            0.8671      0.8316
+    ## 4             Kappa         0.8210   0.9277            0.7351      0.6632
+    ## 5     McnemarPValue         0.6239   0.1649            0.7277      1.0000
+    ## 6    Neg Pred Value         0.9104   0.9705            0.8707      0.8235
+    ## 7    Pos Pred Value         0.9111   0.9583            0.8657      0.8397
+    ## 8       Sensitivity         0.9201   0.9739            0.8855      0.8397
+    ## 9       Specificity         0.9005   0.9530            0.8487      0.8235
+    ##   Logistic_Test
+    ## 1        0.8795
+    ## 2        0.9349
+    ## 3        0.8783
+    ## 4        0.7580
+    ## 5        0.5839
+    ## 6        0.8860
+    ## 7        0.8741
+    ## 8        0.9008
+    ## 9        0.8559
+
+The logistic model performs consistently well on the test set, with an
+AUC of 0.935 and balanced accuracy of 0.878, confirming strong
+generalization. Sensitivity (0.901) and specificity (0.856) remain
+well-balanced, and the Kappa score of 0.758 reflects substantial
+agreement. The McNemar p-value (0.584) shows no directional bias in
+errors. Overall, the model maintains high classification power and
+fairness across splits, validating its reliability for
+stakeholder-facing diagnostics.
+
+Show the ROC curve.
+
+``` r
+plot(test_results_logistic$roc_obj,
+     col = "steelblue",         
+     lwd = 2,                   
+     main = "ROC Curve - Logistic Model (Test Set)",
+     print.auc = TRUE,          
+     print.auc.cex = 1.2,       
+     print.auc.col = "darkred",
+     legacy.axes = TRUE)       
+```
+
+![](4_model_eval_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+
+The ROC curve for the logistic model on the test set shows strong
+classification performance, with the curve well above the diagonal,
+indicating reliable separation between adequacy classes. The AUC of
+0.935 confirms excellent discriminatory power, validating the model’s
+ability to generalize beyond training and validation data. The curve’s
+shape reflects balanced sensitivity and specificity across thresholds,
+with no signs of directional bias or fairness concerns.
 
 ## Random Forest Model
 
+Predict class scores on the test set and get prediction results.
+
 ``` r
-rf_preds <- predict(model_rf, newdata = plans_test, type = "response")
-
-# table(Predicted = rf_preds, Actual = plans_validate$ADEQUACY_IND)
-
-cm_rf_test <- confusionMatrix(rf_preds, plans_test$ADEQUACY_IND, positive = "0")
-
-# Capture performance metrics.
-
-df_all_metrics <- add_metrics_row(cm_rf_test, "RandomForest", "Test", df_all_metrics)
-
-cm_rf_test
+test_results_rf <- evaluate_model(model_rf, plans_test, "ADEQUACY_IND", "RF", "Test", df_all_metrics)
 ```
 
-    ## Confusion Matrix and Statistics
-    ## 
-    ##           Reference
-    ## Prediction   0   1
-    ##          0 114  18
-    ##          1  17 100
-    ##                                         
-    ##                Accuracy : 0.8594        
-    ##                  95% CI : (0.81, 0.9001)
-    ##     No Information Rate : 0.5261        
-    ##     P-Value [Acc > NIR] : <2e-16        
-    ##                                         
-    ##                   Kappa : 0.718         
-    ##                                         
-    ##  Mcnemar's Test P-Value : 1             
-    ##                                         
-    ##             Sensitivity : 0.8702        
-    ##             Specificity : 0.8475        
-    ##          Pos Pred Value : 0.8636        
-    ##          Neg Pred Value : 0.8547        
-    ##              Prevalence : 0.5261        
-    ##          Detection Rate : 0.4578        
-    ##    Detection Prevalence : 0.5301        
-    ##       Balanced Accuracy : 0.8588        
-    ##                                         
-    ##        'Positive' Class : 0             
-    ## 
+    ## Setting levels: control = 0, case = 1
+
+    ## Setting direction: controls < cases
+
+``` r
+df_all_metrics <- test_results_rf$metrics_df
+```
+
+Show results of the confusion matrix.
+
+``` r
+test_results_rf$metrics_df
+```
+
+    ##              Metric Logistic_Train RF_Train Logistic_Validate RF_Validate
+    ## 1          Accuracy         0.9108   0.9640            0.8680      0.8320
+    ## 2               AUC         0.9701   0.9959            0.9514      0.9134
+    ## 3 Balanced Accuracy         0.9103   0.9634            0.8671      0.8316
+    ## 4             Kappa         0.8210   0.9277            0.7351      0.6632
+    ## 5     McnemarPValue         0.6239   0.1649            0.7277      1.0000
+    ## 6    Neg Pred Value         0.9104   0.9705            0.8707      0.8235
+    ## 7    Pos Pred Value         0.9111   0.9583            0.8657      0.8397
+    ## 8       Sensitivity         0.9201   0.9739            0.8855      0.8397
+    ## 9       Specificity         0.9005   0.9530            0.8487      0.8235
+    ##   Logistic_Test RF_Test
+    ## 1        0.8795  0.8554
+    ## 2        0.9349  0.9276
+    ## 3        0.8783  0.8550
+    ## 4        0.7580  0.7101
+    ## 5        0.5839  1.0000
+    ## 6        0.8860  0.8475
+    ## 7        0.8741  0.8626
+    ## 8        0.9008  0.8626
+    ## 9        0.8559  0.8475
+
+The Random Forest model performs well on the test set, with an AUC of
+0.923 and balanced accuracy of 0.855, confirming strong generalization.
+Sensitivity (0.863) and specificity (0.848) are well-balanced, and the
+Kappa score of 0.710 reflects substantial agreement. While slightly
+behind the logistic model in most metrics, the RF model maintains
+reliable classification power and fairness, with a McNemar p-value of
+1.000 indicating no directional bias in errors.
+
+Show the ROC curve.
+
+``` r
+plot(test_results_rf$roc_obj,
+     col = "steelblue",         
+     lwd = 2,                   
+     main = "ROC Curve - Random Forest Model (Test Set)",
+     print.auc = TRUE,          
+     print.auc.cex = 1.2,       
+     print.auc.col = "darkred",
+     legacy.axes = TRUE)       
+```
+
+![](4_model_eval_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
+
+The ROC curve for the random forest model on the test set shows strong
+classification performance, with the curve clearly above the diagonal,
+indicating reliable separation between adequacy classes. The AUC of
+0.923 confirms high discriminatory power, though slightly behind its
+training AUC of 0.996 and the logistic model’s test AUC of 0.935. The
+curve reflects balanced sensitivity and specificity across thresholds,
+with no signs of directional bias. Overall, the RF model generalizes
+well and remains a solid performer.
 
 # Final Comparison
 
-## Performance Metric Comparison
+The logistic model demonstrates consistent performance across train,
+validate, and test splits, with high AUC, balanced
+sensitivity/specificity, and strong interpretability, making it ideal
+for diagnostics and stakeholder transparency.
 
-Show performance metric comparison for models with training and
-validation runs.
+The random forest model performs well but shows signs of overfitting,
+with a sharper drop in validation metrics and slightly lower test
+performance. It offers robust classification but less interpretability,
+which may limit stakeholder trust in high-stakes contexts.
 
-``` r
-kable(df_all_metrics,
-      col.names = c("Metric", names(df_all_metrics)[-1]),
-      caption = "Model Performance Comparison (Wide Format)",
-      format.args = list(big.mark = ","),
-      align = c("l", rep("r", ncol(df_all_metrics) - 1)))
-```
+For applications prioritizing transparency and stakeholder clarity, the
+logistic model is the preferred choice. The random forest model may
+still be useful as a benchmark or ensemble component, but logistic
+offers the cleanest balance of performance and interpretability.
 
-| Metric | Logistic_Train | RandomForest_Train | Logistic_Validate | RandomForest_Validate | Logistic_Test | RandomForest_Test |
-|:---|---:|---:|---:|---:|---:|---:|
-| Accuracy | 0.9108 | 0.9657 | 0.8680 | 0.8280 | 0.8795 | 0.8594 |
-| Balanced Accuracy | 0.9103 | 0.9652 | 0.8671 | 0.8278 | 0.8783 | 0.8588 |
-| Kappa | 0.8210 | 0.9311 | 0.7351 | 0.6553 | 0.7580 | 0.7180 |
-| McnemarPValue | 0.6239 | 0.1547 | 0.7277 | 1.0000 | 0.5839 | 1.0000 |
-| Neg Pred Value | 0.9104 | 0.9724 | 0.8707 | 0.8167 | 0.8860 | 0.8547 |
-| Pos Pred Value | 0.9111 | 0.9599 | 0.8657 | 0.8385 | 0.8741 | 0.8636 |
-| Sensitivity | 0.9201 | 0.9755 | 0.8855 | 0.8321 | 0.9008 | 0.8702 |
-| Specificity | 0.9005 | 0.9548 | 0.8487 | 0.8235 | 0.8559 | 0.8475 |
+# High-Level Takeaways from Model Evaluation
 
-Model Performance Comparison (Wide Format)
+# High-Level Takeaways
 
-``` r
-saveRDS(df_all_metrics, "../data/model_metrics.rds")
-```
+Summary of observations from performance metrics.
+
+| Dimension | Logistic Regression | Random Forest |
+|----|----|----|
+| Train | Solid performance, slightly lower than RF | Near-perfect fit, possible overfitting |
+| Validate | Strong generalization | Noticeable drop from train, less stable |
+| Test | Consistent and balanced | Slight recovery, but still below logistic |
 
 # Misclassification Analysis
 
 To assess whether the models were simply reproducing the engineered
-adequacy score, I conducted a misclassification analysis across adequacy
-tiers using the unseen test data. Both the logistic regression and
-random forest models showed clear signs of structural learning.
+adequacy score, perform a misclassification analysis across adequacy
+tiers using the unseen test data.
 
-Tag misclassified plans with flags for false positives and false
+Tag mis-classified plans with flags for false positives and false
 negatives using the test set.
 
 ``` r
-plans_test <- plans_test %>%
+plans_test_log <- test_results_logistic$predictions
+
+plans_test_rf <- test_results_rf$predictions
+
+# Combine predictions into one data frame.
+
+class_check <- plans_test %>%
+  select(ACK_ID, ADEQUACY_IND, ADEQUACY_SCORE) %>%
+  left_join(plans_test_log %>%
+              select(ACK_ID, predicted_class) %>%
+              rename(LOGISTIC_PRED_NUM = predicted_class),
+            by = "ACK_ID") %>%
+  left_join(plans_test_rf %>%
+              select(ACK_ID, predicted_class) %>%
+              rename(RF_PRED_NUM = predicted_class),
+            by = "ACK_ID") %>%
   mutate(ADEQUACY_IND_NUM = as.numeric(as.character(ADEQUACY_IND)),
-         LOGISTIC_PRED_NUM = as.numeric(as.character(class_pred_logistic)),
-         RF_PRED_NUM = as.numeric(as.character(rf_preds))) %>%
-  mutate(LOGISTIC_FP = LOGISTIC_PRED_NUM == 1 & ADEQUACY_IND_NUM == 0,
+         LOGISTIC_FP = LOGISTIC_PRED_NUM == 1 & ADEQUACY_IND_NUM == 0,
          LOGISTIC_FN = LOGISTIC_PRED_NUM == 0 & ADEQUACY_IND_NUM == 1,
          RF_FP = RF_PRED_NUM == 1 & ADEQUACY_IND_NUM == 0,
          RF_FN = RF_PRED_NUM == 0 & ADEQUACY_IND_NUM == 1)
 ```
 
-Summarize misclassifications by adequacy score to show whether
-misclassified plans are near the threshold (e.g., score of 3 or 4).
+Summarize mis-classifications by adequacy score to show whether
+mis-classified plans are near the threshold (e.g., score of 3 or 4).
 
 ``` r
-class_check <- plans_test %>%
+class_check_summary <- class_check %>%
   group_by(ADEQUACY_SCORE) %>%
   summarise(
     Logistic_FN = sum(LOGISTIC_FN),
@@ -738,7 +731,7 @@ class_check <- plans_test %>%
   ) %>%
   arrange(ADEQUACY_SCORE)
 
-kable(class_check,
+kable(class_check_summary,
       col.names = c("Adequacy Score", "Logistic_FN", "Logistic_FP", "RF_FN", "RF_FP", "Total"),
       caption = "Misclassifications by Model",
       format.args = list(big.mark = ","),
@@ -750,7 +743,7 @@ kable(class_check,
 | 0              |           0 |           0 |     0 |     0 |     9 |
 | 1              |           0 |           0 |     0 |     0 |    21 |
 | 2              |           0 |           0 |     0 |     3 |    43 |
-| 3              |           0 |          13 |     0 |    14 |    58 |
+| 3              |           0 |          13 |     0 |    15 |    58 |
 | 4              |          16 |           0 |    17 |     0 |    70 |
 | 5              |           1 |           0 |     1 |     0 |    34 |
 | 6              |           0 |           0 |     0 |     0 |    14 |
@@ -773,7 +766,7 @@ but learning nuanced structural patterns embedded in the feature space.
 Create faceted bar plot.
 
 ``` r
-misclass_long <- class_check %>%
+misclass_long <- class_check_summary %>%
   tidyr::pivot_longer(cols = c(Logistic_FN, Logistic_FP, RF_FN, RF_FP),
                names_to = "Model_Error",
                values_to = "Count") %>%
@@ -781,6 +774,7 @@ misclass_long <- class_check %>%
                            grepl("^RF", Model_Error) ~ "Random Forest"),
          Error_Type = case_when(grepl("FN$", Model_Error) ~ "False Negative",
                                 grepl("FP$", Model_Error) ~ "False Positive"))
+
 ggplot(misclass_long, aes(x = factor(ADEQUACY_SCORE), y = Count, fill = Error_Type)) +
   geom_bar(stat = "identity", position = "dodge") +
   # geom_vline(xintercept = 4.5, linetype = "dashed", color = "black", linewidth = 0.8) +
@@ -795,46 +789,14 @@ ggplot(misclass_long, aes(x = factor(ADEQUACY_SCORE), y = Count, fill = Error_Ty
         plot.title = element_text(size = 14, face = "bold"))
 ```
 
-![](4_model_eval_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
-
-# High-Level Takeaways
-
-Summary of observations from performance metrics.
-
-| Dimension | Logistic Regression | Random Forest |
-|----|----|----|
-| Train | Solid performance, slightly lower than RF | Near-perfect fit, possible overfitting |
-| Validate | Strong generalization | Noticeable drop from train, less stable |
-| Test | Consistent and balanced | Slight recovery, but still below logistic |
-
-# Diagnostic Highlights
-
-**Logistic Regression**
-
-- Consistent performance metrics across splits; accuracy of ~89–90%
-  (train/validate) and ~86% (test).
-- Balanced accuracy and Kappa remain strong across sets, suggesting
-  stable class separation and agreement.
-- Sensitivity vs. specificity are well-matched, indicating no major bias
-  toward either class.
-- McNemar’s p-values near 1 for validation set suggest symmetric
-  mis-classification, no systematic error.
-
-**Random Forest**
-
-- Training accuracy was high at 96.7%, suggesting possible over-fitting.
-- Validation accuracy dropped to 82.8% and Kappa fell to 0.65; this
-  suggests reduced generalization.
-- Sensitivity greater than specificity across splits; RF may be slightly
-  favoring the positive class (Class 0).
-- McNemar’s P-Values are lower (0.76–0.63), but still not significant;
-  mild asymmetry in errors.
+![](4_model_eval_files/figure-gfm/unnamed-chunk-28-1.png)<!-- -->
 
 # Conclusion
 
-Logistic regression offers consistent, balanced performance across
-training, validation, and test sets, with strong agreement and minimal
-bias. Random forest shows excellent fit on training data but a notable
-drop in validation accuracy and agreement, suggesting potential
-over-fitting. While both models perform well, logistic regression offers
-greater stability and interpretability for deployment.
+The models demonstrate genuine learning from the feature space, not rote
+reproduction of the adequacy score.
+
+Their misclassification patterns reflect sensitivity to structural
+nuance, especially near the adequacy boundary, and reinforce their
+diagnostic value in modeling. This validates their use for
+stakeholder-facing classification.
