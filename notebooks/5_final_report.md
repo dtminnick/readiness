@@ -1,33 +1,31 @@
----
-title: "Classifying Retirement Plan Financial Adequacy Using Form 5500 Data"
-author: "Donnie Minnick, Statistical Learning - Fall A 2025"
-date: "October 07, 2025"
-output:
-  md_document:
-    variant: gfm
-    preserve_yaml: TRUE
-subtitle: "Final Report"
----
+# Classifying Retirement Plan Financial Adequacy Using Form 5500 Data: Final Project Report
 
-    ## 
-    ## Attaching package: 'dplyr'
+Donnie Minnick Statistical Learning - Fall A 2025 October 07, 2025
 
-    ## The following objects are masked from 'package:stats':
-    ## 
-    ##     filter, lag
+# Executive Summary
 
-    ## The following objects are masked from 'package:base':
-    ## 
-    ##     intersect, setdiff, setequal, union
+This report investigates the structural adequacy of employer-sponsored
+retirement plans using 2023 Form 5500 filings. By engineering
+interpretable features tied to participant growth, contribution
+dynamics, asset accumulation, and leakage burden, I developed a
+composite adequacy score and trained two classification models, logistic
+regression and random forest, to predict plan adequacy. Sector-aware
+tiering and stratified sampling ensured fairness and generalizability
+across industries.
 
-# Pipeline Overview
+Model evaluation revealed that logistic regression offered strong
+interpretability and consistent generalization, making it the preferred
+tool for stakeholder-facing diagnostics. Feature importance analysis
+showed that adequacy is driven by both structural momentum (e.g.,
+contribution growth) and sector-specific disparities. Visualization of
+predicted adequacy across sectors surfaced clear gaps, with industries
+like Public Administration and Finance showing high adequacy rates,
+while sectors such as Accommodation and Arts exhibited elevated
+inadequacy.
 
-This project investigates whether employer-sponsored retirement plans
-structurally support participant financial readiness. Using 2023 Form
-5500 filings, I classify plans as “adequate” or “inadequate” based on
-engineered features like participation rate, contribution stability, and
-leakage burden. Two models, logistic regression and random forest, were
-trained and evaluated for interpretability and diagnostic clarity.
+These findings support targeted review and policy intervention, and
+highlight the value of principled modeling in advancing retirement plan
+transparency and equity.
 
 My Github repository for this project can be accessed
 [here](https://github.com/dtminnick/readiness).
