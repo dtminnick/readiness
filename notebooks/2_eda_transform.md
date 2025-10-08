@@ -649,6 +649,8 @@ check_sample <- plans_stratified %>%
   summarise(entries = n()) %>%
   mutate(percent = round(entries / sum(entries), 2))
 
+saveRDS(check_sample, "../data/stratified_sample.rds")
+
 kable(check_sample,
       col.names = c("Sector Title", "Plans", "Percent"),
       caption = "Summary By Sector Title - Stratified Sample",
@@ -710,28 +712,28 @@ kable(summary_by_plan_assets,
       align = c("l", "r", "r"))
 ```
 
-| Sector          |     BOY Assets |      EOY Assets |
-|:----------------|---------------:|----------------:|
-| Information     | 64,411,783,664 |  71,429,112,227 |
-| Accommodatio…   | 14,061,889,348 |  16,443,864,263 |
-| Administrati…   |  9,072,898,960 |  11,219,682,862 |
-| Agriculture,…   |  1,033,447,709 |   1,259,775,971 |
-| Arts, entert…   |  6,796,412,079 |   7,906,174,975 |
-| Construction    |  2,988,197,275 |   3,672,506,891 |
-| Educational …   |  7,398,136,589 |   8,776,873,105 |
-| Finance and …   | 90,579,311,147 | 110,831,742,526 |
-| Health care …   | 14,015,826,234 |  17,670,184,955 |
-| Management o…   | 80,917,788,756 |  93,175,563,202 |
-| Manufacturing   | 31,864,537,876 |  37,660,803,386 |
-| Mining, quar…   |  8,546,627,344 |   9,852,242,471 |
-| Other servic…   |  2,437,374,129 |   2,959,381,318 |
-| Professional…   | 16,384,746,906 |  20,260,623,165 |
-| Public admin…   |    208,619,022 |     248,932,490 |
-| Real estate …   |  8,011,984,378 |   9,893,712,330 |
-| Retail trade    | 21,190,340,132 |  24,780,142,594 |
-| Transportati…   | 27,475,042,659 |  32,114,115,615 |
-| Utilities       | 44,585,805,573 |  49,558,772,500 |
-| Wholesale trade | 14,296,662,269 |  16,947,819,330 |
+| Sector          |     BOY Assets |     EOY Assets |
+|:----------------|---------------:|---------------:|
+| Information     | 61,300,131,618 | 68,000,783,296 |
+| Accommodatio…   | 13,958,347,531 | 16,303,486,359 |
+| Administrati…   |  6,992,525,203 |  8,425,234,786 |
+| Agriculture,…   |    997,094,071 |  1,210,027,508 |
+| Arts, entert…   |  6,083,399,634 |  7,100,250,877 |
+| Construction    |  2,935,157,924 |  3,610,691,331 |
+| Educational …   |  7,274,755,139 |  8,617,887,941 |
+| Finance and …   | 39,740,647,575 | 48,046,431,157 |
+| Health care …   |  8,569,509,069 | 10,616,524,058 |
+| Management o…   | 36,700,412,664 | 41,542,922,262 |
+| Manufacturing   |  9,910,062,707 | 11,092,430,465 |
+| Mining, quar…   |  8,494,778,388 |  9,796,751,010 |
+| Other servic…   |  2,262,824,261 |  2,709,658,286 |
+| Professional…   |  9,746,469,774 | 11,944,196,185 |
+| Public admin…   |    208,619,022 |    248,932,490 |
+| Real estate …   |  7,955,018,887 |  9,734,260,966 |
+| Retail trade    |  8,951,488,601 | 10,399,860,621 |
+| Transportati…   | 33,661,329,298 | 38,735,980,494 |
+| Utilities       | 39,771,242,334 | 44,008,200,218 |
+| Wholesale trade |  5,500,179,874 |  6,941,331,609 |
 
 BOY and EOY Total Plan Assets By Sector
 
@@ -1014,26 +1016,26 @@ kable(summary_by_accbal_participants,
 
 | Sector          | BOY Participants | EOY Participants |
 |:----------------|-----------------:|-----------------:|
-| Information     |          423,013 |          408,167 |
-| Accommodatio…   |          327,109 |          349,621 |
-| Administrati…   |          198,630 |          215,466 |
-| Agriculture,…   |           25,286 |           27,491 |
-| Arts, entert…   |          130,618 |          136,029 |
-| Construction    |           50,835 |           56,027 |
-| Educational …   |           68,458 |           71,580 |
-| Finance and …   |          627,844 |          646,828 |
-| Health care …   |          232,177 |          237,123 |
-| Management o…   |          553,675 |          534,047 |
-| Manufacturing   |          238,594 |          248,145 |
-| Mining, quar…   |           75,301 |           75,668 |
-| Other servic…   |           58,421 |           58,947 |
-| Professional…   |          173,689 |          165,116 |
+| Information     |          387,606 |          375,196 |
+| Accommodatio…   |          324,666 |          346,831 |
+| Administrati…   |          153,024 |          162,058 |
+| Agriculture,…   |           23,542 |           25,268 |
+| Arts, entert…   |          123,219 |          128,835 |
+| Construction    |           55,402 |           61,371 |
+| Educational …   |           65,765 |           69,003 |
+| Finance and …   |          311,379 |          319,124 |
+| Health care …   |          119,977 |          127,712 |
+| Management o…   |          317,257 |          310,040 |
+| Manufacturing   |          105,708 |          107,152 |
+| Mining, quar…   |           75,879 |           76,291 |
+| Other servic…   |           58,993 |           60,685 |
+| Professional…   |           95,639 |           97,939 |
 | Public admin…   |            5,571 |            6,181 |
-| Real estate …   |          146,385 |          156,752 |
-| Retail trade    |          406,251 |          417,244 |
-| Transportati…   |          308,876 |          311,052 |
-| Utilities       |          233,176 |          234,782 |
-| Wholesale trade |          162,134 |          160,716 |
+| Real estate …   |          139,238 |          147,945 |
+| Retail trade    |          150,984 |          159,057 |
+| Transportati…   |          380,568 |          369,338 |
+| Utilities       |          217,207 |          218,473 |
+| Wholesale trade |           94,267 |           98,525 |
 
 BOY and EOY Total Active Participants By Sector
 
@@ -1203,26 +1205,26 @@ kable(summary_by_partcp_contributions,
 
 | Sector          | BOY Contributions | EOY Contributions |
 |:----------------|------------------:|------------------:|
-| Information     |        42,667,048 |        43,371,288 |
-| Accommodatio…   |        11,211,435 |        14,488,075 |
-| Administrati…   |        13,006,759 |        11,502,389 |
-| Agriculture,…   |         2,277,913 |         1,850,532 |
-| Arts, entert…   |         9,343,780 |        11,793,812 |
-| Construction    |         4,551,799 |         4,841,884 |
-| Educational …   |         4,093,220 |         5,659,145 |
-| Finance and …   |        93,803,011 |       110,993,284 |
-| Health care …   |        10,719,709 |         9,602,888 |
-| Management o…   |        55,690,422 |        61,799,450 |
-| Manufacturing   |        21,395,781 |        24,163,669 |
-| Mining, quar…   |         8,435,434 |        12,137,761 |
-| Other servic…   |         5,135,671 |         6,194,939 |
-| Professional…   |        35,967,616 |        39,738,072 |
+| Information     |        37,546,587 |        38,293,359 |
+| Accommodatio…   |        11,271,579 |        14,321,412 |
+| Administrati…   |        14,689,081 |        12,799,735 |
+| Agriculture,…   |         2,054,058 |         1,725,333 |
+| Arts, entert…   |         8,877,244 |        11,190,967 |
+| Construction    |         6,560,703 |         6,305,708 |
+| Educational …   |         3,838,523 |         5,237,779 |
+| Finance and …   |        34,921,035 |        39,065,080 |
+| Health care …   |        12,021,215 |        13,320,087 |
+| Management o…   |        32,152,931 |        35,717,870 |
+| Manufacturing   |         8,290,044 |         8,871,621 |
+| Mining, quar…   |         8,379,672 |        12,241,388 |
+| Other servic…   |         5,024,078 |         5,547,342 |
+| Professional…   |        20,758,824 |        24,790,467 |
 | Public admin…   |           515,954 |           379,164 |
-| Real estate …   |         5,888,442 |         5,982,260 |
-| Retail trade    |        36,161,885 |        39,157,603 |
-| Transportati…   |        18,478,519 |        22,476,380 |
-| Utilities       |        37,633,929 |        42,356,904 |
-| Wholesale trade |        21,980,495 |        23,160,689 |
+| Real estate …   |         4,237,026 |         4,286,427 |
+| Retail trade    |        14,889,497 |        16,343,031 |
+| Transportati…   |        32,069,151 |        35,631,966 |
+| Utilities       |        37,548,526 |        42,469,847 |
+| Wholesale trade |         9,081,702 |        11,437,170 |
 
 BOY and EOY Total Contributions By Sector
 
@@ -1392,26 +1394,26 @@ kable(summary_er_contributions,
 
 | Sector          | BOY Contributions | EOY Contributions |
 |:----------------|------------------:|------------------:|
-| Information     |        75,517,677 |        76,642,832 |
-| Accommodatio…   |        70,589,859 |        83,356,128 |
-| Administrati…   |        40,249,952 |        47,857,677 |
-| Agriculture,…   |        10,820,804 |        11,024,934 |
-| Arts, entert…   |        55,585,692 |        61,738,157 |
-| Construction    |        59,436,197 |        59,096,810 |
-| Educational …   |        11,179,693 |        12,700,497 |
-| Finance and …   |     1,802,174,619 |     2,125,535,720 |
-| Health care …   |       369,314,413 |       401,068,940 |
-| Management o…   |       560,528,024 |       602,883,320 |
-| Manufacturing   |        85,599,625 |       125,260,954 |
-| Mining, quar…   |        41,244,762 |        55,229,699 |
-| Other servic…   |        14,596,707 |        13,784,144 |
-| Professional…   |        67,548,425 |        72,172,133 |
+| Information     |        65,967,983 |        58,397,057 |
+| Accommodatio…   |        70,611,408 |        83,342,289 |
+| Administrati…   |        31,547,292 |        32,392,430 |
+| Agriculture,…   |        10,023,906 |        10,654,935 |
+| Arts, entert…   |        55,039,019 |        61,476,227 |
+| Construction    |        33,210,859 |        34,173,699 |
+| Educational …   |         9,921,069 |        11,088,183 |
+| Finance and …   |       578,561,198 |       663,985,792 |
+| Health care …   |       136,859,630 |       155,760,284 |
+| Management o…   |        94,187,372 |       110,661,788 |
+| Manufacturing   |        45,443,242 |        48,426,089 |
+| Mining, quar…   |        38,876,881 |        55,130,589 |
+| Other servic…   |        11,651,567 |        10,750,636 |
+| Professional…   |        64,485,352 |        74,629,365 |
 | Public admin…   |           287,607 |           316,815 |
-| Real estate …   |       244,234,009 |       302,660,959 |
-| Retail trade    |       150,769,154 |       157,219,043 |
-| Transportati…   |       210,247,327 |       614,990,246 |
-| Utilities       |       184,293,009 |       207,337,756 |
-| Wholesale trade |        90,723,328 |        52,832,114 |
+| Real estate …   |       244,094,571 |       302,681,625 |
+| Retail trade    |        67,286,644 |        70,222,501 |
+| Transportati…   |        93,042,045 |        95,654,780 |
+| Utilities       |       179,909,939 |       203,199,120 |
+| Wholesale trade |        50,023,252 |        57,402,320 |
 
 BOY and EOY Total Employer Contributions By Sector
 
@@ -1577,28 +1579,28 @@ kable(summary_loans,
       align = c("l", "r", "r"))
 ```
 
-| Sector          |     BOY Loans |     EOY Loans |
-|:----------------|--------------:|--------------:|
-| Information     |   917,719,686 |   904,698,868 |
-| Accommodatio…   |   221,835,864 |   248,070,806 |
-| Administrati…   |   217,665,025 |   251,452,875 |
-| Agriculture,…   |    23,805,359 |    28,090,338 |
-| Arts, entert…   |   146,765,817 |   160,306,998 |
-| Construction    |    46,213,355 |    54,986,776 |
-| Educational …   |    39,333,300 |    44,167,636 |
-| Finance and …   |   976,145,804 | 1,073,849,069 |
-| Health care …   |   153,251,857 |   186,772,776 |
-| Management o…   | 1,046,491,029 | 1,130,397,793 |
-| Manufacturing   |   317,262,874 |   353,497,381 |
-| Mining, quar…   |   142,267,726 |   159,264,265 |
-| Other servic…   |    42,391,761 |    47,236,812 |
-| Professional…   |   150,013,305 |   157,852,002 |
-| Public admin…   |     7,827,536 |     9,157,545 |
-| Real estate …   |   114,528,513 |   127,278,375 |
-| Retail trade    |   309,730,486 |   350,973,729 |
-| Transportati…   |   338,143,078 |   360,310,837 |
-| Utilities       |   629,157,849 |   648,004,713 |
-| Wholesale trade |   177,726,780 |   202,433,432 |
+| Sector          |   BOY Loans |   EOY Loans |
+|:----------------|------------:|------------:|
+| Information     | 840,451,901 | 829,452,334 |
+| Accommodatio…   | 218,156,351 | 244,248,032 |
+| Administrati…   | 148,589,458 | 158,004,806 |
+| Agriculture,…   |  21,260,170 |  24,685,620 |
+| Arts, entert…   | 131,858,011 | 145,008,926 |
+| Construction    |  47,057,926 |  57,118,581 |
+| Educational …   |  38,298,504 |  42,878,697 |
+| Finance and …   | 420,726,328 | 455,101,362 |
+| Health care …   |  79,330,516 |  86,846,305 |
+| Management o…   | 419,291,087 | 436,732,889 |
+| Manufacturing   | 113,549,070 | 126,742,176 |
+| Mining, quar…   | 142,782,553 | 160,067,082 |
+| Other servic…   |  39,936,404 |  44,274,164 |
+| Professional…   |  69,487,610 |  78,738,002 |
+| Public admin…   |   7,827,536 |   9,157,545 |
+| Real estate …   | 109,641,514 | 120,845,115 |
+| Retail trade    | 145,675,993 | 162,615,856 |
+| Transportati…   | 568,019,294 | 600,144,739 |
+| Utilities       | 554,467,572 | 570,851,460 |
+| Wholesale trade |  97,451,572 | 113,310,408 |
 
 BOY and EOY Total Loan Balances By Sector
 
@@ -1762,13 +1764,13 @@ kable(summary_by_adequacy_score,
 
 | Adequacy Score | Plans | Percent |
 |:---------------|------:|--------:|
-| 0              |    26 |    0.02 |
-| 1              |   136 |    0.08 |
-| 2              |   307 |    0.18 |
-| 3              |   406 |    0.24 |
-| 4              |   434 |    0.26 |
-| 5              |   255 |    0.15 |
-| 6              |   101 |    0.06 |
+| 0              |    21 |    0.01 |
+| 1              |   116 |    0.07 |
+| 2              |   306 |    0.18 |
+| 3              |   421 |    0.25 |
+| 4              |   453 |    0.27 |
+| 5              |   236 |    0.14 |
+| 6              |   112 |    0.07 |
 
 Summary By Adequacy Score
 
