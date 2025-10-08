@@ -1,4 +1,31 @@
 
+# This function appends a column of performance metrics to a shared metrics data frame, 
+# enabling side-by-side comparison across models and data splits.
+
+# Inputs:
+#   
+#   cm_object: a confusion matrix object (from caret::confusionMatrix) containing overall and byClass metrics.
+#   model_name: name of the model (e.g., "rf", "lasso").
+#   data_split: identifier for the data split (e.g., "train", "test", "fold1").
+#   df_metrics: existing metrics data frame (optional).
+#   auc_val: optional AUC value to include.
+# 
+# Metric Selection:
+#   
+#   From overall: "Accuracy", "Kappa", "McnemarPValue".
+#   From byClass: "Sensitivity", "Specificity", "Pos Pred Value", "Neg Pred Value", "Balanced Accuracy".
+# 
+# Column Construction:
+#   
+#   Combines selected metrics and optional AUC.
+#   Rounds values to 4 decimal places.
+#   Names the column using model_name_data_split.
+# 
+# Output:
+#   
+#   If no prior metrics frame exists, returns a new one.
+#   If df_metrics is provided, merges the new column into it by "Metric".
+
 add_metrics_row <- function(cm_object, model_name, data_split, df_metrics = NULL, auc_val = NA) {
   
   # Extract metrics.

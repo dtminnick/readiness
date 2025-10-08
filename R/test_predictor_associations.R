@@ -1,4 +1,39 @@
 
+# This function computes pairwise association metrics between predictors, 
+# selecting Spearman correlation for ordinal pairs and Cramér’s V for 
+# nominal/mixed pairs. It optionally visualizes the results as a correlation-style matrix.
+
+# Inputs:
+#   
+#   data: the data frame containing predictors.
+#   vars: character vector of variable names to test.
+#   ordinal_vars: optional vector of variables treated as ordinal.
+#   visualize: logical flag to trigger matrix visualization (default = TRUE).
+# 
+# Pairwise Testing:
+#   
+#   Iterates over all unique variable pairs.
+# 
+#   For each pair:
+#     If both are in ordinal_vars, computes Spearman’s ρ.
+#     Otherwise, computes Cramér’s V via chi-squared test on contingency table.
+# 
+# Results Assembly:
+#   
+#   Stores each pair’s metric type and value in a named list.
+# 
+#   Converts to a tidy data frame with columns: Pair, Type, Value.
+# 
+# Optional Visualization:
+#   
+#   Constructs a symmetric matrix of association values.
+# 
+#   Uses corrplot() to render a color-coded matrix with missing values blanked.
+# 
+# Output:
+#   
+#   Returns the association data frame, optionally visualized.
+
 test_predictor_associations <- function(data, vars, ordinal_vars = NULL, visualize = TRUE) {
   
   library("psych")
