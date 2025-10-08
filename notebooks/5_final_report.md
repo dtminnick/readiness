@@ -1,6 +1,6 @@
 # Classifying Retirement Plan Financial Adequacy Using Form 5500 Data: Final Project Report
 
-Donnie Minnick Statistical Learning - Fall A 2025 October 07, 2025
+Donnie Minnick Statistical Learning - Fall A 2025 October 08, 2025
 
 # Executive Summary
 
@@ -101,12 +101,12 @@ sets for model training and evaluation.
 
 | Split      | Adequacy Indicator | Observations | Percent |
 |:-----------|-------------------:|-------------:|--------:|
-| Train      |                  0 |          621 |    0.53 |
-| Train      |                  1 |          545 |    0.47 |
-| Validation |                  0 |          133 |    0.53 |
-| Validation |                  1 |          117 |    0.47 |
-| Test       |                  0 |          133 |    0.53 |
-| Test       |                  1 |          116 |    0.47 |
+| Train      |                  0 |          605 |    0.52 |
+| Train      |                  1 |          561 |    0.48 |
+| Validation |                  0 |          130 |    0.52 |
+| Validation |                  1 |          120 |    0.48 |
+| Test       |                  0 |          129 |    0.52 |
+| Test       |                  1 |          120 |    0.48 |
 
 Sample Records by Data Split
 
@@ -131,15 +131,15 @@ showed signs of overfitting.
 
 | Metric | Logistic Train | RF Train | Logistic Validate | RF Validate | Logistic Test | RF Test |
 |:---|---:|---:|---:|---:|---:|---:|
-| Accuracy | 0.8945 | 0.9983 | 0.8480 | 0.8720 | 0.8916 | 0.8635 |
-| AUC | 0.9627 | 0.9999 | 0.9377 | 0.9405 | 0.9408 | 0.9420 |
-| Balanced Accuracy | 0.8940 | 0.9982 | 0.8463 | 0.8751 | 0.8880 | 0.8628 |
-| Kappa | 0.7881 | 0.9966 | 0.6941 | 0.7448 | 0.7808 | 0.7256 |
-| McnemarPValue | 1.0000 | 0.4795 | 0.6265 | 0.0216 | 0.0543 | 1.0000 |
-| Neg Pred Value | 0.8879 | 1.0000 | 0.8496 | 0.8244 | 0.9238 | 0.8534 |
-| Pos Pred Value | 0.9003 | 0.9968 | 0.8467 | 0.9244 | 0.8681 | 0.8722 |
-| Sensitivity | 0.9018 | 1.0000 | 0.8722 | 0.8271 | 0.9398 | 0.8722 |
-| Specificity | 0.8862 | 0.9963 | 0.8205 | 0.9231 | 0.8362 | 0.8534 |
+| Accuracy | 0.8937 | 0.9991 | 0.8720 | 0.8360 | 0.8715 | 0.8835 |
+| AUC | 0.9551 | 1.0000 | 0.9503 | 0.9470 | 0.9557 | 0.9580 |
+| Balanced Accuracy | 0.8934 | 0.9992 | 0.8734 | 0.8397 | 0.8713 | 0.8853 |
+| Kappa | 0.7870 | 0.9983 | 0.7444 | 0.6741 | 0.7426 | 0.7676 |
+| McnemarPValue | 0.9284 | 1.0000 | 0.1116 | 0.0002 | 1.0000 | 0.0259 |
+| Neg Pred Value | 0.8909 | 0.9982 | 0.8385 | 0.7724 | 0.8667 | 0.8421 |
+| Pos Pred Value | 0.8962 | 1.0000 | 0.9083 | 0.9238 | 0.8760 | 0.9310 |
+| Sensitivity | 0.8992 | 0.9983 | 0.8385 | 0.7462 | 0.8760 | 0.8372 |
+| Specificity | 0.8877 | 1.0000 | 0.9083 | 0.9333 | 0.8667 | 0.9333 |
 
 Model Metrics by Model and Data Split
 
@@ -172,13 +172,13 @@ signals embedded in the feature space.
 
 | Adequacy Score | Logistic FN | Logistic FP | RF FN | RF FP | Total |
 |:---------------|------------:|------------:|------:|------:|------:|
-| 0              |           0 |           0 |     0 |     0 |     3 |
-| 1              |           0 |           0 |     0 |     0 |    16 |
-| 2              |           0 |           0 |     0 |     2 |    53 |
-| 3              |           0 |           8 |     0 |    15 |    61 |
-| 4              |          18 |           0 |    16 |     0 |    69 |
-| 5              |           1 |           0 |     1 |     0 |    32 |
-| 6              |           0 |           0 |     0 |     0 |    15 |
+| 0              |           0 |           0 |     0 |     0 |     4 |
+| 1              |           0 |           0 |     0 |     0 |    27 |
+| 2              |           0 |           2 |     0 |     2 |    34 |
+| 3              |           0 |          14 |     0 |    19 |    64 |
+| 4              |          16 |           0 |     8 |     0 |    59 |
+| 5              |           0 |           0 |     0 |     0 |    40 |
+| 6              |           0 |           0 |     0 |     0 |    21 |
 
 Misclassifications on Test Set by Adequacy Score and Model
 
