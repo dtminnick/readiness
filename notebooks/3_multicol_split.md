@@ -145,30 +145,30 @@ kable(vif_summary,
 | SECTOR_TITLE_SHORTEducational …   | 1.62 |
 | SECTOR_TITLE_SHORTArts, entert…   | 1.61 |
 | SECTOR_TITLE_SHORTUtilities       | 1.53 |
-| ASSETS_PER_PARTCP_TIER_Q.L        | 1.51 |
-| TOTAL_ASSETS_GROWTH_TIER_Q.L      | 1.50 |
-| PLAN_VINTAGE_GROUP.L              | 1.42 |
+| TOTAL_ASSETS_GROWTH_TIER_Q.L      | 1.48 |
+| ASSETS_PER_PARTCP_TIER_Q.L        | 1.46 |
+| PLAN_VINTAGE_GROUP.L              | 1.40 |
 | SECTOR_TITLE_SHORTAgriculture,…   | 1.39 |
 | SECTOR_TITLE_SHORTMining, quar…   | 1.39 |
-| PARTCP_GROWTH_TIER_Q.L            | 1.32 |
-| CONTRIB_PARTCP_GROWTH_TIER_Q.L    | 1.31 |
-| CONTRIB_EMPLR_GROWTH_TIER_Q.L     | 1.31 |
-| CONTRIB_PARTCP_GROWTH_TIER_Q.Q    | 1.22 |
-| CONTRIB_EMPLR_GROWTH_TIER_Q.Q     | 1.22 |
-| LOAN_LEAKAGE_TIER_Q.L             | 1.18 |
-| TOTAL_ASSETS_GROWTH_TIER_Q.Q      | 1.12 |
+| CONTRIB_PARTCP_GROWTH_TIER_Q.L    | 1.33 |
+| CONTRIB_EMPLR_GROWTH_TIER_Q.L     | 1.32 |
+| PARTCP_GROWTH_TIER_Q.L            | 1.28 |
+| CONTRIB_PARTCP_GROWTH_TIER_Q.Q    | 1.23 |
+| CONTRIB_EMPLR_GROWTH_TIER_Q.Q     | 1.23 |
+| LOAN_LEAKAGE_TIER_Q.L             | 1.17 |
 | SECTOR_TITLE_SHORTPublic admin…   | 1.10 |
 | PARTCP_GROWTH_TIER_Q.Q            | 1.10 |
+| CONTRIB_PARTCP_GROWTH_TIER_Q.C    | 1.09 |
+| TOTAL_ASSETS_GROWTH_TIER_Q.Q      | 1.09 |
 | PLAN_VINTAGE_GROUP.Q              | 1.08 |
-| CONTRIB_PARTCP_GROWTH_TIER_Q.C    | 1.08 |
 | CONTRIB_EMPLR_GROWTH_TIER_Q.C     | 1.07 |
-| ASSETS_PER_PARTCP_TIER_Q.Q        | 1.06 |
-| PLAN_VINTAGE_GROUP.C              | 1.04 |
-| LOAN_LEAKAGE_TIER_Q.Q             | 1.04 |
-| PARTCP_GROWTH_TIER_Q.C            | 1.02 |
+| LOAN_LEAKAGE_TIER_Q.Q             | 1.05 |
+| ASSETS_PER_PARTCP_TIER_Q.Q        | 1.05 |
+| PLAN_VINTAGE_GROUP.C              | 1.03 |
 | TOTAL_ASSETS_GROWTH_TIER_Q.C      | 1.02 |
-| ASSETS_PER_PARTCP_TIER_Q.C        | 1.02 |
+| PARTCP_GROWTH_TIER_Q.C            | 1.01 |
 | LOAN_LEAKAGE_TIER_Q.C             | 1.01 |
+| ASSETS_PER_PARTCP_TIER_Q.C        | 1.01 |
 
 VIF Summary
 
@@ -260,48 +260,48 @@ kable(selected_predictors,
 
 | Estimate   | Term                              |
 |:-----------|:----------------------------------|
-| 2.8473097  | PARTCP_GROWTH_TIER_Q.L            |
-| 2.5753387  | CONTRIB_EMPLR_GROWTH_TIER_Q.L     |
-| 2.5072410  | CONTRIB_PARTCP_GROWTH_TIER_Q.L    |
-| -2.3873118 | SECTOR_TITLE_SHORTPublic admin…   |
-| -2.2256849 | LOAN_LEAKAGE_TIER_Q.L             |
-| 2.2223420  | ASSETS_PER_PARTCP_TIER_Q.L        |
-| -1.8283314 | SECTOR_TITLE_SHORTRetail trade    |
-| -1.7650363 | SECTOR_TITLE_SHORTManufacturing   |
-| -1.2333685 | SECTOR_TITLE_SHORTAccommodatio…   |
-| 1.1886939  | SECTOR_TITLE_SHORTArts, entert…   |
-| 1.1191843  | SECTOR_TITLE_SHORTProfessional…   |
-| 1.0177505  | SECTOR_TITLE_SHORTHealth care …   |
-| -0.8831268 | CONTRIB_PARTCP_GROWTH_TIER_Q.C    |
-| 0.8132645  | SECTOR_TITLE_SHORTFinance and …   |
-| 0.8054827  | SECTOR_TITLE_SHORTMining, quar…   |
-| -0.7590457 | CONTRIB_EMPLR_GROWTH_TIER_Q.C     |
-| -0.5462216 | SECTOR_TITLE_SHORTAdministrati…   |
-| 0.5423239  | TOTAL_ASSETS_GROWTH_TIER_Q.L      |
-| 0.5236344  | SECTOR_TITLE_SHORTEducational …   |
-| -0.5058915 | SECTOR_TITLE_SHORTAgriculture,…   |
-| -0.4972437 | SECTOR_TITLE_SHORTUtilities       |
-| -0.4958110 | SECTOR_TITLE_SHORTReal estate …   |
-| -0.4502857 | CONTRIB_EMPLR_GROWTH_TIER_Q.Q     |
-| -0.4271859 | SECTOR_TITLE_SHORTTransportati…   |
-| -0.3987251 | TOTAL_ASSETS_GROWTH_TIER_Q.Q      |
-| -0.3203553 | PARTCP_GROWTH_TIER_Q.Q            |
-| 0.3186558  | ASSETS_PER_PARTCP_TIER_Q.Q        |
-| 0.3147451  | SECTOR_TITLE_SHORTConstruction    |
-| -0.3089922 | PARTCP_GROWTH_TIER_Q.C            |
-| 0.2637669  | SECTOR_TITLE_SHORTManagement o…   |
-| 0.2366825  | PLAN_VINTAGE_GROUP.C              |
-| -0.1767173 | SECTOR_TITLE_SHORTWholesale trade |
-| -0.0954543 | CONTRIB_PARTCP_GROWTH_TIER_Q.Q    |
-| -0.0835303 | ASSETS_PER_PARTCP_TIER_Q.C        |
-| 0.0701247  | LOAN_LEAKAGE_TIER_Q.C             |
-| 0.0635725  | TOTAL_ASSETS_GROWTH_TIER_Q.C      |
-| -0.0632674 | (Intercept)                       |
-| -0.0183752 | LOAN_LEAKAGE_TIER_Q.Q             |
+| 2.8614552  | PARTCP_GROWTH_TIER_Q.L            |
+| 2.6771184  | CONTRIB_PARTCP_GROWTH_TIER_Q.L    |
+| 2.5079349  | CONTRIB_EMPLR_GROWTH_TIER_Q.L     |
+| -2.3985073 | LOAN_LEAKAGE_TIER_Q.L             |
+| 2.2827429  | ASSETS_PER_PARTCP_TIER_Q.L        |
+| -2.2592249 | SECTOR_TITLE_SHORTPublic admin…   |
+| -1.4018416 | SECTOR_TITLE_SHORTManufacturing   |
+| -1.3538567 | SECTOR_TITLE_SHORTAccommodatio…   |
+| 1.0586490  | SECTOR_TITLE_SHORTHealth care …   |
+| 1.0224775  | SECTOR_TITLE_SHORTProfessional…   |
+| 1.0084811  | SECTOR_TITLE_SHORTArts, entert…   |
+| -1.0004966 | SECTOR_TITLE_SHORTRetail trade    |
+| 0.9457871  | SECTOR_TITLE_SHORTEducational …   |
+| -0.9341741 | CONTRIB_EMPLR_GROWTH_TIER_Q.C     |
+| 0.8870891  | SECTOR_TITLE_SHORTMining, quar…   |
+| -0.8730260 | SECTOR_TITLE_SHORTTransportati…   |
+| 0.7754975  | TOTAL_ASSETS_GROWTH_TIER_Q.L      |
+| 0.7217047  | SECTOR_TITLE_SHORTConstruction    |
+| -0.5579932 | SECTOR_TITLE_SHORTAgriculture,…   |
+| 0.5359233  | SECTOR_TITLE_SHORTWholesale trade |
+| -0.5263909 | PARTCP_GROWTH_TIER_Q.C            |
+| -0.4981689 | CONTRIB_PARTCP_GROWTH_TIER_Q.C    |
+| 0.4560205  | SECTOR_TITLE_SHORTManagement o…   |
+| 0.4483328  | ASSETS_PER_PARTCP_TIER_Q.Q        |
+| -0.4118440 | CONTRIB_EMPLR_GROWTH_TIER_Q.Q     |
+| -0.4070555 | SECTOR_TITLE_SHORTUtilities       |
+| -0.4018628 | SECTOR_TITLE_SHORTAdministrati…   |
+| -0.3735922 | PLAN_VINTAGE_GROUP.Q              |
+| 0.3538258  | SECTOR_TITLE_SHORTOther servic…   |
+| -0.3189513 | TOTAL_ASSETS_GROWTH_TIER_Q.Q      |
+| -0.2585841 | (Intercept)                       |
+| -0.2460970 | ASSETS_PER_PARTCP_TIER_Q.C        |
+| 0.2122074  | LOAN_LEAKAGE_TIER_Q.C             |
+| -0.1968031 | PARTCP_GROWTH_TIER_Q.Q            |
+| 0.1773524  | PLAN_VINTAGE_GROUP.C              |
+| -0.0953494 | CONTRIB_PARTCP_GROWTH_TIER_Q.Q    |
+| -0.0285039 | TOTAL_ASSETS_GROWTH_TIER_Q.C      |
+| 0.0204957  | LOAN_LEAKAGE_TIER_Q.Q             |
 | 0.0000000  | (Intercept)                       |
 | 0.0000000  | PLAN_VINTAGE_GROUP.L              |
-| 0.0000000  | PLAN_VINTAGE_GROUP.Q              |
-| 0.0000000  | SECTOR_TITLE_SHORTOther servic…   |
+| 0.0000000  | SECTOR_TITLE_SHORTFinance and …   |
+| 0.0000000  | SECTOR_TITLE_SHORTReal estate …   |
 
 Selected Predictors
 
@@ -343,7 +343,7 @@ removed.
 setdiff(original_levels, levels(plans$SECTOR_TITLE_SHORT))
 ```
 
-    ## [1] "Information"     "Other servic..."
+    ## [1] "Information"     "Finance and ..." "Real estate ..."
 
 # Split Data
 
@@ -412,12 +412,12 @@ kable(check_split,
 
 | Dataset    | Adequacy Level | Count | Percent |
 |:-----------|---------------:|------:|--------:|
-| Train      |              0 |   605 |    0.52 |
-| Train      |              1 |   561 |    0.48 |
-| Validation |              0 |   130 |    0.52 |
-| Validation |              1 |   120 |    0.48 |
-| Test       |              0 |   129 |    0.52 |
-| Test       |              1 |   120 |    0.48 |
+| Train      |              0 |   615 |    0.53 |
+| Train      |              1 |   551 |    0.47 |
+| Validation |              0 |   132 |    0.53 |
+| Validation |              1 |   118 |    0.47 |
+| Test       |              0 |   131 |    0.53 |
+| Test       |              1 |   118 |    0.47 |
 
 Dataset Class Balance
 

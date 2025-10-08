@@ -19,8 +19,6 @@ This analysis leverages the following R packages: `dplyr` and `forcats` for data
 I use two customized R functions for variable associations and multicollinearity checks.
 
 ```{r echo = FALSE, message = FALSE}
-set.seed(91210)
-
 library("caret")
 library("dplyr")
 library("forcats")
@@ -32,6 +30,8 @@ library("randomForest")
 
 source("../R/check_multicollinearity_factors.R")
 source("../R/test_predictor_associations.R")
+
+set.seed(91210)
 ```
 
 # Load Data

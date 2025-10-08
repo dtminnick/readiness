@@ -3,9 +3,9 @@ title: "Classifying Retirement Plan Financial Adequacy Using Form 5500 Data"
 author: "Donnie Minnick, Statistical Learning - Fall A 2025"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output:
+  word_document: 
   md_document:
     variant: gfm
-  word_document: 
 subtitle: "Final Report"
 ---
 

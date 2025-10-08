@@ -28,6 +28,8 @@ source("../R/evaluate_model.R")
 # Initialize metrics data frame.
 
 df_all_metrics <- data.frame(Metric = character(), stringsAsFactors = FALSE)
+
+set.seed(91210)
 ```
 
 # Load Data
@@ -72,56 +74,55 @@ summary(model_logistic)
     ## 
     ## Coefficients:
     ##                                   Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)                       -1.59298    0.42847  -3.718 0.000201 ***
-    ## SECTOR_TITLE_SHORTAdministrati...  0.95061    0.58117   1.636 0.101904    
-    ## SECTOR_TITLE_SHORTAgriculture,...  0.37832    0.69926   0.541 0.588490    
-    ## SECTOR_TITLE_SHORTArts, entert...  3.11465    0.68719   4.532 5.83e-06 ***
-    ## SECTOR_TITLE_SHORTConstruction     1.89105    0.58374   3.240 0.001197 ** 
-    ## SECTOR_TITLE_SHORTEducational ...  2.22422    0.65173   3.413 0.000643 ***
-    ## SECTOR_TITLE_SHORTFinance and ...  2.69646    0.60885   4.429 9.48e-06 ***
-    ## SECTOR_TITLE_SHORTHealth care ...  2.97350    0.63297   4.698 2.63e-06 ***
-    ## SECTOR_TITLE_SHORTManagement o...  1.72307    0.65026   2.650 0.008053 ** 
-    ## SECTOR_TITLE_SHORTManufacturing   -0.61940    0.58059  -1.067 0.286039    
-    ## SECTOR_TITLE_SHORTMining, quar...  2.89027    0.81178   3.560 0.000370 ***
-    ## SECTOR_TITLE_SHORTProfessional...  2.94293    0.64528   4.561 5.10e-06 ***
-    ## SECTOR_TITLE_SHORTPublic admin... -2.85609    1.41995  -2.011 0.044282 *  
-    ## SECTOR_TITLE_SHORTReal estate ...  0.99179    0.61355   1.616 0.105990    
-    ## SECTOR_TITLE_SHORTRetail trade    -0.47418    0.63701  -0.744 0.456644    
-    ## SECTOR_TITLE_SHORTTransportati...  0.77386    0.64434   1.201 0.229745    
-    ## SECTOR_TITLE_SHORTUtilities        1.21189    0.71745   1.689 0.091185 .  
-    ## SECTOR_TITLE_SHORTWholesale trade  1.45000    0.56640   2.560 0.010466 *  
-    ## SECTOR_TITLE_SHORTOther            1.79512    0.52107   3.445 0.000571 ***
-    ## PLAN_VINTAGE_GROUP.L               0.03136    0.25987   0.121 0.903932    
-    ## PLAN_VINTAGE_GROUP.Q              -0.12294    0.22159  -0.555 0.579040    
-    ## PLAN_VINTAGE_GROUP.C               0.32206    0.21032   1.531 0.125693    
-    ## CONTRIB_EMPLR_GROWTH_TIER_Q.L      2.70276    0.26599  10.161  < 2e-16 ***
-    ## CONTRIB_EMPLR_GROWTH_TIER_Q.Q     -0.48871    0.23129  -2.113 0.034599 *  
-    ## CONTRIB_EMPLR_GROWTH_TIER_Q.C     -0.80002    0.20872  -3.833 0.000127 ***
-    ## CONTRIB_PARTCP_GROWTH_TIER_Q.L     2.84074    0.26379  10.769  < 2e-16 ***
-    ## CONTRIB_PARTCP_GROWTH_TIER_Q.Q    -0.26442    0.23028  -1.148 0.250849    
-    ## CONTRIB_PARTCP_GROWTH_TIER_Q.C    -1.09654    0.21187  -5.175 2.27e-07 ***
-    ## PARTCP_GROWTH_TIER_Q.L             3.00589    0.27850  10.793  < 2e-16 ***
-    ## PARTCP_GROWTH_TIER_Q.Q            -0.49217    0.22064  -2.231 0.025706 *  
-    ## PARTCP_GROWTH_TIER_Q.C            -0.39053    0.20275  -1.926 0.054089 .  
-    ## ASSETS_PER_PARTCP_TIER_Q.L         2.70214    0.30176   8.955  < 2e-16 ***
-    ## ASSETS_PER_PARTCP_TIER_Q.Q         0.28053    0.21268   1.319 0.187166    
-    ## ASSETS_PER_PARTCP_TIER_Q.C        -0.30299    0.21033  -1.441 0.149713    
-    ## TOTAL_ASSETS_GROWTH_TIER_Q.L       0.82551    0.27567   2.995 0.002748 ** 
-    ## TOTAL_ASSETS_GROWTH_TIER_Q.Q      -0.38148    0.22116  -1.725 0.084546 .  
-    ## TOTAL_ASSETS_GROWTH_TIER_Q.C       0.26008    0.20732   1.255 0.209658    
-    ## LOAN_LEAKAGE_TIER_Q.L             -2.30143    0.26095  -8.819  < 2e-16 ***
-    ## LOAN_LEAKAGE_TIER_Q.Q             -0.18117    0.21100  -0.859 0.390559    
-    ## LOAN_LEAKAGE_TIER_Q.C              0.09935    0.20199   0.492 0.622822    
+    ## (Intercept)                       -2.09697    0.43206  -4.853 1.21e-06 ***
+    ## SECTOR_TITLE_SHORTAdministrati...  1.03566    0.60595   1.709 0.087420 .  
+    ## SECTOR_TITLE_SHORTAgriculture,...  1.17457    0.70647   1.663 0.096396 .  
+    ## SECTOR_TITLE_SHORTArts, entert...  2.94812    0.66983   4.401 1.08e-05 ***
+    ## SECTOR_TITLE_SHORTConstruction     2.52494    0.60852   4.149 3.33e-05 ***
+    ## SECTOR_TITLE_SHORTEducational ...  3.10848    0.68920   4.510 6.47e-06 ***
+    ## SECTOR_TITLE_SHORTHealth care ...  3.29707    0.62217   5.299 1.16e-07 ***
+    ## SECTOR_TITLE_SHORTManagement o...  2.26678    0.60380   3.754 0.000174 ***
+    ## SECTOR_TITLE_SHORTManufacturing   -0.24268    0.60602  -0.400 0.688824    
+    ## SECTOR_TITLE_SHORTMining, quar...  3.45841    0.91475   3.781 0.000156 ***
+    ## SECTOR_TITLE_SHORTOther servic...  2.11945    0.59407   3.568 0.000360 ***
+    ## SECTOR_TITLE_SHORTProfessional...  3.22732    0.68293   4.726 2.29e-06 ***
+    ## SECTOR_TITLE_SHORTPublic admin... -0.11821    1.80463  -0.066 0.947775    
+    ## SECTOR_TITLE_SHORTRetail trade     0.54136    0.58759   0.921 0.356880    
+    ## SECTOR_TITLE_SHORTTransportati...  0.61147    0.62206   0.983 0.325620    
+    ## SECTOR_TITLE_SHORTUtilities        1.04674    0.70599   1.483 0.138163    
+    ## SECTOR_TITLE_SHORTWholesale trade  2.22483    0.57333   3.881 0.000104 ***
+    ## SECTOR_TITLE_SHORTOther            1.70860    0.49861   3.427 0.000611 ***
+    ## PLAN_VINTAGE_GROUP.L              -0.00365    0.26177  -0.014 0.988875    
+    ## PLAN_VINTAGE_GROUP.Q              -0.58325    0.22101  -2.639 0.008315 ** 
+    ## PLAN_VINTAGE_GROUP.C               0.15610    0.20539   0.760 0.447252    
+    ## CONTRIB_EMPLR_GROWTH_TIER_Q.L      2.75761    0.26880  10.259  < 2e-16 ***
+    ## CONTRIB_EMPLR_GROWTH_TIER_Q.Q     -0.69719    0.23700  -2.942 0.003265 ** 
+    ## CONTRIB_EMPLR_GROWTH_TIER_Q.C     -0.95049    0.20816  -4.566 4.97e-06 ***
+    ## CONTRIB_PARTCP_GROWTH_TIER_Q.L     3.13492    0.27873  11.247  < 2e-16 ***
+    ## CONTRIB_PARTCP_GROWTH_TIER_Q.Q    -0.08221    0.23352  -0.352 0.724800    
+    ## CONTRIB_PARTCP_GROWTH_TIER_Q.C    -0.69331    0.20727  -3.345 0.000823 ***
+    ## PARTCP_GROWTH_TIER_Q.L             3.28080    0.29260  11.212  < 2e-16 ***
+    ## PARTCP_GROWTH_TIER_Q.Q            -0.09096    0.22331  -0.407 0.683752    
+    ## PARTCP_GROWTH_TIER_Q.C            -0.46988    0.20104  -2.337 0.019428 *  
+    ## ASSETS_PER_PARTCP_TIER_Q.L         2.45711    0.30688   8.007 1.18e-15 ***
+    ## ASSETS_PER_PARTCP_TIER_Q.Q         0.45152    0.21601   2.090 0.036598 *  
+    ## ASSETS_PER_PARTCP_TIER_Q.C        -0.35165    0.20519  -1.714 0.086573 .  
+    ## TOTAL_ASSETS_GROWTH_TIER_Q.L       0.91516    0.27011   3.388 0.000704 ***
+    ## TOTAL_ASSETS_GROWTH_TIER_Q.Q      -0.54253    0.22291  -2.434 0.014939 *  
+    ## TOTAL_ASSETS_GROWTH_TIER_Q.C      -0.12794    0.20517  -0.624 0.532923    
+    ## LOAN_LEAKAGE_TIER_Q.L             -2.93330    0.28783 -10.191  < 2e-16 ***
+    ## LOAN_LEAKAGE_TIER_Q.Q              0.37609    0.21695   1.734 0.083003 .  
+    ## LOAN_LEAKAGE_TIER_Q.C              0.42741    0.20811   2.054 0.039997 *  
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ## (Dispersion parameter for binomial family taken to be 1)
     ## 
-    ##     Null deviance: 1614.76  on 1165  degrees of freedom
-    ## Residual deviance:  628.28  on 1126  degrees of freedom
-    ## AIC: 708.28
+    ##     Null deviance: 1612.90  on 1165  degrees of freedom
+    ## Residual deviance:  609.59  on 1127  degrees of freedom
+    ## AIC: 687.59
     ## 
-    ## Number of Fisher Scoring iterations: 6
+    ## Number of Fisher Scoring iterations: 7
 
 This model was selected for predictive performance rather than
 inferential testing. While some coefficients exhibit high p-values,
@@ -215,15 +216,15 @@ kable(train_results_logistic$metrics_df,
 
 | Metric            | Logistic_Train |
 |:------------------|:---------------|
-| Accuracy          | 0.8937         |
-| AUC               | 0.9551         |
-| Balanced Accuracy | 0.8934         |
-| Kappa             | 0.7870         |
-| McnemarPValue     | 0.9284         |
-| Neg Pred Value    | 0.8909         |
-| Pos Pred Value    | 0.8962         |
-| Sensitivity       | 0.8992         |
-| Specificity       | 0.8877         |
+| Accuracy          | 0.8894         |
+| AUC               | 0.9582         |
+| Balanced Accuracy | 0.8885         |
+| Kappa             | 0.7778         |
+| McnemarPValue     | 0.3786         |
+| Neg Pred Value    | 0.8907         |
+| Pos Pred Value    | 0.8882         |
+| Sensitivity       | 0.9041         |
+| Specificity       | 0.8730         |
 
 Metrics Table
 
@@ -288,11 +289,11 @@ print(model_rf)
     ##                      Number of trees: 500
     ## No. of variables tried at each split: 3
     ## 
-    ##         OOB estimate of  error rate: 13.55%
+    ##         OOB estimate of  error rate: 13.98%
     ## Confusion matrix:
     ##     0   1 class.error
-    ## 0 507  98   0.1619835
-    ## 1  60 501   0.1069519
+    ## 0 512 103   0.1674797
+    ## 1  60 491   0.1088929
 
 This random forest model achieves ~88% accuracy with balanced error
 rates across adequacy classes. The OOB estimate supports generalization,
@@ -322,15 +323,15 @@ kable(train_results_rf$metrics_df,
 
 | Metric            | Logistic_Train | RF_Train |
 |:------------------|:---------------|:---------|
-| Accuracy          | 0.8937         | 0.9991   |
-| AUC               | 0.9551         | 1.0000   |
-| Balanced Accuracy | 0.8934         | 0.9992   |
-| Kappa             | 0.7870         | 0.9983   |
-| McnemarPValue     | 0.9284         | 1.0000   |
-| Neg Pred Value    | 0.8909         | 0.9982   |
-| Pos Pred Value    | 0.8962         | 1.0000   |
-| Sensitivity       | 0.8992         | 0.9983   |
-| Specificity       | 0.8877         | 1.0000   |
+| Accuracy          | 0.8894         | 0.9974   |
+| AUC               | 0.9582         | 1.0000   |
+| Balanced Accuracy | 0.8885         | 0.9974   |
+| Kappa             | 0.7778         | 0.9948   |
+| McnemarPValue     | 0.3786         | 1.0000   |
+| Neg Pred Value    | 0.8907         | 0.9982   |
+| Pos Pred Value    | 0.8882         | 0.9968   |
+| Sensitivity       | 0.9041         | 0.9984   |
+| Specificity       | 0.8730         | 0.9964   |
 
 Metrics Table
 
@@ -394,15 +395,15 @@ kable(validate_results_logistic$metrics_df,
 
 | Metric            | Logistic_Train | RF_Train | Logistic_Validate |
 |:------------------|:---------------|:---------|:------------------|
-| Accuracy          | 0.8937         | 0.9991   | 0.8720            |
-| AUC               | 0.9551         | 1.0000   | 0.9503            |
-| Balanced Accuracy | 0.8934         | 0.9992   | 0.8734            |
-| Kappa             | 0.7870         | 0.9983   | 0.7444            |
-| McnemarPValue     | 0.9284         | 1.0000   | 0.1116            |
-| Neg Pred Value    | 0.8909         | 0.9982   | 0.8385            |
-| Pos Pred Value    | 0.8962         | 1.0000   | 0.9083            |
-| Sensitivity       | 0.8992         | 0.9983   | 0.8385            |
-| Specificity       | 0.8877         | 1.0000   | 0.9083            |
+| Accuracy          | 0.8894         | 0.9974   | 0.8880            |
+| AUC               | 0.9582         | 1.0000   | 0.9570            |
+| Balanced Accuracy | 0.8885         | 0.9974   | 0.8863            |
+| Kappa             | 0.7778         | 0.9948   | 0.7747            |
+| McnemarPValue     | 0.3786         | 1.0000   | 0.3447            |
+| Neg Pred Value    | 0.8907         | 0.9982   | 0.9018            |
+| Pos Pred Value    | 0.8882         | 0.9968   | 0.8768            |
+| Sensitivity       | 0.9041         | 0.9984   | 0.9167            |
+| Specificity       | 0.8730         | 0.9964   | 0.8559            |
 
 Metrics Table
 
@@ -458,15 +459,15 @@ kable(validate_results_rf$metrics_df,
 
 | Metric            | Logistic_Train | RF_Train | Logistic_Validate | RF_Validate |
 |:------------------|:---------------|:---------|:------------------|:------------|
-| Accuracy          | 0.8937         | 0.9991   | 0.8720            | 0.8360      |
-| AUC               | 0.9551         | 1.0000   | 0.9503            | 0.9470      |
-| Balanced Accuracy | 0.8934         | 0.9992   | 0.8734            | 0.8397      |
-| Kappa             | 0.7870         | 0.9983   | 0.7444            | 0.6741      |
-| McnemarPValue     | 0.9284         | 1.0000   | 0.1116            | 0.0002      |
-| Neg Pred Value    | 0.8909         | 0.9982   | 0.8385            | 0.7724      |
-| Pos Pred Value    | 0.8962         | 1.0000   | 0.9083            | 0.9238      |
-| Sensitivity       | 0.8992         | 0.9983   | 0.8385            | 0.7462      |
-| Specificity       | 0.8877         | 1.0000   | 0.9083            | 0.9333      |
+| Accuracy          | 0.8894         | 0.9974   | 0.8880            | 0.8640      |
+| AUC               | 0.9582         | 1.0000   | 0.9570            | 0.9492      |
+| Balanced Accuracy | 0.8885         | 0.9974   | 0.8863            | 0.8649      |
+| Kappa             | 0.7778         | 0.9948   | 0.7747            | 0.7279      |
+| McnemarPValue     | 0.3786         | 1.0000   | 0.3447            | 0.3912      |
+| Neg Pred Value    | 0.8907         | 0.9982   | 0.9018            | 0.8387      |
+| Pos Pred Value    | 0.8882         | 0.9968   | 0.8768            | 0.8889      |
+| Sensitivity       | 0.9041         | 0.9984   | 0.9167            | 0.8485      |
+| Specificity       | 0.8730         | 0.9964   | 0.8559            | 0.8814      |
 
 Metrics Table
 
@@ -527,15 +528,15 @@ kable(test_results_logistic$metrics_df,
 
 | Metric | Logistic_Train | RF_Train | Logistic_Validate | RF_Validate | Logistic_Test |
 |:---|:---|:---|:---|:---|:---|
-| Accuracy | 0.8937 | 0.9991 | 0.8720 | 0.8360 | 0.8715 |
-| AUC | 0.9551 | 1.0000 | 0.9503 | 0.9470 | 0.9557 |
-| Balanced Accuracy | 0.8934 | 0.9992 | 0.8734 | 0.8397 | 0.8713 |
-| Kappa | 0.7870 | 0.9983 | 0.7444 | 0.6741 | 0.7426 |
-| McnemarPValue | 0.9284 | 1.0000 | 0.1116 | 0.0002 | 1.0000 |
-| Neg Pred Value | 0.8909 | 0.9982 | 0.8385 | 0.7724 | 0.8667 |
-| Pos Pred Value | 0.8962 | 1.0000 | 0.9083 | 0.9238 | 0.8760 |
-| Sensitivity | 0.8992 | 0.9983 | 0.8385 | 0.7462 | 0.8760 |
-| Specificity | 0.8877 | 1.0000 | 0.9083 | 0.9333 | 0.8667 |
+| Accuracy | 0.8894 | 0.9974 | 0.8880 | 0.8640 | 0.8876 |
+| AUC | 0.9582 | 1.0000 | 0.9570 | 0.9492 | 0.9616 |
+| Balanced Accuracy | 0.8885 | 0.9974 | 0.8863 | 0.8649 | 0.8872 |
+| Kappa | 0.7778 | 0.9948 | 0.7747 | 0.7279 | 0.7745 |
+| McnemarPValue | 0.3786 | 1.0000 | 0.3447 | 0.3912 | 1.0000 |
+| Neg Pred Value | 0.8907 | 0.9982 | 0.9018 | 0.8387 | 0.8814 |
+| Pos Pred Value | 0.8882 | 0.9968 | 0.8768 | 0.8889 | 0.8931 |
+| Sensitivity | 0.9041 | 0.9984 | 0.9167 | 0.8485 | 0.8931 |
+| Specificity | 0.8730 | 0.9964 | 0.8559 | 0.8814 | 0.8814 |
 
 Metrics Table
 
@@ -595,15 +596,15 @@ kable(test_results_rf$metrics_df,
 
 | Metric | Logistic_Train | RF_Train | Logistic_Validate | RF_Validate | Logistic_Test | RF_Test |
 |:---|:---|:---|:---|:---|:---|:---|
-| Accuracy | 0.8937 | 0.9991 | 0.8720 | 0.8360 | 0.8715 | 0.8835 |
-| AUC | 0.9551 | 1.0000 | 0.9503 | 0.9470 | 0.9557 | 0.9580 |
-| Balanced Accuracy | 0.8934 | 0.9992 | 0.8734 | 0.8397 | 0.8713 | 0.8853 |
-| Kappa | 0.7870 | 0.9983 | 0.7444 | 0.6741 | 0.7426 | 0.7676 |
-| McnemarPValue | 0.9284 | 1.0000 | 0.1116 | 0.0002 | 1.0000 | 0.0259 |
-| Neg Pred Value | 0.8909 | 0.9982 | 0.8385 | 0.7724 | 0.8667 | 0.8421 |
-| Pos Pred Value | 0.8962 | 1.0000 | 0.9083 | 0.9238 | 0.8760 | 0.9310 |
-| Sensitivity | 0.8992 | 0.9983 | 0.8385 | 0.7462 | 0.8760 | 0.8372 |
-| Specificity | 0.8877 | 1.0000 | 0.9083 | 0.9333 | 0.8667 | 0.9333 |
+| Accuracy | 0.8894 | 0.9974 | 0.8880 | 0.8640 | 0.8876 | 0.9116 |
+| AUC | 0.9582 | 1.0000 | 0.9570 | 0.9492 | 0.9616 | 0.9609 |
+| Balanced Accuracy | 0.8885 | 0.9974 | 0.8863 | 0.8649 | 0.8872 | 0.9118 |
+| Kappa | 0.7778 | 0.9948 | 0.7747 | 0.7279 | 0.7745 | 0.8230 |
+| McnemarPValue | 0.3786 | 1.0000 | 0.3447 | 0.3912 | 1.0000 | 0.8312 |
+| Neg Pred Value | 0.8907 | 0.9982 | 0.9018 | 0.8387 | 0.8814 | 0.9000 |
+| Pos Pred Value | 0.8882 | 0.9968 | 0.8768 | 0.8889 | 0.8931 | 0.9225 |
+| Sensitivity | 0.9041 | 0.9984 | 0.9167 | 0.8485 | 0.8931 | 0.9084 |
+| Specificity | 0.8730 | 0.9964 | 0.8559 | 0.8814 | 0.8814 | 0.9153 |
 
 Metrics Table
 
@@ -722,12 +723,12 @@ kable(class_check_summary,
 
 | Adequacy Score | Logistic_FN | Logistic_FP | RF_FN | RF_FP | Total |
 |:---------------|------------:|------------:|------:|------:|------:|
-| 0              |           0 |           0 |     0 |     0 |     4 |
-| 1              |           0 |           0 |     0 |     0 |    27 |
-| 2              |           0 |           2 |     0 |     2 |    34 |
-| 3              |           0 |          14 |     0 |    19 |    64 |
-| 4              |          16 |           0 |     8 |     0 |    59 |
-| 5              |           0 |           0 |     0 |     0 |    40 |
+| 0              |           0 |           0 |     0 |     0 |     7 |
+| 1              |           0 |           0 |     0 |     1 |    16 |
+| 2              |           0 |           1 |     0 |     0 |    48 |
+| 3              |           0 |          13 |     0 |    11 |    60 |
+| 4              |          12 |           0 |     7 |     0 |    64 |
+| 5              |           2 |           0 |     3 |     0 |    33 |
 | 6              |           0 |           0 |     0 |     0 |    21 |
 
 Misclassifications by Model

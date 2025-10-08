@@ -24,6 +24,8 @@ library("knitr")
 library("lubridate")
 library("stringr")
 library("tidyr")
+
+set.seed(91210)
 ```
 
 # Load Data

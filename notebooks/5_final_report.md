@@ -101,12 +101,12 @@ sets for model training and evaluation.
 
 | Split      | Adequacy Indicator | Observations | Percent |
 |:-----------|-------------------:|-------------:|--------:|
-| Train      |                  0 |          605 |    0.52 |
-| Train      |                  1 |          561 |    0.48 |
-| Validation |                  0 |          130 |    0.52 |
-| Validation |                  1 |          120 |    0.48 |
-| Test       |                  0 |          129 |    0.52 |
-| Test       |                  1 |          120 |    0.48 |
+| Train      |                  0 |          615 |    0.53 |
+| Train      |                  1 |          551 |    0.47 |
+| Validation |                  0 |          132 |    0.53 |
+| Validation |                  1 |          118 |    0.47 |
+| Test       |                  0 |          131 |    0.53 |
+| Test       |                  1 |          118 |    0.47 |
 
 Sample Records by Data Split
 
@@ -131,15 +131,15 @@ showed signs of overfitting.
 
 | Metric | Logistic Train | RF Train | Logistic Validate | RF Validate | Logistic Test | RF Test |
 |:---|---:|---:|---:|---:|---:|---:|
-| Accuracy | 0.8937 | 0.9991 | 0.8720 | 0.8360 | 0.8715 | 0.8835 |
-| AUC | 0.9551 | 1.0000 | 0.9503 | 0.9470 | 0.9557 | 0.9580 |
-| Balanced Accuracy | 0.8934 | 0.9992 | 0.8734 | 0.8397 | 0.8713 | 0.8853 |
-| Kappa | 0.7870 | 0.9983 | 0.7444 | 0.6741 | 0.7426 | 0.7676 |
-| McnemarPValue | 0.9284 | 1.0000 | 0.1116 | 0.0002 | 1.0000 | 0.0259 |
-| Neg Pred Value | 0.8909 | 0.9982 | 0.8385 | 0.7724 | 0.8667 | 0.8421 |
-| Pos Pred Value | 0.8962 | 1.0000 | 0.9083 | 0.9238 | 0.8760 | 0.9310 |
-| Sensitivity | 0.8992 | 0.9983 | 0.8385 | 0.7462 | 0.8760 | 0.8372 |
-| Specificity | 0.8877 | 1.0000 | 0.9083 | 0.9333 | 0.8667 | 0.9333 |
+| Accuracy | 0.8894 | 0.9974 | 0.8880 | 0.8640 | 0.8876 | 0.9116 |
+| AUC | 0.9582 | 1.0000 | 0.9570 | 0.9492 | 0.9616 | 0.9609 |
+| Balanced Accuracy | 0.8885 | 0.9974 | 0.8863 | 0.8649 | 0.8872 | 0.9118 |
+| Kappa | 0.7778 | 0.9948 | 0.7747 | 0.7279 | 0.7745 | 0.8230 |
+| McnemarPValue | 0.3786 | 1.0000 | 0.3447 | 0.3912 | 1.0000 | 0.8312 |
+| Neg Pred Value | 0.8907 | 0.9982 | 0.9018 | 0.8387 | 0.8814 | 0.9000 |
+| Pos Pred Value | 0.8882 | 0.9968 | 0.8768 | 0.8889 | 0.8931 | 0.9225 |
+| Sensitivity | 0.9041 | 0.9984 | 0.9167 | 0.8485 | 0.8931 | 0.9084 |
+| Specificity | 0.8730 | 0.9964 | 0.8559 | 0.8814 | 0.8814 | 0.9153 |
 
 Model Metrics by Model and Data Split
 
@@ -172,12 +172,12 @@ signals embedded in the feature space.
 
 | Adequacy Score | Logistic FN | Logistic FP | RF FN | RF FP | Total |
 |:---------------|------------:|------------:|------:|------:|------:|
-| 0              |           0 |           0 |     0 |     0 |     4 |
-| 1              |           0 |           0 |     0 |     0 |    27 |
-| 2              |           0 |           2 |     0 |     2 |    34 |
-| 3              |           0 |          14 |     0 |    19 |    64 |
-| 4              |          16 |           0 |     8 |     0 |    59 |
-| 5              |           0 |           0 |     0 |     0 |    40 |
+| 0              |           0 |           0 |     0 |     0 |     7 |
+| 1              |           0 |           0 |     0 |     1 |    16 |
+| 2              |           0 |           1 |     0 |     0 |    48 |
+| 3              |           0 |          13 |     0 |    11 |    60 |
+| 4              |          12 |           0 |     7 |     0 |    64 |
+| 5              |           2 |           0 |     3 |     0 |    33 |
 | 6              |           0 |           0 |     0 |     0 |    21 |
 
 Misclassifications on Test Set by Adequacy Score and Model

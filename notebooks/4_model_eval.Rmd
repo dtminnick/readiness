@@ -34,6 +34,8 @@ source("../R/evaluate_model.R")
 # Initialize metrics data frame.
 
 df_all_metrics <- data.frame(Metric = character(), stringsAsFactors = FALSE)
+
+set.seed(91210)
 ```
 
 # Load Data
