@@ -71,57 +71,57 @@ summary(model_logistic)
     ##     LOAN_LEAKAGE_TIER_Q, family = "binomial", data = plans_train)
     ## 
     ## Coefficients:
-    ##                                    Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept)                       -2.002805   0.486874  -4.114 3.90e-05 ***
-    ## SECTOR_TITLE_SHORTAdministrati... -0.031153   0.655053  -0.048 0.962068    
-    ## SECTOR_TITLE_SHORTAgriculture,...  0.907670   0.776545   1.169 0.242461    
-    ## SECTOR_TITLE_SHORTArts, entert...  3.044731   0.765507   3.977 6.97e-05 ***
-    ## SECTOR_TITLE_SHORTConstruction     2.126887   0.645851   3.293 0.000991 ***
-    ## SECTOR_TITLE_SHORTEducational ...  2.991934   0.714487   4.188 2.82e-05 ***
-    ## SECTOR_TITLE_SHORTFinance and ...  2.423290   0.629734   3.848 0.000119 ***
-    ## SECTOR_TITLE_SHORTHealth care ...  1.868379   0.640077   2.919 0.003512 ** 
-    ## SECTOR_TITLE_SHORTManagement o...  2.212885   0.680620   3.251 0.001149 ** 
-    ## SECTOR_TITLE_SHORTManufacturing    1.138847   0.671182   1.697 0.089738 .  
-    ## SECTOR_TITLE_SHORTMining, quar...  3.149309   0.800851   3.932 8.41e-05 ***
-    ## SECTOR_TITLE_SHORTProfessional...  2.309664   0.683568   3.379 0.000728 ***
-    ## SECTOR_TITLE_SHORTPublic admin... -2.964738   1.531855  -1.935 0.052942 .  
-    ## SECTOR_TITLE_SHORTReal estate ...  1.342119   0.632114   2.123 0.033735 *  
-    ## SECTOR_TITLE_SHORTRetail trade    -0.439978   0.659529  -0.667 0.504702    
-    ## SECTOR_TITLE_SHORTTransportati...  0.804372   0.683600   1.177 0.239327    
-    ## SECTOR_TITLE_SHORTUtilities        0.893870   0.729975   1.225 0.220756    
-    ## SECTOR_TITLE_SHORTWholesale trade  1.073234   0.665310   1.613 0.106716    
-    ## SECTOR_TITLE_SHORTOther            2.029163   0.580259   3.497 0.000471 ***
-    ## PLAN_VINTAGE_GROUP.L               0.109544   0.262890   0.417 0.676905    
-    ## PLAN_VINTAGE_GROUP.Q              -0.311734   0.230024  -1.355 0.175346    
-    ## PLAN_VINTAGE_GROUP.C               0.553789   0.222534   2.489 0.012826 *  
-    ## CONTRIB_EMPLR_GROWTH_TIER_Q.L      3.221348   0.297013  10.846  < 2e-16 ***
-    ## CONTRIB_EMPLR_GROWTH_TIER_Q.Q      0.005893   0.241159   0.024 0.980503    
-    ## CONTRIB_EMPLR_GROWTH_TIER_Q.C     -1.181678   0.223686  -5.283 1.27e-07 ***
-    ## CONTRIB_PARTCP_GROWTH_TIER_Q.L     2.888794   0.270996  10.660  < 2e-16 ***
-    ## CONTRIB_PARTCP_GROWTH_TIER_Q.Q    -0.427898   0.238786  -1.792 0.073137 .  
-    ## CONTRIB_PARTCP_GROWTH_TIER_Q.C    -1.230642   0.223441  -5.508 3.64e-08 ***
-    ## PARTCP_GROWTH_TIER_Q.L             3.457127   0.295055  11.717  < 2e-16 ***
-    ## PARTCP_GROWTH_TIER_Q.Q            -0.203798   0.222023  -0.918 0.358664    
-    ## PARTCP_GROWTH_TIER_Q.C            -0.888386   0.222920  -3.985 6.74e-05 ***
-    ## ASSETS_PER_PARTCP_TIER_Q.L         2.619856   0.303980   8.619  < 2e-16 ***
-    ## ASSETS_PER_PARTCP_TIER_Q.Q         0.267971   0.225898   1.186 0.235525    
-    ## ASSETS_PER_PARTCP_TIER_Q.C        -0.800783   0.227953  -3.513 0.000443 ***
-    ## TOTAL_ASSETS_GROWTH_TIER_Q.L       0.718330   0.272828   2.633 0.008466 ** 
-    ## TOTAL_ASSETS_GROWTH_TIER_Q.Q      -0.803069   0.231553  -3.468 0.000524 ***
-    ## TOTAL_ASSETS_GROWTH_TIER_Q.C       0.516212   0.218032   2.368 0.017904 *  
-    ## LOAN_LEAKAGE_TIER_Q.L             -2.755397   0.278801  -9.883  < 2e-16 ***
-    ## LOAN_LEAKAGE_TIER_Q.Q              0.135733   0.222987   0.609 0.542719    
-    ## LOAN_LEAKAGE_TIER_Q.C              0.475993   0.218186   2.182 0.029140 *  
+    ##                                   Estimate Std. Error z value Pr(>|z|)    
+    ## (Intercept)                       -1.59298    0.42847  -3.718 0.000201 ***
+    ## SECTOR_TITLE_SHORTAdministrati...  0.95061    0.58117   1.636 0.101904    
+    ## SECTOR_TITLE_SHORTAgriculture,...  0.37832    0.69926   0.541 0.588490    
+    ## SECTOR_TITLE_SHORTArts, entert...  3.11465    0.68719   4.532 5.83e-06 ***
+    ## SECTOR_TITLE_SHORTConstruction     1.89105    0.58374   3.240 0.001197 ** 
+    ## SECTOR_TITLE_SHORTEducational ...  2.22422    0.65173   3.413 0.000643 ***
+    ## SECTOR_TITLE_SHORTFinance and ...  2.69646    0.60885   4.429 9.48e-06 ***
+    ## SECTOR_TITLE_SHORTHealth care ...  2.97350    0.63297   4.698 2.63e-06 ***
+    ## SECTOR_TITLE_SHORTManagement o...  1.72307    0.65026   2.650 0.008053 ** 
+    ## SECTOR_TITLE_SHORTManufacturing   -0.61940    0.58059  -1.067 0.286039    
+    ## SECTOR_TITLE_SHORTMining, quar...  2.89027    0.81178   3.560 0.000370 ***
+    ## SECTOR_TITLE_SHORTProfessional...  2.94293    0.64528   4.561 5.10e-06 ***
+    ## SECTOR_TITLE_SHORTPublic admin... -2.85609    1.41995  -2.011 0.044282 *  
+    ## SECTOR_TITLE_SHORTReal estate ...  0.99179    0.61355   1.616 0.105990    
+    ## SECTOR_TITLE_SHORTRetail trade    -0.47418    0.63701  -0.744 0.456644    
+    ## SECTOR_TITLE_SHORTTransportati...  0.77386    0.64434   1.201 0.229745    
+    ## SECTOR_TITLE_SHORTUtilities        1.21189    0.71745   1.689 0.091185 .  
+    ## SECTOR_TITLE_SHORTWholesale trade  1.45000    0.56640   2.560 0.010466 *  
+    ## SECTOR_TITLE_SHORTOther            1.79512    0.52107   3.445 0.000571 ***
+    ## PLAN_VINTAGE_GROUP.L               0.03136    0.25987   0.121 0.903932    
+    ## PLAN_VINTAGE_GROUP.Q              -0.12294    0.22159  -0.555 0.579040    
+    ## PLAN_VINTAGE_GROUP.C               0.32206    0.21032   1.531 0.125693    
+    ## CONTRIB_EMPLR_GROWTH_TIER_Q.L      2.70276    0.26599  10.161  < 2e-16 ***
+    ## CONTRIB_EMPLR_GROWTH_TIER_Q.Q     -0.48871    0.23129  -2.113 0.034599 *  
+    ## CONTRIB_EMPLR_GROWTH_TIER_Q.C     -0.80002    0.20872  -3.833 0.000127 ***
+    ## CONTRIB_PARTCP_GROWTH_TIER_Q.L     2.84074    0.26379  10.769  < 2e-16 ***
+    ## CONTRIB_PARTCP_GROWTH_TIER_Q.Q    -0.26442    0.23028  -1.148 0.250849    
+    ## CONTRIB_PARTCP_GROWTH_TIER_Q.C    -1.09654    0.21187  -5.175 2.27e-07 ***
+    ## PARTCP_GROWTH_TIER_Q.L             3.00589    0.27850  10.793  < 2e-16 ***
+    ## PARTCP_GROWTH_TIER_Q.Q            -0.49217    0.22064  -2.231 0.025706 *  
+    ## PARTCP_GROWTH_TIER_Q.C            -0.39053    0.20275  -1.926 0.054089 .  
+    ## ASSETS_PER_PARTCP_TIER_Q.L         2.70214    0.30176   8.955  < 2e-16 ***
+    ## ASSETS_PER_PARTCP_TIER_Q.Q         0.28053    0.21268   1.319 0.187166    
+    ## ASSETS_PER_PARTCP_TIER_Q.C        -0.30299    0.21033  -1.441 0.149713    
+    ## TOTAL_ASSETS_GROWTH_TIER_Q.L       0.82551    0.27567   2.995 0.002748 ** 
+    ## TOTAL_ASSETS_GROWTH_TIER_Q.Q      -0.38148    0.22116  -1.725 0.084546 .  
+    ## TOTAL_ASSETS_GROWTH_TIER_Q.C       0.26008    0.20732   1.255 0.209658    
+    ## LOAN_LEAKAGE_TIER_Q.L             -2.30143    0.26095  -8.819  < 2e-16 ***
+    ## LOAN_LEAKAGE_TIER_Q.Q             -0.18117    0.21100  -0.859 0.390559    
+    ## LOAN_LEAKAGE_TIER_Q.C              0.09935    0.20199   0.492 0.622822    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ## (Dispersion parameter for binomial family taken to be 1)
     ## 
-    ##     Null deviance: 1611.5  on 1165  degrees of freedom
-    ## Residual deviance:  575.0  on 1126  degrees of freedom
-    ## AIC: 655
+    ##     Null deviance: 1614.76  on 1165  degrees of freedom
+    ## Residual deviance:  628.28  on 1126  degrees of freedom
+    ## AIC: 708.28
     ## 
-    ## Number of Fisher Scoring iterations: 7
+    ## Number of Fisher Scoring iterations: 6
 
 This model was selected for predictive performance rather than
 inferential testing. While some coefficients exhibit high p-values,
@@ -209,19 +209,23 @@ df_all_metrics <- train_results_logistic$metrics_df
 Show results of the confusion matrix.
 
 ``` r
-train_results_logistic$metrics_df
+kable(train_results_logistic$metrics_df,
+      caption = "Metrics Table", align = "l")
 ```
 
-    ##              Metric Logistic_Train
-    ## 1          Accuracy         0.8945
-    ## 2               AUC         0.9627
-    ## 3 Balanced Accuracy         0.8940
-    ## 4             Kappa         0.7881
-    ## 5     McnemarPValue         1.0000
-    ## 6    Neg Pred Value         0.8879
-    ## 7    Pos Pred Value         0.9003
-    ## 8       Sensitivity         0.9018
-    ## 9       Specificity         0.8862
+| Metric            | Logistic_Train |
+|:------------------|:---------------|
+| Accuracy          | 0.8937         |
+| AUC               | 0.9551         |
+| Balanced Accuracy | 0.8934         |
+| Kappa             | 0.7870         |
+| McnemarPValue     | 0.9284         |
+| Neg Pred Value    | 0.8909         |
+| Pos Pred Value    | 0.8962         |
+| Sensitivity       | 0.8992         |
+| Specificity       | 0.8877         |
+
+Metrics Table
 
 The confusion matrix reveals strong model performance, with high
 accuracy, balanced sensitivity and specificity, and substantial
@@ -284,11 +288,11 @@ print(model_rf)
     ##                      Number of trees: 500
     ## No. of variables tried at each split: 3
     ## 
-    ##         OOB estimate of  error rate: 11.66%
+    ##         OOB estimate of  error rate: 13.55%
     ## Confusion matrix:
     ##     0   1 class.error
-    ## 0 529  92  0.14814815
-    ## 1  44 501  0.08073394
+    ## 0 507  98   0.1619835
+    ## 1  60 501   0.1069519
 
 This random forest model achieves ~88% accuracy with balanced error
 rates across adequacy classes. The OOB estimate supports generalization,
@@ -312,19 +316,23 @@ df_all_metrics <- train_results_rf$metrics_df
 Show results of the confusion matrix.
 
 ``` r
-train_results_rf$metrics_df
+kable(train_results_rf$metrics_df,
+            caption = "Metrics Table", align = "l")
 ```
 
-    ##              Metric Logistic_Train RF_Train
-    ## 1          Accuracy         0.8945   0.9983
-    ## 2               AUC         0.9627   0.9999
-    ## 3 Balanced Accuracy         0.8940   0.9982
-    ## 4             Kappa         0.7881   0.9966
-    ## 5     McnemarPValue         1.0000   0.4795
-    ## 6    Neg Pred Value         0.8879   1.0000
-    ## 7    Pos Pred Value         0.9003   0.9968
-    ## 8       Sensitivity         0.9018   1.0000
-    ## 9       Specificity         0.8862   0.9963
+| Metric            | Logistic_Train | RF_Train |
+|:------------------|:---------------|:---------|
+| Accuracy          | 0.8937         | 0.9991   |
+| AUC               | 0.9551         | 1.0000   |
+| Balanced Accuracy | 0.8934         | 0.9992   |
+| Kappa             | 0.7870         | 0.9983   |
+| McnemarPValue     | 0.9284         | 1.0000   |
+| Neg Pred Value    | 0.8909         | 0.9982   |
+| Pos Pred Value    | 0.8962         | 1.0000   |
+| Sensitivity       | 0.8992         | 0.9983   |
+| Specificity       | 0.8877         | 1.0000   |
+
+Metrics Table
 
 This random forest model demonstrates exceptional performance, with high
 accuracy, balanced sensitivity and specificity, and strong agreement
@@ -380,19 +388,23 @@ df_all_metrics <- validate_results_logistic$metrics_df
 Show results of the confusion matrix.
 
 ``` r
-validate_results_logistic$metrics_df
+kable(validate_results_logistic$metrics_df,
+      caption = "Metrics Table", align = "l")
 ```
 
-    ##              Metric Logistic_Train RF_Train Logistic_Validate
-    ## 1          Accuracy         0.8945   0.9983            0.8480
-    ## 2               AUC         0.9627   0.9999            0.9377
-    ## 3 Balanced Accuracy         0.8940   0.9982            0.8463
-    ## 4             Kappa         0.7881   0.9966            0.6941
-    ## 5     McnemarPValue         1.0000   0.4795            0.6265
-    ## 6    Neg Pred Value         0.8879   1.0000            0.8496
-    ## 7    Pos Pred Value         0.9003   0.9968            0.8467
-    ## 8       Sensitivity         0.9018   1.0000            0.8722
-    ## 9       Specificity         0.8862   0.9963            0.8205
+| Metric            | Logistic_Train | RF_Train | Logistic_Validate |
+|:------------------|:---------------|:---------|:------------------|
+| Accuracy          | 0.8937         | 0.9991   | 0.8720            |
+| AUC               | 0.9551         | 1.0000   | 0.9503            |
+| Balanced Accuracy | 0.8934         | 0.9992   | 0.8734            |
+| Kappa             | 0.7870         | 0.9983   | 0.7444            |
+| McnemarPValue     | 0.9284         | 1.0000   | 0.1116            |
+| Neg Pred Value    | 0.8909         | 0.9982   | 0.8385            |
+| Pos Pred Value    | 0.8962         | 1.0000   | 0.9083            |
+| Sensitivity       | 0.8992         | 0.9983   | 0.8385            |
+| Specificity       | 0.8877         | 1.0000   | 0.9083            |
+
+Metrics Table
 
 The logistic model performs well on the validation set, with an AUC of
 0.937 and balanced accuracy of 0.846, indicating strong class separation
@@ -440,19 +452,23 @@ df_all_metrics <- validate_results_rf$metrics_df
 Show results of the confusion matrix.
 
 ``` r
-validate_results_rf$metrics_df
+kable(validate_results_rf$metrics_df,
+      caption = "Metrics Table", align = "l")
 ```
 
-    ##              Metric Logistic_Train RF_Train Logistic_Validate RF_Validate
-    ## 1          Accuracy         0.8945   0.9983            0.8480      0.8720
-    ## 2               AUC         0.9627   0.9999            0.9377      0.9405
-    ## 3 Balanced Accuracy         0.8940   0.9982            0.8463      0.8751
-    ## 4             Kappa         0.7881   0.9966            0.6941      0.7448
-    ## 5     McnemarPValue         1.0000   0.4795            0.6265      0.0216
-    ## 6    Neg Pred Value         0.8879   1.0000            0.8496      0.8244
-    ## 7    Pos Pred Value         0.9003   0.9968            0.8467      0.9244
-    ## 8       Sensitivity         0.9018   1.0000            0.8722      0.8271
-    ## 9       Specificity         0.8862   0.9963            0.8205      0.9231
+| Metric            | Logistic_Train | RF_Train | Logistic_Validate | RF_Validate |
+|:------------------|:---------------|:---------|:------------------|:------------|
+| Accuracy          | 0.8937         | 0.9991   | 0.8720            | 0.8360      |
+| AUC               | 0.9551         | 1.0000   | 0.9503            | 0.9470      |
+| Balanced Accuracy | 0.8934         | 0.9992   | 0.8734            | 0.8397      |
+| Kappa             | 0.7870         | 0.9983   | 0.7444            | 0.6741      |
+| McnemarPValue     | 0.9284         | 1.0000   | 0.1116            | 0.0002      |
+| Neg Pred Value    | 0.8909         | 0.9982   | 0.8385            | 0.7724      |
+| Pos Pred Value    | 0.8962         | 1.0000   | 0.9083            | 0.9238      |
+| Sensitivity       | 0.8992         | 0.9983   | 0.8385            | 0.7462      |
+| Specificity       | 0.8877         | 1.0000   | 0.9083            | 0.9333      |
+
+Metrics Table
 
 The random forest model shows decent validation performance with an AUC
 of 0.940 and balanced accuracy of 0.871, but it trails the logistic
@@ -505,29 +521,23 @@ df_all_metrics <- test_results_logistic$metrics_df
 Show results of the confusion matrix.
 
 ``` r
-test_results_logistic$metrics_df
+kable(test_results_logistic$metrics_df,
+      caption = "Metrics Table", align = "l")
 ```
 
-    ##              Metric Logistic_Train RF_Train Logistic_Validate RF_Validate
-    ## 1          Accuracy         0.8945   0.9983            0.8480      0.8720
-    ## 2               AUC         0.9627   0.9999            0.9377      0.9405
-    ## 3 Balanced Accuracy         0.8940   0.9982            0.8463      0.8751
-    ## 4             Kappa         0.7881   0.9966            0.6941      0.7448
-    ## 5     McnemarPValue         1.0000   0.4795            0.6265      0.0216
-    ## 6    Neg Pred Value         0.8879   1.0000            0.8496      0.8244
-    ## 7    Pos Pred Value         0.9003   0.9968            0.8467      0.9244
-    ## 8       Sensitivity         0.9018   1.0000            0.8722      0.8271
-    ## 9       Specificity         0.8862   0.9963            0.8205      0.9231
-    ##   Logistic_Test
-    ## 1        0.8916
-    ## 2        0.9408
-    ## 3        0.8880
-    ## 4        0.7808
-    ## 5        0.0543
-    ## 6        0.9238
-    ## 7        0.8681
-    ## 8        0.9398
-    ## 9        0.8362
+| Metric | Logistic_Train | RF_Train | Logistic_Validate | RF_Validate | Logistic_Test |
+|:---|:---|:---|:---|:---|:---|
+| Accuracy | 0.8937 | 0.9991 | 0.8720 | 0.8360 | 0.8715 |
+| AUC | 0.9551 | 1.0000 | 0.9503 | 0.9470 | 0.9557 |
+| Balanced Accuracy | 0.8934 | 0.9992 | 0.8734 | 0.8397 | 0.8713 |
+| Kappa | 0.7870 | 0.9983 | 0.7444 | 0.6741 | 0.7426 |
+| McnemarPValue | 0.9284 | 1.0000 | 0.1116 | 0.0002 | 1.0000 |
+| Neg Pred Value | 0.8909 | 0.9982 | 0.8385 | 0.7724 | 0.8667 |
+| Pos Pred Value | 0.8962 | 1.0000 | 0.9083 | 0.9238 | 0.8760 |
+| Sensitivity | 0.8992 | 0.9983 | 0.8385 | 0.7462 | 0.8760 |
+| Specificity | 0.8877 | 1.0000 | 0.9083 | 0.9333 | 0.8667 |
+
+Metrics Table
 
 The logistic model performs consistently well on the test set, with an
 AUC of 0.94 and balanced accuracy of 0.88, confirming strong
@@ -579,29 +589,23 @@ df_all_metrics <- test_results_rf$metrics_df
 Show results of the confusion matrix.
 
 ``` r
-test_results_rf$metrics_df
+kable(test_results_rf$metrics_df,
+      caption = "Metrics Table", align = "l")
 ```
 
-    ##              Metric Logistic_Train RF_Train Logistic_Validate RF_Validate
-    ## 1          Accuracy         0.8945   0.9983            0.8480      0.8720
-    ## 2               AUC         0.9627   0.9999            0.9377      0.9405
-    ## 3 Balanced Accuracy         0.8940   0.9982            0.8463      0.8751
-    ## 4             Kappa         0.7881   0.9966            0.6941      0.7448
-    ## 5     McnemarPValue         1.0000   0.4795            0.6265      0.0216
-    ## 6    Neg Pred Value         0.8879   1.0000            0.8496      0.8244
-    ## 7    Pos Pred Value         0.9003   0.9968            0.8467      0.9244
-    ## 8       Sensitivity         0.9018   1.0000            0.8722      0.8271
-    ## 9       Specificity         0.8862   0.9963            0.8205      0.9231
-    ##   Logistic_Test RF_Test
-    ## 1        0.8916  0.8635
-    ## 2        0.9408  0.9420
-    ## 3        0.8880  0.8628
-    ## 4        0.7808  0.7256
-    ## 5        0.0543  1.0000
-    ## 6        0.9238  0.8534
-    ## 7        0.8681  0.8722
-    ## 8        0.9398  0.8722
-    ## 9        0.8362  0.8534
+| Metric | Logistic_Train | RF_Train | Logistic_Validate | RF_Validate | Logistic_Test | RF_Test |
+|:---|:---|:---|:---|:---|:---|:---|
+| Accuracy | 0.8937 | 0.9991 | 0.8720 | 0.8360 | 0.8715 | 0.8835 |
+| AUC | 0.9551 | 1.0000 | 0.9503 | 0.9470 | 0.9557 | 0.9580 |
+| Balanced Accuracy | 0.8934 | 0.9992 | 0.8734 | 0.8397 | 0.8713 | 0.8853 |
+| Kappa | 0.7870 | 0.9983 | 0.7444 | 0.6741 | 0.7426 | 0.7676 |
+| McnemarPValue | 0.9284 | 1.0000 | 0.1116 | 0.0002 | 1.0000 | 0.0259 |
+| Neg Pred Value | 0.8909 | 0.9982 | 0.8385 | 0.7724 | 0.8667 | 0.8421 |
+| Pos Pred Value | 0.8962 | 1.0000 | 0.9083 | 0.9238 | 0.8760 | 0.9310 |
+| Sensitivity | 0.8992 | 0.9983 | 0.8385 | 0.7462 | 0.8760 | 0.8372 |
+| Specificity | 0.8877 | 1.0000 | 0.9083 | 0.9333 | 0.8667 | 0.9333 |
+
+Metrics Table
 
 The Random Forest model performs well on the test set, with an AUC of
 0.94 and balanced accuracy of 0.85, confirming strong generalization.
@@ -651,9 +655,7 @@ logistic model is the preferred choice. The random forest model may
 still be useful as a benchmark or ensemble component, but logistic
 offers the cleanest balance of performance and interpretability.
 
-# High-Level Takeaways from Model Evaluation
-
-# High-Level Takeaways
+# Takeaways from Model Evaluation
 
 Summary of observations from performance metrics.
 
@@ -720,13 +722,13 @@ kable(class_check_summary,
 
 | Adequacy Score | Logistic_FN | Logistic_FP | RF_FN | RF_FP | Total |
 |:---------------|------------:|------------:|------:|------:|------:|
-| 0              |           0 |           0 |     0 |     0 |     3 |
-| 1              |           0 |           0 |     0 |     0 |    16 |
-| 2              |           0 |           0 |     0 |     2 |    53 |
-| 3              |           0 |           8 |     0 |    15 |    61 |
-| 4              |          18 |           0 |    16 |     0 |    69 |
-| 5              |           1 |           0 |     1 |     0 |    32 |
-| 6              |           0 |           0 |     0 |     0 |    15 |
+| 0              |           0 |           0 |     0 |     0 |     4 |
+| 1              |           0 |           0 |     0 |     0 |    27 |
+| 2              |           0 |           2 |     0 |     2 |    34 |
+| 3              |           0 |          14 |     0 |    19 |    64 |
+| 4              |          16 |           0 |     8 |     0 |    59 |
+| 5              |           0 |           0 |     0 |     0 |    40 |
+| 6              |           0 |           0 |     0 |     0 |    21 |
 
 Misclassifications by Model
 
@@ -879,6 +881,8 @@ adequacy_by_sector <- as.data.frame(test_results_logistic$predictions) %>%
   group_by(SECTOR_TITLE_SHORT) %>%
   mutate(Proportion = count / sum(count)) %>%
   ungroup()
+
+saveRDS(adequacy_by_sector, "../data/adequacy_by_sector.rds")
 
 # Extract proportion of class 1 (adequate) for sorting.
 
